@@ -768,6 +768,7 @@
       play.addEventListener("click", () => {
         row.classList.add("selected");
         setTimeout(() => {
+          closeModal($("users-modal"));
           state.activeId = usr.id;
           writeUsers(state);
           renderHub();
@@ -2087,25 +2088,30 @@
   }
 
   // Auto-load deck files from decks/manifest.json via <script> tags.
-  // Using script injection instead of import() for broader compatibility
-  // (file:// protocol, non-module MIME types, older browsers).
+  // Falls back to a hardcoded list when fetch fails (e.g. file:// protocol).
   function loadExternalDecks() {
     return new Promise((resolve) => {
+      const DECK_FILES = [
+        "world-history.js",
+        "classical-conversations.js",
+        "world-literature.js",
+      ];
+      const load = (files) => {
+        if (!files.length) return resolve();
+        let loaded = 0;
+        const check = () => { if (++loaded >= files.length) resolve(); };
+        for (const file of files) {
+          const s = document.createElement("script");
+          s.src = "decks/" + file;
+          s.onload = check;
+          s.onerror = check;
+          document.head.appendChild(s);
+        }
+      };
       fetch("decks/manifest.json")
-        .then((r) => (r.ok ? r.json() : []))
-        .catch(() => [])
-        .then((files) => {
-          if (!files.length) return resolve();
-          let loaded = 0;
-          const check = () => { if (++loaded >= files.length) resolve(); };
-          for (const file of files) {
-            const s = document.createElement("script");
-            s.src = "decks/" + file;
-            s.onload = check;
-            s.onerror = check;
-            document.head.appendChild(s);
-          }
-        });
+        .then((r) => (r.ok ? r.json() : DECK_FILES))
+        .catch(() => DECK_FILES)
+        .then(load);
     });
   }
 
