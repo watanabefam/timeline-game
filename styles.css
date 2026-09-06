@@ -592,7 +592,7 @@ html, body {
 }
 .user-avatar.big { width: 52px; height: 52px; font-size: 1.5rem; }
 .user-avatar.sm { width: 22px; height: 22px; font-size: 0.7rem; border: none; text-shadow: none; }
-.user-btn { position: relative; }
+.user-btn { position: relative; overflow: hidden; }
 .user-btn .user-icon { transition: opacity 0.2s ease; }
 .user-btn .appbar-avatar {
   position: absolute; inset: 0; width: 100% !important; height: 100% !important;
@@ -607,6 +607,12 @@ html, body {
   background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .user-row.active { border-color: var(--accent); background: rgba(110, 168, 254, 0.10); }
+.user-row.selected { animation: user-select-flash 0.3s ease-in-out 1; }
+@keyframes user-select-flash {
+  0%   { background: rgba(110, 168, 254, 0.10); }
+  50%  { background: rgba(110, 168, 254, 0.45); }
+  100% { background: rgba(110, 168, 254, 0.10); }
+}
 .user-name {
   flex: 1; text-align: left; background: none; border: none; cursor: pointer;
   color: var(--text); font-size: 1rem; font-weight: 700; padding: 4px 2px;

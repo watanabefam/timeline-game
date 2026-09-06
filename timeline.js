@@ -766,10 +766,12 @@
       play.textContent = usr.id === state.activeId ? "Playing" : "Play as";
       play.disabled = usr.id === state.activeId;
       play.addEventListener("click", () => {
-        state.activeId = usr.id;
-        writeUsers(state);
-        renderUsersModal();
-        renderHub();
+        row.classList.add("selected");
+        setTimeout(() => {
+          state.activeId = usr.id;
+          writeUsers(state);
+          renderHub();
+        }, 250);
       });
       row.append(av, nameBtn, play);
       list.appendChild(row);
@@ -2084,18 +2086,27 @@
     initGlassOnScreen();
   }
 
-  // Auto-load deck files from decks/manifest.json
-  async function loadExternalDecks() {
-    try {
-      const res = await fetch("decks/manifest.json");
-      if (!res.ok) return;
-      const files = await res.json();
-      for (const file of files) {
-        await import("./decks/" + file);
-      }
-    } catch (_) {
-      // No manifest or load error — use bundled decks only
-    }
+  // Auto-load deck files from decks/manifest.json via <script> tags.
+  // Using script injection instead of import() for broader compatibility
+  // (file:// protocol, non-module MIME types, older browsers).
+  function loadExternalDecks() {
+    return new Promise((resolve) => {
+      fetch("decks/manifest.json")
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => [])
+        .then((files) => {
+          if (!files.length) return resolve();
+          let loaded = 0;
+          const check = () => { if (++loaded >= files.length) resolve(); };
+          for (const file of files) {
+            const s = document.createElement("script");
+            s.src = "decks/" + file;
+            s.onload = check;
+            s.onerror = check;
+            document.head.appendChild(s);
+          }
+        });
+    });
   }
 
   loadExternalDecks().then(() => {
