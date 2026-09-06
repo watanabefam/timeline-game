@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timeline Game — place history in order</title>
+  <link rel="stylesheet" href="styles.css?v=78" />
+  <link rel="stylesheet" href="assets/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="assets/vendor/vis-timeline-graph2d.min.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- HUB: pick a deck -->
+    <section id="home" class="screen">
+      <header class="appbar">
+        <div class="appbar-left"><span class="wordmark">TIMELINE<span>·</span>GAME</span></div>
+        <div class="appbar-center"></div>
+        <div class="appbar-right">
+          <button class="icon-btn gear-btn" aria-label="Settings">
+            <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
+          <button class="icon-btn user-btn" aria-label="Users">
+            <svg class="ico user-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span class="user-avatar appbar-avatar hidden"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="home-hero">
+        <img class="logo-img" src="assets/images/title.png" alt="Timeline Game" />
+        <p class="playing-as" id="playing-as"></p>
+      </div>
+
+      <p class="hub-prompt">Choose a timeline deck</p>
+      <div class="deck-grid" id="deck-grid"></div>
+
+      <div id="focus-panel" class="hidden"></div>
+
+      <div class="scroll-frame home-scroll">
+        <p class="scroll-tagline">Drop each event into the line. Get the order right, grow the chain.</p>
+        <button class="link-btn" id="how-btn">How to play</button>
+      </div>
+    </section>
+
+    <!-- SETUP: mode + filters for the chosen deck -->
+    <section id="setup" class="screen hidden">
+      <header class="appbar">
+        <div class="appbar-left">
+          <button class="icon-btn" id="setup-back" aria-label="Back to decks">&larr;</button>
+        </div>
+        <div class="appbar-center">
+          <span class="mode-tag">SETUP</span>
+          <span class="setup-title" id="setup-title">Deck</span>
+        </div>
+        <div class="appbar-right">
+          <button class="icon-btn" id="setup-browse" aria-label="Browse deck">📚</button>
+          <button class="icon-btn gear-btn" aria-label="Settings">
+            <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
+          <button class="icon-btn user-btn" aria-label="Users">
+            <svg class="ico user-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span class="user-avatar appbar-avatar hidden"></span>
+          </button>
+        </div>
+      </header>
+
+      <p class="setup-blurb" id="setup-blurb"></p>
+
+      <div class="setup-filters" id="setup-filters"></div>
+
+      <div class="scroll-frame setup-scroll">
+        <div class="setup-count-control">
+          <label class="count-label" for="setup-max">Play count</label>
+          <select class="count-select" id="setup-max" aria-label="Number of events to play"></select>
+          <span class="count-note" id="setup-max-note"></span>
+        </div>
+        <div class="setup-actions">
+          <button class="btn btn--primary" id="setup-start">Start!</button>
+        </div>
+        <p class="setup-summary" id="setup-summary"></p>
+        <p class="setup-count-note" id="setup-count-note"></p>
+      </div>
+    </section>
+
+    <!-- GAME -->
+    <section id="game" class="screen hidden">
+      <div class="game-header">
+        <header class="appbar">
+          <div class="appbar-left">
+            <button class="icon-btn" id="back-btn" aria-label="Back to setup">&larr;</button>
+          </div>
+          <div class="appbar-center">
+            <span class="mode-tag" id="mode-tag">DAILY</span>
+            <span class="score-tag">Score <b id="score-num">0</b> / <span id="score-max"></span></span>
+          </div>
+          <div class="appbar-right">
+            <span class="lives" id="lives"></span>
+            <button class="icon-btn gear-btn" aria-label="Settings">
+              <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <button class="icon-btn user-btn" aria-label="Users">
+              <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="prompt">
+          <div class="prompt-label">PLACE THIS EVENT</div>
+          <div class="prompt-card" id="prompt-card">
+            <span class="prompt-emoji" id="prompt-emoji">❓</span>
+            <span class="prompt-title" id="prompt-title">Loading&hellip;</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-wrap">
+        <ol class="timeline" id="timeline"></ol>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="results" class="screen hidden">
+      <header class="appbar">
+        <div class="appbar-left"></div>
+        <div class="appbar-center">
+          <span class="result-tag" id="result-tag">DAILY</span>
+        </div>
+        <div class="appbar-right">
+          <button class="icon-btn gear-btn" aria-label="Settings">
+            <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
+          <button class="icon-btn user-btn" aria-label="Users">
+            <svg class="ico user-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span class="user-avatar appbar-avatar hidden"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="result-head">
+        <h2 id="result-title">Timeline complete!</h2>
+        <p id="result-blurb"></p>
+      </div>
+
+      <div class="result-score">
+        <span id="result-score-num">0</span><span class="result-score-max">/<span id="result-score-max"></span></span>
+        <span class="result-score-label">POINTS EARNED</span>
+      </div>
+
+      <div class="result-grid" id="result-grid"></div>
+
+      <ol class="result-timeline" id="result-timeline"></ol>
+
+      <div class="result-actions">
+        <button class="btn btn--primary" id="again-btn">Play again</button>
+        <button class="btn" id="share-btn">Share result</button>
+        <button class="btn btn--ghost" id="home-btn">Home</button>
+      </div>
+      <pre class="share-text hidden" id="share-text"></pre>
+    </section>
+
+    <!-- BROWSE -->
+    <section id="browse" class="screen hidden">
+      <header class="appbar">
+        <div class="appbar-left">
+          <button class="icon-btn" id="browse-back">&larr;</button>
+        </div>
+        <div class="appbar-center">
+          <span class="mode-tag">LIBRARY</span>
+        </div>
+        <div class="appbar-right">
+          <button class="icon-btn gear-btn" aria-label="Settings">
+            <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
+          <button class="icon-btn user-btn" aria-label="Users">
+            <svg class="ico user-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span class="user-avatar appbar-avatar hidden"></span>
+          </button>
+        </div>
+      </header>
+      <p class="browse-count" id="browse-count"></p>
+      <div class="tl-glass-panel">
+        <div class="tl-head browse-tl-head">
+          <h3>Timeline</h3>
+          <div class="tl-toggle" id="browse-tl-toggle"></div>
+        </div>
+        <div class="tl-container" id="browse-tl"></div>
+        <p class="tl-note" id="browse-tl-note"></p>
+      </div>
+      <div class="tl-glass-panel grouped-tl-panel">
+        <div class="tl-head browse-tl-head">
+          <h3>Timeline · grouped</h3>
+        </div>
+        <div class="tl-group-chips" id="browse-grouped-chips"></div>
+        <div class="tl-container" id="browse-tl-grouped"></div>
+        <p class="tl-note" id="browse-tl-grouped-note"></p>
+      </div>
+      <ol class="browse-list" id="browse-list"></ol>
+    </section>
+
+    <!-- STATS (progress report) -->
+    <section id="stats" class="screen hidden">
+      <header class="appbar">
+        <div class="appbar-left">
+          <button class="icon-btn" id="stats-back" aria-label="Back">&larr;</button>
+        </div>
+        <div class="appbar-center">
+          <span class="mode-tag">PROGRESS</span>
+        </div>
+        <div class="appbar-right">
+          <button class="icon-btn gear-btn" aria-label="Settings">
+            <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
+          <button class="icon-btn user-btn" aria-label="Users">
+            <svg class="ico user-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span class="user-avatar appbar-avatar hidden"></span>
+          </button>
+        </div>
+      </header>
+      <div class="stats-head">
+        <span class="user-avatar big" id="stats-avatar"></span>
+        <div class="stats-who">
+          <div class="stats-name-row">
+            <h2 id="stats-name"></h2>
+            <button class="mini-btn ghost" id="stats-edit" title="Rename player">✏️</button>
+          </div>
+          <button class="mini-btn" id="stats-playas">Play as</button>
+        </div>
+        <button class="mini-btn print-btn" id="stats-print" title="Print report">🖨 Print</button>
+      </div>
+      <div class="deck-chips" id="stats-decks"></div>
+      <div id="stats-body"></div>
+      <div class="stats-danger">
+        <button class="danger-btn" id="stats-delete">Delete player…</button>
+      </div>
+    </section>
+
+    <!-- SETTINGS modal -->
+    <div class="modal hidden" id="settings-modal">
+      <div class="modal-card">
+        <button class="modal-x" id="settings-x">&times;</button>
+        <h2>Settings</h2>
+        <div class="settings-body">
+          <div class="settings-group">
+            <h3 class="settings-group-title">Map</h3>
+            <p class="settings-group-note">Satellite shows NASA Blue Marble imagery (needs internet). Plain uses an offline outline map.</p>
+            <div class="mode-toggle" id="map-mode-toggle">
+              <button class="mode-btn" data-mode="satellite" type="button">🛰️ Satellite</button>
+              <button class="mode-btn" data-mode="plain" type="button">🗺️ Plain</button>
+            </div>
+          </div>
+          <div class="settings-group">
+            <h3 class="settings-group-title">Audio</h3>
+            <div class="settings-row">
+              <span class="settings-row-label">Interface sounds</span>
+              <button class="mode-btn" id="sfx-btn" type="button" aria-pressed="false">🔊 On</button>
+            </div>
+            <div class="settings-row">
+              <span class="settings-row-label">Music</span>
+              <span class="settings-row-controls">
+                <button class="icon-btn music-btn" aria-label="Toggle music" aria-pressed="false">♪</button>
+                <input class="vol-slider music-vol" type="range" min="0" max="100" value="35" aria-label="Music volume" />
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="settings-actions">
+          <button class="btn btn--primary" id="settings-done">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS modal -->
+    <div class="modal hidden" id="users-modal">
+      <div class="modal-card">
+        <button class="modal-x" id="users-x">&times;</button>
+        <h2>Who's playing?</h2>
+        <div id="users-list"></div>
+        <div class="user-new">
+          <input id="user-new-name" type="text" maxlength="24" placeholder="New player name" aria-label="New player name" />
+          <button class="btn btn--primary" id="user-create">＋ Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOW TO PLAY modal -->
+    <div class="modal hidden" id="how-modal">
+      <div class="modal-card" id="how-card">
+        <button class="modal-x" id="how-x">&times;</button>
+        <h2>How to play</h2>
+        <ol class="how-list">
+          <li>Pick a deck, then (optionally) filter it by age / week / continent.</li>
+          <li>Read the mystery event. Its year stays hidden.</li>
+          <li>Choose a gap &mdash; before, between, or after the placed events.</li>
+          <li>Every card you place is worth <b>3 points</b>; each slip on it costs 1 (never below 0). Perfect runs earn 3 &times; the cards placed.</li>
+          <li>Wrong placement bounces you back to try again &mdash; slips reduce that card's points to zero, so clean runs earn the most.</li>
+        </ol>
+        <p class="how-note">Same-year rule: if two events share a year, either side counts. Every run is a fresh random puzzle from your chosen events, and wrong answers never end the run — they just cost points.</p>
+        <button class="btn btn--primary" id="how-gotit">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="events-data.js"></script>
+  <script src="assets/leaflet/leaflet.js"></script>
+  <script src="assets/world-land.js"></script>
+  <script src="assets/vendor/liquid-glass.js"></script>
+  <script src="assets/vendor/vis-timeline-graph2d.min.js"></script>
+  <script src="timeline.js?v=80"></script>
+</body>
+</html>

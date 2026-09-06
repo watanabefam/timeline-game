@@ -1,0 +1,14 @@
+{
+  "name": "timeline-game",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "No-backend timeline-ordering game with pluggable decks.",
+  "scripts": {
+    "validate": "node scripts/validate-content.mjs",
+    "geo": "node scripts/geo-fill.mjs",
+    "enrich:cc": "node scripts/enrich-cc.mjs && node scripts/geo-fill.mjs",
+    "enrich:general": "node scripts/enrich-general.mjs && node scripts/geo-fill.mjs",
+    "enrich": "node scripts/enrich-cc.mjs && node scripts/enrich-general.mjs && node scripts/geo-fill.mjs && node scripts/validate-content.mjs"
+  }
+}
