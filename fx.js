@@ -87,17 +87,43 @@
 
     // Title painted on the panel — clipped by the animated clip-path, so it
     // is revealed by the leading edge and wiped away by the trailing edge.
+    // Structure: titleEl (flex-centered, drift target) > span (the text).
+    // The span is measured and font-fitted per transition so long deck names
+    // never overflow narrow (mobile) viewports.
     let titleEl = null;
     let titleDrift = null;
     if (titleText) {
       titleEl = document.createElement("div");
-      titleEl.textContent = titleText;
       titleEl.style.cssText =
         "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;" +
+        "will-change:transform;";
+      const span = document.createElement("span");
+      span.textContent = titleText;
+      span.style.cssText =
         "font-weight:800;line-height:1;font-size:clamp(2rem,10vw,4rem);" +
         "letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;" +
-        "color:rgba(255,255,255,.18);will-change:transform;";
+        "color:rgba(255,255,255,.18);";
+      titleEl.appendChild(span);
       c.appendChild(titleEl);
+
+      // Fit-to-width: scale the font until the line fits 84% of the viewport
+      // (84% + the ±3vw drift stay inside the panel at any width). A single
+      // proportional pass undershoots — glyph advance rounding makes text
+      // relatively wider at smaller sizes — so measure, scale, and re-measure
+      // (max 3 passes, 2% headroom per pass). Floor at 15px; ellipsis is the
+      // safety net for pathological names.
+      const maxW = W * 0.84;
+      let fs = parseFloat(getComputedStyle(span).fontSize);
+      for (let i = 0; i < 3; i++) {
+        const w = span.getBoundingClientRect().width;
+        if (w <= maxW) break;
+        fs = Math.max(15, fs * (maxW / w) * 0.98);
+        span.style.fontSize = fs.toFixed(1) + "px";
+      }
+      span.style.maxWidth = maxW + "px";
+      span.style.overflow = "hidden";
+      span.style.textOverflow = "ellipsis";
+
       // Slow constant glide in the sweep direction, over the whole run.
       // px numbers (not vw strings): anime.js's WAAPI `x` shorthand drops
       // unit-string keyframes — the animation then runs but applies nothing.
