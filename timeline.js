@@ -184,6 +184,7 @@
     document.querySelectorAll(".user-btn").forEach((btn) => {
       const icon = btn.querySelector(".user-icon");
       const av = btn.querySelector(".appbar-avatar");
+      if (!icon || !av) return;
       if (showAvatar) {
         icon.classList.add("hidden");
         av.classList.remove("hidden");
@@ -304,10 +305,35 @@
     browse: $("browse"),
     stats: $("stats"),
   };
+  // Screen flow order drives curtain direction (Motion PageCurtain pattern):
+  // destination further along the flow = forward (sweep right, top leans
+  // right); earlier = backward (sweep left, top leans left).
+  const SCREEN_ORDER = { home: 0, stats: 0, setup: 1, browse: 1, game: 2, results: 3 };
+  const SCREEN_TITLES = {
+    home: "DECKS", setup: "SETUP", game: "GAME START!",
+    results: "RESULTS", browse: "LIBRARY", stats: "PROGRESS",
+  };
+  let currentScreen = "home";
+
   function show(name) {
-    Object.values(screens).forEach((s) => s.classList.add("hidden"));
-    screens[name].classList.remove("hidden");
-    initGlassOnScreen(); // glass newly-visible controls
+    const prev = currentScreen;
+    currentScreen = name;
+    const swap = () => {
+      Object.values(screens).forEach((s) => s.classList.add("hidden"));
+      screens[name].classList.remove("hidden");
+      initGlassOnScreen(); // glass newly-visible controls
+    };
+    // Same-screen renders (initial hub render) swap plainly — no curtain.
+    if (name === prev || !window.FX) { swap(); return; }
+    const direction = (SCREEN_ORDER[name] || 0) >= (SCREEN_ORDER[prev] || 0)
+      ? "forward" : "backward";
+    // Carry the destination name: setup carries the deck title, the game
+    // screen announces itself.
+    const title =
+      name === "game" ? "Game Start!"
+      : name === "setup" && ui.deck ? ui.deck.name
+      : SCREEN_TITLES[name] || name;
+    FX.curtain(swap, { title, direction });
   }
 
   // ---- modal open/close with quick fade in/out ----
@@ -1366,7 +1392,9 @@
       $("prompt-title").textContent = "Timeline complete!";
     }
 
-    $("score-num").textContent = game.score;
+    // Count-up from the displayed value (0 on first render — no-op there).
+    if (window.FX) FX.scoreCount($("score-num"), game.score);
+    else $("score-num").textContent = game.score;
     // Single mode: no lives — wrong placements bounce back (slips cost points).
     $("lives").textContent = "";
 
@@ -1593,6 +1621,9 @@
       // never end the run (research-backed for learning; slips cost points).
       flashFeedback("✗ try again", false);
       beep("wrong");
+      // Screen shake: same-frame punctuation alongside beep + gap flash.
+      // Short/decaying/positional (4px, 200ms) — FX handles reduced motion.
+      if (window.FX) FX.shake(screens.game, 4, 200);
       // Flash the clicked gap instead of rebuilding the timeline.
       const gapNode = document.querySelector(`.gap[data-index="${index}"]`);
       if (gapNode) {
@@ -1678,7 +1709,9 @@
       : // Losses only occur in Endless (Daily bounces back), where the run
         // ends after ENDLESS_LIVES slips.
         `${{ 1: "One", 2: "Two", 3: "Three" }[ENDLESS_LIVES] || ENDLESS_LIVES} slips ended the run — but now you know something new.`;
-    $("result-score-num").textContent = game.score;
+    // Results score counts up as the curtain reveals (600ms, easeOutExpo).
+    if (window.FX) FX.scoreCount($("result-score-num"), game.score);
+    else $("result-score-num").textContent = game.score;
     // A previous run's share text must not bleed into these results.
     $("share-text").classList.add("hidden");
 
@@ -1708,9 +1741,8 @@
         `</div>`;
       tl.appendChild(li);
     });
-    initAllFactMaps(tl);
-
     show("results");
+    initAllFactMaps(tl);
   }
 
   function shareText() {
@@ -1886,24 +1918,26 @@
   // Chromium; Safari/Firefox keep the CSS frosted layer automatically.
   function initGlassOnScreen() {
     if (!window.LiquidGlass || !window.LiquidGlass.isChromium) return;
-    requestAnimationFrame(() => {
-      document.querySelectorAll(".icon-btn, .btn, .mode-btn, .prompt-card, .modal-card").forEach((el) => {
-        if (el.dataset.glassed || el.closest(".hidden") || !el.offsetWidth) return;
-        el.dataset.glassed = "1";
-        const radius = el.classList.contains("prompt-card") ? 18
-          : el.classList.contains("modal-card") ? 24
-          : Math.max(6, Math.round(el.getBoundingClientRect().height / 2));
-        try {
-          window.LiquidGlass.createLiquidGlass(el, {
-            borderRadius: radius,
-            scale: el.classList.contains("prompt-card") || el.classList.contains("modal-card") ? -36 : -60,
-            aberration: [0, 6, 12],
-            frost: 0, // keep the CSS glass tint — the script would otherwise overwrite it
-            blur: 9,
-            fallbackFilter: "blur(14px) saturate(160%)",
-          });
-        } catch (e) { console.error("glass init failed", el.className, e); }
-      });
+    // Synchronous on purpose: createLiquidGlass is fully synchronous (canvas
+    // maps are cached), so glass lands before first paint at load and before
+    // the curtain reveals on transitions. The previous rAF deferral showed a
+    // 1-frame flash of plain controls.
+    document.querySelectorAll(".icon-btn, .btn, .mode-btn, .prompt-card, .modal-card").forEach((el) => {
+      if (el.dataset.glassed || el.closest(".hidden") || !el.offsetWidth) return;
+      el.dataset.glassed = "1";
+      const radius = el.classList.contains("prompt-card") ? 18
+        : el.classList.contains("modal-card") ? 24
+        : Math.max(6, Math.round(el.getBoundingClientRect().height / 2));
+      try {
+        window.LiquidGlass.createLiquidGlass(el, {
+          borderRadius: radius,
+          scale: el.classList.contains("prompt-card") || el.classList.contains("modal-card") ? -36 : -60,
+          aberration: [0, 6, 12],
+          frost: 0, // keep the CSS glass tint — the script would otherwise overwrite it
+          blur: 9,
+          fallbackFilter: "blur(14px) saturate(160%)",
+        });
+      } catch (e) { console.error("glass init failed", el.className, e); }
     });
   }
 
@@ -1966,6 +2000,22 @@
         syncAudioControls();
         if (getSound()) beep("correct");
       });
+    }
+
+    // interface effects toggle (curtain / shake / score count-up)
+    const fxBtn = $("fx-btn");
+    function syncFxControls() {
+      if (!fxBtn || !window.FX) return;
+      fxBtn.textContent = FX.enabled ? "✨ On" : "✨ Off";
+      fxBtn.setAttribute("aria-pressed", String(FX.enabled));
+    }
+    if (fxBtn) {
+      fxBtn.addEventListener("click", () => {
+        if (!window.FX) return;
+        FX.setEnabled(!FX.enabled);
+        syncFxControls();
+      });
+      syncFxControls();
     }
 
     // background music: play/pause + volume next to the SFX control
@@ -2108,10 +2158,14 @@
           document.head.appendChild(s);
         }
       };
-      fetch("decks/manifest.json")
-        .then((r) => (r.ok ? r.json() : DECK_FILES))
-        .catch(() => DECK_FILES)
-        .then(load);
+      // Timeout: if fetch hangs (e.g. file:// protocol), fall back to DECK_FILES after 2s.
+      const manifest = Promise.race([
+        fetch("decks/manifest.json")
+          .then((r) => (r.ok ? r.json() : DECK_FILES))
+          .catch(() => DECK_FILES),
+        new Promise((ok) => setTimeout(() => ok(DECK_FILES), 2000)),
+      ]);
+      manifest.then(load);
     });
   }
 
