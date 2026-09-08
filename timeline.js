@@ -269,7 +269,117 @@
     try { localStorage.setItem(SOUND_KEY, on ? "on" : "off"); } catch {}
   }
 
-  // ---- sound -----------------------------------------------------
+  // ---- sound effects ----------------------------------------------
+  // Kenney CC0 SFX (assets/audio/*.mp3 — see assets/audio/LICENSE.txt).
+  // HTMLAudioElement-based so playback works from file:// in every browser
+  // (Web Audio buffer loading needs fetch(), which Chrome blocks on file://).
+  // Best-practice rules baked in (see research):
+  //  - variant pools with random-without-repeats (shuffled bag, not dice roll)
+  //  - playbackRate jitter ±5-10% per play (anti-fatigue)
+  //  - volume jitter ±~1dB
+  //  - loudness ladder: frequent sounds quiet, rare sounds loud
+  //  - streak escalation: +1 semitone (1.06x) per consecutive correct, cap 5
+  //  - wrong answers layer a soft impact thud under the buzz
+  //  - beep() (Web Audio synth) remains as a zero-asset fallback
+  const SFX = {
+    click:    { files: ["ui-click-1", "ui-click-2", "ui-click-3", "ui-click-4"], vol: 0.30, rate: [0.95, 1.05] },
+    select:   { files: ["ui-select-1", "ui-select-2", "ui-select-3"], vol: 0.30, rate: [0.95, 1.05] },
+    toggle:   { files: ["ui-toggle-1", "ui-toggle-2", "ui-toggle-3"], vol: 0.30, rate: [0.95, 1.05] },
+    switch:   { files: ["ui-switch-1", "ui-switch-2", "ui-switch-3"], vol: 0.30, rate: [0.95, 1.05] },
+    rollover: { files: ["ui-rollover-1", "ui-rollover-2"], vol: 0.20, rate: [0.95, 1.05] },
+    open:     { files: ["ui-open-1"], vol: 0.30, rate: [0.95, 1.05] },
+    close:    { files: ["ui-close-1"], vol: 0.30, rate: [0.95, 1.05] },
+    glass:    { files: ["ui-glass-1", "ui-glass-2", "ui-glass-3"], vol: 0.30, rate: [0.95, 1.05] },
+    glitch:   { files: ["ui-glitch-1", "ui-glitch-2"], vol: 0.30, rate: [0.95, 1.05] },
+    tick:     { files: ["tick-1", "tick-2"], vol: 0.30, rate: [0.95, 1.05] },
+    place:    { files: ["place-1", "place-2", "place-3"], vol: 0.35, rate: [0.95, 1.05], layer: { group: "wood", vol: 0.25 } },
+    correct:  { files: ["correct-1", "correct-2", "correct-3", "correct-4"], vol: 0.40, rate: [0.95, 1.05], fallback: "correct" },
+    pluck:    { files: ["correct-pluck-1", "correct-pluck-2"], vol: 0.40, rate: [0.95, 1.05] },
+    wrong:    { files: ["wrong-1", "wrong-2", "wrong-3", "wrong-4"], vol: 0.45, rate: [0.95, 1.05], fallback: "wrong", layer: { group: "impact", vol: 0.30 } },
+    impact:   { files: ["impact-soft-1", "impact-soft-2", "impact-soft-3"], vol: 0.30, rate: [0.9, 1.1] },
+    wood:     { files: ["impact-wood-1", "impact-wood-2"], vol: 0.25, rate: [0.9, 1.1] },
+    win:      { files: ["win-1"], vol: 0.60, rate: [0.98, 1.02], fallback: "finish" },
+  };
+  // Per-file Audio element pools (2 each) so rapid triggers can overlap.
+  const audioPool = {};
+  const poolIdx = {};
+  // Random-without-repeats bags per group (shuffled, refilled when empty).
+  const bags = {};
+  const lastPlayed = {};
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function pickVariant(group) {
+    const def = SFX[group];
+    if (!def || !def.files.length) return null;
+    let bag = bags[group];
+    if (!bag || !bag.length) {
+      bag = def.files.slice();
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+      // Boundary guard: the file we are about to pop (the last element) must
+      // not equal the one just played, or the shuffle degenerates into a
+      // back-to-back repeat when the bag refills.
+      if (lastPlayed[group] != null && bag[bag.length - 1] === lastPlayed[group] && bag.length > 1) {
+        const k = Math.floor(Math.random() * (bag.length - 1));
+        [bag[bag.length - 1], bag[k]] = [bag[k], bag[bag.length - 1]];
+      }
+      bags[group] = bag;
+    }
+    const file = bag.pop();
+    lastPlayed[group] = file;
+    return file;
+  }
+  function getAudioEl(file) {
+    const pool = audioPool[file];
+    if (!pool || !pool.length) return null;
+    const i = (poolIdx[file] = ((poolIdx[file] || 0) + 1) % pool.length);
+    return pool[i];
+  }
+  function preloadSfx() {
+    Object.keys(SFX).forEach((group) => {
+      SFX[group].files.forEach((f) => {
+        if (!audioPool[f]) audioPool[f] = [];
+        if (audioPool[f].length < 2) {
+          const a = new Audio(`assets/audio/${f}.mp3`);
+          a.preload = "auto";
+          audioPool[f].push(a);
+        }
+      });
+    });
+  }
+  function playSfx(name, opts = {}) {
+    if (!getSound()) return;
+    const def = SFX[name];
+    if (!def) return;
+    const file = pickVariant(name);
+    const el = file && getAudioEl(file);
+    if (!el || el.readyState === 0) {
+      // File not loaded yet (or missing) — fall back to the synth beep.
+      if (def.fallback) beep(def.fallback);
+      return;
+    }
+    let rate = rand(def.rate[0], def.rate[1]);
+    if (opts.streak && opts.streak > 1) rate *= Math.pow(1.06, Math.min(opts.streak - 1, 5));
+    el.playbackRate = rate;
+    el.volume = def.vol * rand(0.9, 1.1);
+    el.currentTime = 0;
+    el.play().catch(() => {});
+    // Layered feedback (e.g. wrong = buzz + soft thud) for weight.
+    if (def.layer) {
+      const ldef = SFX[def.layer.group];
+      const lfile = pickVariant(def.layer.group);
+      const lel = lfile && getAudioEl(lfile);
+      if (lel && lel.readyState !== 0) {
+        lel.playbackRate = rand(ldef.rate[0], ldef.rate[1]);
+        lel.volume = (def.layer.vol != null ? def.layer.vol : ldef.vol) * rand(0.9, 1.1);
+        lel.currentTime = 0;
+        lel.play().catch(() => {});
+      }
+    }
+  }
+
+  // ---- sound (synth fallback) -------------------------------------
   let audioCtx = null;
   function beep(kind) {
     if (!getSound()) return;
@@ -322,9 +432,15 @@
       Object.values(screens).forEach((s) => s.classList.add("hidden"));
       screens[name].classList.remove("hidden");
       initGlassOnScreen(); // glass newly-visible controls
+      // Dock globe lives on setup/game/results only (its mode-setting calls
+      // handle visibility); leaving those screens hides + pauses it.
+      if (window.GlobeDock && name !== "setup" && name !== "game" && name !== "results") {
+        window.GlobeDock.hide();
+      }
     };
     // Same-screen renders (initial hub render) swap plainly — no curtain.
     if (name === prev || !window.FX) { swap(); return; }
+    playSfx("glass"); // liquid-glass transition whoosh
     const direction = (SCREEN_ORDER[name] || 0) >= (SCREEN_ORDER[prev] || 0)
       ? "forward" : "backward";
     // Carry the destination name: setup carries the deck title, the game
@@ -340,10 +456,12 @@
   function openModal(el) {
     if (!el) return;
     el.classList.remove("hidden", "closing");
+    playSfx("open");
   }
   function closeModal(el) {
     if (!el || el.classList.contains("hidden")) return;
     el.classList.add("closing");
+    playSfx("close");
     setTimeout(() => {
       el.classList.add("hidden");
       el.classList.remove("closing");
@@ -496,7 +614,7 @@
     hideTlHoverCard();
     const card = document.createElement("div");
     card.className = "fact-sheet tl-hover";
-    card.innerHTML = factSheetHtml(ev);
+    card.innerHTML = `<div class="fs-title">${escapeHtml(ev.title)}</div>` + factSheetHtml(ev);
     document.body.appendChild(card);
     const mapDiv = card.querySelector(".fact-map");
     if (mapDiv) initFactMap(mapDiv);
@@ -520,6 +638,19 @@
     card.addEventListener("mouseenter", () => clearTimeout(tlHoverHideTimer));
     card.addEventListener("mouseleave", hideTlHoverCard);
     tlHoverCard = card;
+  }
+  // Globe-dock marker clicks surface the SAME hover card as timeline items.
+  if (window.GlobeDock) {
+    // Both click and hover anchor the card to the right of the main column
+    // (#app) on desktop, exactly like timeline-item tooltips.
+    const mainCol = () => document.getElementById("app");
+    window.GlobeDock.onMarkerClick = (ev, x, y) => showTlHoverCard(ev, x, y, mainCol());
+    // Hover over a globe marker shows the same fact-sheet tooltip (with the
+    // Leaflet map); hovering off hides it.
+    window.GlobeDock.onMarkerHover = (ev, x, y) => {
+      if (ev) showTlHoverCard(ev, x, y, mainCol());
+      else hideTlHoverCard();
+    };
   }
   function attachTlHover(tl, lookupEvent, container) {
     const panelEl = container ? container.closest("#stats-body, .tl-glass-panel") : null;
@@ -1210,6 +1341,8 @@
   function updateSetupSummary() {
     const subset = filterSubset(ui.deck, ui.selections);
     ui.subset = subset;
+    // Dock globe mirrors the filtered subset as ambient points.
+    if (window.GlobeDock) window.GlobeDock.setSetup(subset);
     const note = $("setup-count-note");
     if (subset.length === 0) {
       $("setup-summary").textContent = "No events match this combination.";
@@ -1305,6 +1438,7 @@
       outcomes: [],
       score: 0,
       wrongOnCurrent: 0,
+      streak: 0, // consecutive correct placements (drives SFX pitch escalation)
       // Anchor cards by ID (styling must not depend on list position — cards
       // can be inserted before/between the anchors), plus per-card slips so
       // placed cards can show clean vs. needed-retries.
@@ -1400,11 +1534,35 @@
 
     const tl = $("timeline");
     tl.innerHTML = "";
+    // First deal: stagger the cards in as the curtain reveals. CSS-driven —
+    // the game screen becomes visible mid-curtain, which starts the animation.
+    const firstDeal = game.roundIndex === 0 && game.status === "playing";
     timelineEvents.forEach((e, idx) => {
+      const li = eventEl(e, idx);
+      if (firstDeal) li.style.setProperty("--i", String(idx));
       tl.appendChild(gapEl(idx));
-      tl.appendChild(eventEl(e, idx));
+      tl.appendChild(li);
     });
     tl.appendChild(gapEl(timelineEvents.length));
+    if (firstDeal) {
+      tl.classList.add("timeline--dealing");
+      setTimeout(() => tl.classList.remove("timeline--dealing"), 1600);
+    }
+
+    // Dock globe: placed markers coloured by outcome, current prompt on top.
+    if (window.GlobeDock) {
+      window.GlobeDock.syncGame(
+        timelineEvents.map((e) => ({ ev: e, kind: placedKindFor(e) })),
+        ev
+      );
+    }
+  }
+
+  // Dock-globe marker colour for a placed card — mirrors placedClassFor().
+  function placedKindFor(e) {
+    if (game.anchorIds && game.anchorIds.has(e.id)) return "anchor";
+    const slips = game.cardSlips ? game.cardSlips[e.id] : null;
+    return slips === 0 ? "good" : "bad";
   }
 
   // Build a fact-sheet row; returns "" when the value is empty.
@@ -1551,11 +1709,21 @@
         ev.stopPropagation();
         const open = li.classList.toggle("open");
         btn.setAttribute("aria-expanded", open ? "true" : "false");
-        if (open) ensureFactMap(li); // build the mini-map lazily on first open
+        if (open) {
+          ensureFactMap(li); // build the mini-map lazily on first open
+          if (window.GlobeDock) window.GlobeDock.focus(e); // aim globe at this card
+        }
       });
     }
     // Mouse users reveal the sheet on hover — init the map then too.
-    li.addEventListener("mouseenter", () => ensureFactMap(li));
+    li.addEventListener("mouseenter", () => {
+      ensureFactMap(li);
+      if (window.GlobeDock) window.GlobeDock.focus(e); // shift globe to this card
+    });
+    li.addEventListener("mouseleave", () => {
+      // Hovering away returns the globe to the current "place this event" spot.
+      if (window.GlobeDock) window.GlobeDock.focus(currentEvent());
+    });
     return li;
   }
 
@@ -1599,7 +1767,8 @@
       game.roundIndex += 1;
       game.wrongOnCurrent = 0;
       flashFeedback(value > 0 ? `✓ +${value}` : "✓ placed +0", true);
-      beep("correct");
+      game.streak += 1;
+      playSfx("correct", { streak: game.streak });
 
       if (game.roundIndex >= game.queue.length) finishGame(true);
       else {
@@ -1612,7 +1781,14 @@
           newEventEl.addEventListener("animationend", () => {
             newEventEl.classList.remove("tl-event--entering");
           }, { once: true });
+          // Juice: lock-in burst + floating score + green vignette, tiered
+          // by streak (heavy at 3+ consecutive corrects).
+          juicePlace(newEventEl, value, game.streak);
         }
+        // Rail pulse: the timeline line flashes as the card locks in.
+        const tl = $("timeline");
+        tl.classList.add("timeline--pulse");
+        setTimeout(() => tl.classList.remove("timeline--pulse"), 500);
       }
     } else {
       game.outcomes.push("wrong");
@@ -1620,7 +1796,11 @@
       // Immediate corrective feedback + retry: wrong placements bounce back and
       // never end the run (research-backed for learning; slips cost points).
       flashFeedback("✗ try again", false);
-      beep("wrong");
+      game.streak = 0;
+      playSfx("wrong");
+      juiceWrong();
+      // Dock globe ring follows the good/bad scheme.
+      if (window.GlobeDock) window.GlobeDock.markCurrent("bad");
       // Screen shake: same-frame punctuation alongside beep + gap flash.
       // Short/decaying/positional (4px, 200ms) — FX handles reduced motion.
       if (window.FX) FX.shake(screens.game, 4, 200);
@@ -1643,6 +1823,29 @@
     f.className = "feedback " + (good ? "good" : "bad");
     clearTimeout(feedbackTimer);
     feedbackTimer = setTimeout(() => { f.textContent = ""; f.className = "feedback"; }, 1600);
+  }
+
+  // ---- juice (tiered feedback profiles) ---------------------------
+  // Research (Kao et al. 2024, n=1699): juice OUTCOMES, not every action —
+  // success-dependent amplification drives competence; undifferentiated juice
+  // backfires. Tiers: medium (correct) vs heavy (3+ streak). Wrong answers
+  // get only the red vignette (errors loud but short, never over-juiced).
+  function cssVar(name) {
+    try { return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || null; } catch (_) { return null; }
+  }
+  function juicePlace(el, value, streak) {
+    if (!window.FX) return;
+    const heavy = streak >= 3;
+    FX.burst(el, { count: heavy ? 16 : 9 });
+    FX.floatText(el, `+${value}`, { color: cssVar("--good") || "#4ade80" });
+    FX.vignette("rgba(74, 222, 128, 0.30)");
+    // Pop AFTER the expand-in layout animation (300ms) so the two transform
+    // animations don't fight for the same property.
+    setTimeout(() => FX.pop(el, heavy ? 1.2 : 1.15), 300);
+  }
+  function juiceWrong() {
+    if (!window.FX) return;
+    FX.vignette("rgba(248, 81, 73, 0.35)");
   }
 
   // ---- finish ----------------------------------------------------
@@ -1688,7 +1891,7 @@
 
   function finishGame(won) {
     game.status = won ? "complete" : "lost";
-    beep(won ? "finish" : "wrong");
+    playSfx(won ? "win" : "wrong");
     recordRun();
     showResults(won);
   }
@@ -1742,7 +1945,22 @@
       tl.appendChild(li);
     });
     show("results");
+    // Celebration confetti fires as the curtain reveal completes (600ms).
+    // Graded: perfect run = full cannon, otherwise a modest burst. Never on
+    // a loss (research: celebrations must match the achievement).
+    if (won && window.FX) {
+      setTimeout(() => window.FX.confetti({ tier: perfect ? "heavy" : "medium" }), 650);
+    }
     initAllFactMaps(tl);
+    // Dock globe becomes the expanded geographic recap of the run.
+    if (window.GlobeDock) {
+      window.GlobeDock.showResults(
+        game.timeline.map((id) => {
+          const e = eventById(ui.deck, id);
+          return { ev: e, kind: placedKindFor(e) };
+        })
+      );
+    }
   }
 
   function shareText() {
@@ -1998,7 +2216,7 @@
       sfxBtn.addEventListener("click", () => {
         setSound(!getSound());
         syncAudioControls();
-        if (getSound()) beep("correct");
+        if (getSound()) playSfx("correct");
       });
     }
 
@@ -2048,6 +2266,18 @@
     document.addEventListener("pointerdown", musicKick);
     document.addEventListener("keydown", musicKick);
 
+    // UI click sounds: delegated so every button gets tactile feedback, except
+    // the SFX test button (plays its own sound) and music controls (own intent).
+    document.addEventListener("click", (ev) => {
+      const t = ev.target;
+      if (!t || !t.closest) return;
+      const btn = t.closest("button");
+      if (!btn) return;
+      if (btn.closest(".sfx-btn, .music-btn")) return;
+      playSfx("click");
+    });
+    preloadSfx();
+
     // settings modal (reachable from any screen via the gear)
     document.querySelectorAll(".gear-btn").forEach((b) =>
       b.addEventListener("click", () => {
@@ -2062,6 +2292,78 @@
     $("settings-modal").addEventListener("click", (e) => {
       if (e.target === $("settings-modal")) closeModal($("settings-modal")); // backdrop click
     });
+
+    // settings tabs
+    function switchSettingsTab(panelId) {
+      const tabs = document.querySelectorAll(".settings-tab");
+      const panels = document.querySelectorAll(".settings-tab-panel");
+      tabs.forEach((tab) => {
+        const selected = tab.getAttribute("aria-controls") === panelId;
+        tab.setAttribute("aria-selected", String(selected));
+        tab.classList.toggle("active", selected);
+        tab.setAttribute("tabindex", selected ? "0" : "-1");
+      });
+      panels.forEach((panel) => {
+        const active = panel.id === panelId;
+        panel.classList.toggle("active", active);
+        panel.hidden = !active;
+      });
+    }
+    document.querySelectorAll(".settings-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        switchSettingsTab(tab.getAttribute("aria-controls"));
+      });
+    });
+    const tablist = document.querySelector(".settings-tablist");
+    if (tablist) {
+      tablist.addEventListener("keydown", (e) => {
+        const tabs = Array.from(tablist.querySelectorAll(".settings-tab"));
+        const current = tablist.querySelector(".settings-tab[aria-selected='true']");
+        const index = tabs.indexOf(current);
+        let newIndex = index;
+        if (e.key === "ArrowRight") newIndex = (index + 1) % tabs.length;
+        else if (e.key === "ArrowLeft") newIndex = (index - 1 + tabs.length) % tabs.length;
+        else if (e.key === "Home") newIndex = 0;
+        else if (e.key === "End") newIndex = tabs.length - 1;
+        else return;
+        e.preventDefault();
+        const newTab = tabs[newIndex];
+        newTab.focus();
+        switchSettingsTab(newTab.getAttribute("aria-controls"));
+      });
+    }
+
+    const decksStatus = $("decks-status");
+    $("export-current-btn").addEventListener("click", () => {
+      const deckId = (ui && ui.deck && ui.deck.id) || (window.DECKS[0] && window.DECKS[0].id);
+      if (!deckId) {
+        alert("Pick a deck first.");
+        return;
+      }
+      window.exportDeck(deckId);
+    });
+    $("export-all-btn").addEventListener("click", () => {
+      window.exportAllDecks();
+    });
+    const importFileInput = $("import-file-input");
+    $("import-file-btn").addEventListener("click", () => {
+      if (!importFileInput || !importFileInput.files || !importFileInput.files[0]) {
+        alert("Choose a JSON file first.");
+        return;
+      }
+      window.importDeckFromFile(importFileInput.files[0])
+        .then(function () {
+          if (decksStatus) decksStatus.textContent = "Import complete.";
+          renderHub();
+        })
+        .catch(function (err) {
+          if (decksStatus) decksStatus.textContent = "Import failed: " + err.message;
+        })
+        .finally(function () {
+          if (importFileInput) importFileInput.value = "";
+        });
+    });
+
     const mapToggle = $("map-mode-toggle");
     if (mapToggle) {
       mapToggle.querySelectorAll(".mode-btn").forEach((b) =>
@@ -2170,6 +2472,9 @@
   }
 
   loadExternalDecks().then(() => {
+    if (typeof window.loadImportedDecks === "function") {
+      window.loadImportedDecks();
+    }
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", init);
     } else {

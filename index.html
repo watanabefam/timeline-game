@@ -4,11 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Timeline Game — place history in order</title>
-  <link rel="stylesheet" href="styles.css?v=78" />
+  <link rel="stylesheet" href="styles.css?v=83" />
   <link rel="stylesheet" href="assets/leaflet/leaflet.css" />
   <link rel="stylesheet" href="assets/vendor/vis-timeline-graph2d.min.css" />
 </head>
 <body>
+  <!-- Shared icon sprite: one source of truth for repeated icons. -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="icon-settings" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51 1H21a2 2 0 0 1 0 4h.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </symbol>
+  </svg>
   <div id="app">
 
     <!-- HUB: pick a deck -->
@@ -18,7 +25,7 @@
         <div class="appbar-center"></div>
         <div class="appbar-right">
           <button class="icon-btn gear-btn" aria-label="Settings">
-            <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <svg class="ico"><use href="#icon-settings"/></svg>
           </button>
           <button class="icon-btn user-btn" aria-label="Users">
             <svg class="ico user-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -56,7 +63,7 @@
         <div class="appbar-right">
           <button class="icon-btn" id="setup-browse" aria-label="Browse deck">📚</button>
           <button class="icon-btn gear-btn" aria-label="Settings">
-            <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <svg class="ico"><use href="#icon-settings"/></svg>
           </button>
           <button class="icon-btn user-btn" aria-label="Users">
             <svg class="ico user-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -97,8 +104,8 @@
           <div class="appbar-right">
             <span class="lives" id="lives"></span>
             <button class="icon-btn gear-btn" aria-label="Settings">
-              <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            </button>
+            <svg class="ico"><use href="#icon-settings"/></svg>
+          </button>
             <button class="icon-btn user-btn" aria-label="Users">
               <svg class="ico user-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               <span class="user-avatar appbar-avatar hidden"></span>
@@ -131,7 +138,7 @@
         </div>
         <div class="appbar-right">
           <button class="icon-btn gear-btn" aria-label="Settings">
-            <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <svg class="ico"><use href="#icon-settings"/></svg>
           </button>
           <button class="icon-btn user-btn" aria-label="Users">
             <svg class="ico user-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -173,7 +180,7 @@
         </div>
         <div class="appbar-right">
           <button class="icon-btn gear-btn" aria-label="Settings">
-            <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <svg class="ico"><use href="#icon-settings"/></svg>
           </button>
           <button class="icon-btn user-btn" aria-label="Users">
             <svg class="ico user-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -212,7 +219,7 @@
         </div>
         <div class="appbar-right">
           <button class="icon-btn gear-btn" aria-label="Settings">
-            <svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <svg class="ico"><use href="#icon-settings"/></svg>
           </button>
           <button class="icon-btn user-btn" aria-label="Users">
             <svg class="ico user-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -238,40 +245,85 @@
       </div>
     </section>
 
+    <!-- Globe dock (setup/game/results) — lives OUTSIDE the screen sections so
+         it survives curtain transitions. Library + textures load lazily via
+         globe.js; hidden until a dock screen activates it. -->
+    <div id="globe-dock" class="hidden" aria-hidden="true">
+      <span class="globe-dock-hint">🌍 tap to explore</span>
+      <button class="globe-dock-close hidden" id="globe-dock-close" type="button" aria-label="Collapse globe">&times;</button>
+      <div id="globe-dock-canvas"></div>
+    </div>
+
     <!-- SETTINGS modal -->
     <div class="modal hidden" id="settings-modal">
-      <div class="modal-card">
+      <div class="modal-card settings-full">
         <button class="modal-x" id="settings-x">&times;</button>
         <h2>Settings</h2>
-        <div class="settings-body">
-          <div class="settings-group">
-            <h3 class="settings-group-title">Map</h3>
-            <p class="settings-group-note">Satellite shows NASA Blue Marble imagery (needs internet). Plain uses an offline outline map.</p>
-            <div class="mode-toggle" id="map-mode-toggle">
-              <button class="mode-btn" data-mode="satellite" type="button">🛰️ Satellite</button>
-              <button class="mode-btn" data-mode="plain" type="button">🗺️ Plain</button>
+        <div class="settings-tablist" role="tablist" aria-label="Settings categories">
+          <button class="settings-tab active" role="tab" aria-selected="true" aria-controls="panel-decks" id="tab-decks" tabindex="0">Decks</button>
+          <button class="settings-tab" role="tab" aria-selected="false" aria-controls="panel-audio" id="tab-audio" tabindex="-1">Audio</button>
+          <button class="settings-tab" role="tab" aria-selected="false" aria-controls="panel-visual" id="tab-visual" tabindex="-1">Visual</button>
+        </div>
+        <div class="settings-tab-panels">
+          <div class="settings-tab-panel active" id="panel-decks" role="tabpanel" aria-labelledby="tab-decks">
+            <div class="settings-body">
+              <div class="settings-group">
+                <h3 class="settings-group-title">Export</h3>
+                <p class="settings-group-note">Download the current deck or every loaded deck as JSON.</p>
+                <div class="settings-actions">
+                  <button class="btn btn--primary" id="export-current-btn">Export current deck</button>
+                </div>
+                <div class="settings-actions">
+                  <button class="btn btn--ghost" id="export-all-btn">Export all decks</button>
+                </div>
+              </div>
+              <div class="settings-group">
+                <h3 class="settings-group-title">Import</h3>
+                <p class="settings-group-note">Import a deck JSON file exported from this app, or a single-deck JSON object. Duplicate ids replace the existing deck.</p>
+                <input type="file" id="import-file-input" accept="application/json,.json" style="display:block;width:100%;margin:10px 0;color:var(--muted);" />
+                <div class="settings-actions">
+                  <button class="btn btn--primary" id="import-file-btn">Import from file</button>
+                </div>
+                <p id="decks-status" class="settings-group-note" style="margin-top:10px;"></p>
+              </div>
             </div>
           </div>
-          <div class="settings-group">
-            <h3 class="settings-group-title">Effects</h3>
-            <div class="settings-row">
-              <span class="settings-row-label">Interface effects</span>
-              <button class="mode-btn" id="fx-btn" type="button" aria-pressed="true">✨ On</button>
+          <div class="settings-tab-panel" id="panel-audio" role="tabpanel" aria-labelledby="tab-audio" hidden>
+            <div class="settings-body">
+              <div class="settings-group">
+                <h3 class="settings-group-title">Audio</h3>
+                <div class="settings-row">
+                  <span class="settings-row-label">Interface sounds</span>
+                  <button class="mode-btn" id="sfx-btn" type="button" aria-pressed="false">🔊 On</button>
+                </div>
+                <div class="settings-row">
+                  <span class="settings-row-label">Music</span>
+                  <span class="settings-row-controls">
+                    <button class="icon-btn music-btn" aria-label="Toggle music" aria-pressed="false">♪</button>
+                    <input class="vol-slider music-vol" type="range" min="0" max="100" value="35" aria-label="Music volume" />
+                  </span>
+                </div>
+              </div>
             </div>
-            <p class="settings-group-note">Screen transitions, shake and score animations. Your system's reduced-motion setting always takes precedence.</p>
           </div>
-          <div class="settings-group">
-            <h3 class="settings-group-title">Audio</h3>
-            <div class="settings-row">
-              <span class="settings-row-label">Interface sounds</span>
-              <button class="mode-btn" id="sfx-btn" type="button" aria-pressed="false">🔊 On</button>
-            </div>
-            <div class="settings-row">
-              <span class="settings-row-label">Music</span>
-              <span class="settings-row-controls">
-                <button class="icon-btn music-btn" aria-label="Toggle music" aria-pressed="false">♪</button>
-                <input class="vol-slider music-vol" type="range" min="0" max="100" value="35" aria-label="Music volume" />
-              </span>
+          <div class="settings-tab-panel" id="panel-visual" role="tabpanel" aria-labelledby="tab-visual" hidden>
+            <div class="settings-body">
+              <div class="settings-group">
+                <h3 class="settings-group-title">Map</h3>
+                <p class="settings-group-note">Satellite shows NASA Blue Marble imagery (needs internet). Plain uses an offline outline map.</p>
+                <div class="mode-toggle" id="map-mode-toggle">
+                  <button class="mode-btn" data-mode="satellite" type="button">🛰️ Satellite</button>
+                  <button class="mode-btn" data-mode="plain" type="button">🗺️ Plain</button>
+                </div>
+              </div>
+              <div class="settings-group">
+                <h3 class="settings-group-title">Effects</h3>
+                <div class="settings-row">
+                  <span class="settings-row-label">Interface effects</span>
+                  <button class="mode-btn" id="fx-btn" type="button" aria-pressed="true">✨ On</button>
+                </div>
+                <p class="settings-group-note">Screen transitions, shake and score animations. Your system's reduced-motion setting always takes precedence.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -313,12 +365,15 @@
   </div>
 
   <script src="events-data.js"></script>
+  <script src="decks-io.js?v=1"></script>
   <script src="assets/leaflet/leaflet.js"></script>
   <script src="assets/world-land.js"></script>
   <script src="assets/vendor/liquid-glass.js"></script>
   <script src="assets/vendor/vis-timeline-graph2d.min.js"></script>
   <script src="assets/vendor/anime.umd.min.js"></script>
-  <script src="fx.js?v=13"></script>
-  <script src="timeline.js?v=81"></script>
+  <script src="assets/vendor/canvas-confetti-1.9.3.min.js"></script>
+<script src="fx.js?v=14"></script>
+<script src="globe.js?v=3"></script>
+<script src="timeline.js?v=87"></script>
 </body>
 </html>

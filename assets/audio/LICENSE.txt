@@ -1,0 +1,19 @@
+Audio assets in this folder are from Kenney.nl (https://kenney.nl), licensed
+under Creative Commons Zero v1.0 Universal (CC0) — public domain.
+
+Source packs (downloaded 2026-09-08):
+  - Interface Sounds  (kenney_interface-sounds.zip, 100 files)
+  - UI Audio          (kenney_ui-audio.zip, 50 files)
+  - Impact Sounds     (kenney_impact-sounds.zip, 130 files)
+
+Files were converted from the original OGG Vorbis to MP3 (192 kbps) for
+universal browser support (Safari does not play OGG) and renamed to semantic
+names (ui-click-1, correct-1, wrong-1, ...). The original packs are archived
+in ~/Downloads (kenney_*.zip).
+
+CC0 terms: free to use, modify, and ship in commercial projects. No
+attribution required. The Kenney logo is NOT covered by CC0 and may not be
+used. Full license text: https://creativecommons.org/publicdomain/zero/1.0/
+
+The background music track (alex-morgan-battle-boss-fight-game-music-583276.mp3)
+is a separate asset from Pixabay and is NOT part of the Kenney packs.

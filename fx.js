@@ -281,6 +281,120 @@
     });
   }
 
+  // ---- juice primitives -------------------------------------------
+  // Small compositor-driven feedback effects. All gate on motionOn() and use
+  // native element.animate (transform/opacity are composited) so they stay
+  // time-locked even when the main thread is busy (glass init, rebuilds).
+  // Research-backed: particles = strongest perceived feedback modality;
+  // floating text = most reliable information channel; vignette = peripheral
+  // (felt more than seen); all color-coded per the Juice Audit's colour
+  // language (green = good, red = bad).
+
+  // Scale pop with a springy overshoot (lock-in feel).
+  function pop(el, scale = 1.15, ms = 300) {
+    if (!el || !motionOn()) return;
+    el.animate(
+      [
+        { transform: "scale(1)" },
+        { transform: `scale(${scale})`, offset: 0.45 },
+        { transform: "scale(0.96)", offset: 0.8 },
+        { transform: "scale(1)" },
+      ],
+      { duration: ms, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)" }
+    );
+  }
+
+  // Radial particle burst from an element's center (DOM particles, one-shot).
+  function burst(el, opts = {}) {
+    if (!el || !motionOn()) return;
+    const count = opts.count || 10;
+    const colors = opts.colors || ["#6ea8fe", "#8b7bff", "#4ade80", "#f8b26a"];
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    for (let i = 0; i < count; i++) {
+      const size = 4 + Math.random() * 4;
+      const p = document.createElement("div");
+      p.style.cssText =
+        `position:fixed;left:${cx - size / 2}px;top:${cy - size / 2}px;` +
+        `width:${size}px;height:${size}px;border-radius:50%;` +
+        `background:${colors[i % colors.length]};pointer-events:none;z-index:9997;`;
+      document.body.appendChild(p);
+      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.6;
+      const dist = 40 + Math.random() * 55;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+      const anim = p.animate(
+        [
+          { transform: "translate(0,0) scale(1)", opacity: 1 },
+          { transform: `translate(${dx}px,${dy}px) scale(0.15)`, opacity: 0 },
+        ],
+        { duration: 450 + Math.random() * 250, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }
+      );
+      anim.finished.then(() => p.remove()).catch(() => p.remove());
+    }
+  }
+
+  // Floating score text that rises and fades above an element.
+  function floatText(el, text, opts = {}) {
+    if (!el || !motionOn()) return;
+    const r = el.getBoundingClientRect();
+    const t = document.createElement("div");
+    t.textContent = text;
+    t.style.cssText =
+      `position:fixed;left:${r.left + r.width / 2}px;top:${r.top}px;` +
+      `transform:translate(-50%,-50%);font-weight:800;` +
+      `font-size:${opts.size || 1.15}rem;color:${opts.color || "#4ade80"};` +
+      `text-shadow:0 2px 10px rgba(0,0,0,.55);pointer-events:none;z-index:9997;` +
+      `white-space:nowrap;`;
+    document.body.appendChild(t);
+    const anim = t.animate(
+      [
+        { transform: "translate(-50%,-50%)", opacity: 0 },
+        { transform: "translate(-50%,-120%)", opacity: 1, offset: 0.2 },
+        { transform: "translate(-50%,-170%)", opacity: 0 },
+      ],
+      { duration: 900, easing: "ease-out" }
+    );
+    anim.finished.then(() => t.remove()).catch(() => t.remove());
+  }
+
+  // Full-viewport vignette pulse (peripheral feedback, color-coded).
+  let vignetteEl = null;
+  function vignette(color, ms = 260) {
+    if (!motionOn()) return;
+    if (!vignetteEl) {
+      vignetteEl = document.createElement("div");
+      vignetteEl.style.cssText =
+        "position:fixed;inset:0;pointer-events:none;z-index:9996;opacity:0;";
+      document.body.appendChild(vignetteEl);
+    }
+    vignetteEl.style.boxShadow = `inset 0 0 130px 45px ${color}`;
+    vignetteEl.animate(
+      [
+        { opacity: 0 },
+        { opacity: 1, offset: 0.25 },
+        { opacity: 0 },
+      ],
+      { duration: ms, easing: "ease-out" }
+    );
+  }
+
+  // Graded confetti celebration (canvas-confetti vendored; no-op if missing).
+  // z-index 9997: below the curtain (9998), above content.
+  function confetti(opts = {}) {
+    if (!motionOn() || typeof window.confetti !== "function") return;
+    const c = window.confetti;
+    const z = 9997;
+    if (opts.tier === "heavy") {
+      c({ particleCount: 180, spread: 120, origin: { y: 0.6 }, zIndex: z });
+      setTimeout(() => c({ particleCount: 90, spread: 90, angle: 60, origin: { y: 0.55 }, zIndex: z }), 250);
+      setTimeout(() => c({ particleCount: 90, spread: 90, angle: 120, origin: { y: 0.55 }, zIndex: z }), 420);
+    } else {
+      c({ particleCount: 80, spread: 80, origin: { y: 0.6 }, zIndex: z });
+    }
+  }
+
   // ---- public API ----------------------------------------------------
   window.FX = {
     get enabled() { return getFxOn(); },
@@ -288,5 +402,10 @@
     curtain,
     shake,
     scoreCount,
+    pop,
+    burst,
+    floatText,
+    vignette,
+    confetti,
   };
 })();
