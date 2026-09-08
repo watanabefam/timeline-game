@@ -357,6 +357,12 @@
       aimAt(ev, motionOK() ? 500 : 0);
     },
 
+    // Toggle a visual flash/glow on the dock while a placed card is hovered.
+    flashHover(active) {
+      if (state.failed) return;
+      dock.classList.toggle("globe-dock--hover", active);
+    },
+
     // RESULTS: full recap, expanded. items: [{ev, kind}]
     showResults(items) {
       setMode("results");

@@ -428,10 +428,16 @@
   function show(name) {
     const prev = currentScreen;
     currentScreen = name;
+    if (prev === "game" && name !== "game" && hoverDebounceTimer) {
+      clearTimeout(hoverDebounceTimer);
+      setCardHovered(false);
+    }
     const swap = () => {
       Object.values(screens).forEach((s) => s.classList.add("hidden"));
       screens[name].classList.remove("hidden");
       initGlassOnScreen(); // glass newly-visible controls
+      // Rail bounds need a visible screen (offsetTop is 0 while hidden).
+      if (name === "game") updateRail();
       // Dock globe lives on setup/game/results only (its mode-setting calls
       // handle visibility); leaving those screens hides + pauses it.
       if (window.GlobeDock && name !== "setup" && name !== "game" && name !== "results") {
@@ -832,6 +838,28 @@
     if (!game || game.roundIndex >= game.queue.length) return null;
     return eventById(ui.deck, game.queue[game.roundIndex]);
   }
+
+  // ---- hover state: placed cards ↔ globe + prompt-card flash ----------------
+  let hoverDebounceTimer = null;
+  let isCardHovered = false;
+  function setCardHovered(val) {
+    if (isCardHovered === val) return;
+    isCardHovered = val;
+    updateHoverUI();
+  }
+  function updateHoverUI() {
+    const promptCard = $("prompt-card");
+    if (!promptCard) return;
+    const hasCurrent = !!currentEvent();
+    if (isCardHovered) {
+      promptCard.classList.remove("prompt-card--flash");
+      if (window.GlobeDock) window.GlobeDock.flashHover(true);
+    } else {
+      promptCard.classList.toggle("prompt-card--flash", hasCurrent);
+      if (window.GlobeDock) window.GlobeDock.flashHover(false);
+    }
+  }
+
   function correctIndexRange(ev, timelineEvents) {
     let before = 0, atOrBefore = 0;
     const y = sortYearOf(ev);
@@ -1514,7 +1542,27 @@
     return f === "Full deck" ? ui.deck.name : `${ui.deck.name} · ${f}`;
   }
 
+  // Rail bounds: the timeline line spans exactly the first→last card nodes.
+  // Measured from layout (offsetTop is unaffected by the deal/expand
+  // animations), so it stays correct while cards animate in. The CSS
+  // transition on --rail-top/--rail-bottom animates the extension when a
+  // card is placed above or below the current span.
+  function updateRail() {
+    const tl = $("timeline");
+    if (!tl) return;
+    const placed = tl.querySelectorAll(".tl-event");
+    if (!placed.length) return;
+    const firstY = placed[0].offsetTop + placed[0].offsetHeight / 2;
+    const lastY = placed[placed.length - 1].offsetTop + placed[placed.length - 1].offsetHeight / 2;
+    tl.style.setProperty("--rail-top", firstY.toFixed(1) + "px");
+    tl.style.setProperty("--rail-bottom", (tl.offsetHeight - lastY).toFixed(1) + "px");
+  }
+
   function renderGame() {
+    // Cards are being rebuilt — clear any stale hover state.
+    if (hoverDebounceTimer) clearTimeout(hoverDebounceTimer);
+    setCardHovered(false);
+
     const ev = currentEvent();
     const timelineEvents = game.timeline.map((id) => eventById(ui.deck, id));
 
@@ -1548,6 +1596,9 @@
       tl.classList.add("timeline--dealing");
       setTimeout(() => tl.classList.remove("timeline--dealing"), 1600);
     }
+    // Rail bounds: measurable only when the screen is visible — the first
+    // render runs while hidden, so show()'s swap recomputes on reveal.
+    if (!screens.game.classList.contains("hidden")) updateRail();
 
     // Dock globe: placed markers coloured by outcome, current prompt on top.
     if (window.GlobeDock) {
@@ -1689,6 +1740,7 @@
     );
     const sheet = factSheetHtml(e);
     li.innerHTML =
+      `<span class="tl-node" aria-hidden="true"></span>` +
       `<span class="tl-emoji">${e.emoji || "📌"}</span>` +
       `<div class="tl-info">` +
       `<span class="tl-title">${escapeHtml(e.title)}</span>` +
@@ -1718,10 +1770,18 @@
     // Mouse users reveal the sheet on hover — init the map then too.
     li.addEventListener("mouseenter", () => {
       ensureFactMap(li);
+      if (hoverDebounceTimer) clearTimeout(hoverDebounceTimer);
+      setCardHovered(true);
       if (window.GlobeDock) window.GlobeDock.focus(e); // shift globe to this card
     });
-    li.addEventListener("mouseleave", () => {
-      // Hovering away returns the globe to the current "place this event" spot.
+    li.addEventListener("mouseleave", (ev) => {
+      hoverDebounceTimer = setTimeout(() => setCardHovered(false), 200);
+      // Moving directly to another card (or the gap between cards) keeps the
+      // globe on that card — only reset to the current "place this event" spot
+      // when actually leaving the timeline (prompt, or outside). Otherwise
+      // the globe jerks back to the prompt event and then forward again.
+      const to = ev.relatedTarget;
+      if (to && to.closest && (to.closest(".tl-event") || to.closest(".gap"))) return;
       if (window.GlobeDock) window.GlobeDock.focus(currentEvent());
     });
     return li;

@@ -7,17 +7,30 @@ the cross-platform plan lives in `doc/CROSS_PLATFORM_ROADMAP.md`.
 
 A no-backend timeline-ordering game (place historical events in chronological
 order) built as **plain HTML/CSS/JS with no build step**. Decks are pluggable
-data files. Runs from any static server **and from `file://`**.
+data files. Deployed as a static site served over **HTTPS** (the historical
+`file://` requirement was dropped 2026-09 — the final product is hosted, so
+secure-context-only APIs — service workers, notifications — are available).
 
 ## Hard rules
 
-1. **No build step, no framework, no npm runtime dependencies.** The game must
-   keep working when opened via `file://`. Everything first-party is a classic
-   (non-module) script loaded by `index.html`.
+1. **No build step, no framework, no npm runtime dependencies.** The game is
+   served over HTTPS; it does **not** need to work from `file://` (dropped
+   2026-09). Everything first-party is a classic (non-module) script loaded by
+   `index.html`. Vendored third-party libs may ship an **ESM build** loaded via
+   `<script type="module">` (allowed since the hosting change) — but never a
+   bundler-required npm package.
+   **Scope:** rules 1–4 govern the web game core (`index.html`, `timeline.js`,
+   `fx.js`, `events-data.js`, `decks/`, `assets/`). The cross-platform
+   packaging layer planned in `doc/CROSS_PLATFORM_ROADMAP.md` (Capacitor/Tauri
+   shells, staging scripts, npm dev tooling) is exempt from the no-build rule —
+   but it must **wrap the game core unmodified**, not rewrite it. Capacitor and
+   Tauri do **not** require a bundler; point `webDir`/`frontendDist` at a
+   staging directory produced by a copy script (see roadmap §5.1).
 2. **Never edit anything under `assets/`** — it is vendored third-party code.
    To add a library: download the release bundle into `assets/vendor/`, keep
    its license header, pin the version (record it in the file header comment),
-   and load it with a `<script>` tag.
+   and load it with a `<script>` tag (or `<script type="module">` for ESM
+   builds).
 3. **Cache-busting:** first-party scripts load with `?v=N`
    (`fx.js?v=11`, `timeline.js?v=81`). Bump `N` whenever you edit that file,
    or returning players get stale code.
@@ -25,6 +38,9 @@ data files. Runs from any static server **and from `file://`**.
    `events-data.js` → Leaflet → `world-land.js` → `liquid-glass.js` →
    `vis-timeline` → `anime.umd.min.js` → `fx.js` → `timeline.js`.
    `fx.js` must load before `timeline.js` (it defines `window.FX`).
+   `<script type="module">` tags are deferred by spec — they run after all
+   classic scripts, so a module can rely on `window.FX`/`window.DECKS` being
+   present, but classic scripts can never rely on a module.
 5. **Run the content gate after touching deck data:**
    `npm run validate` (Node ≥18). It enforces the fact-quality rule across all
    decks in `decks/`. The enrichment scripts (`npm run enrich`) also run it.
@@ -37,7 +53,7 @@ data files. Runs from any static server **and from `file://`**.
 | `timeline.js` | The entire game: state, screens, placement logic, vis-timeline rendering, Leaflet maps, glass init, settings |
 | `fx.js` | Interface effects layer → `window.FX` (see below) |
 | `events-data.js` | Deck loader + `window.DECKS` registry |
-| `decks/*.js` | Deck data files (script-tag globals, not modules — `file://` safe) |
+| `decks/*.js` | Deck data files (script-tag globals, not modules) |
 | `scripts/*.mjs` | Node content tooling only (never loaded by the game) |
 
 ## FX layer (`fx.js` → `window.FX`)
@@ -87,8 +103,9 @@ swaps instantly, `?v=` bumped on edited files.
 ## Conventions
 
 - **Style:** the codebase uses IIFE + `"use strict"`, `const`/`let`, template
-  literals, `$("id")` helper for DOM lookups. Match it; don't introduce
-  modules, JSX, or TypeScript.
+  literals, `$("id")` helper for DOM lookups. Match it. First-party code stays
+  classic-script IIFE — no JSX, no TypeScript. ESM is allowed only for
+  vendored third-party libs (rule 1).
 - **State:** game state lives in module-level objects inside the
   `timeline.js` IIFE; persistence via `localStorage` with `try/catch` guards
   (keys: `timeline.users.*`, `timeline.fx`, `timeline.mapMode`, …).

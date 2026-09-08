@@ -221,10 +221,18 @@ html, body {
 }
 .prompt-emoji { font-size: 1.5rem; }
 .prompt-title { font-size: 1.05rem; font-weight: 600; }
+/* Idle flash: prompt card pulses when no placed card is hovered. */
+.prompt-card--flash {
+  animation: prompt-pulse 1.8s ease-in-out infinite;
+}
+@keyframes prompt-pulse {
+  0%, 100% { border-color: var(--border); box-shadow: none; }
+  50%      { border-color: var(--accent); box-shadow: 0 0 14px rgba(110, 168, 254, 0.35); }
+}
 
 /* ---------- TIMELINE ---------- */
 .timeline-wrap { margin: 4px 0; }
-.timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.timeline { list-style: none; margin: 0; padding: 0 0 0 28px; display: flex; flex-direction: column; gap: 0; }
 .tl-event {
   display: flex; align-items: center; gap: 12px;
   background: var(--card); border: 1px solid var(--border);
@@ -974,6 +982,15 @@ html, body {
 }
 .globe-dock-close:hover { background: rgba(255,255,255,0.15); }
 
+/* Hover flash: subtle glow on the globe dock while a placed card is hovered. */
+#globe-dock.globe-dock--hover {
+  animation: globe-glow 0.7s ease-in-out infinite alternate;
+}
+@keyframes globe-glow {
+  0%   { box-shadow: 0 -2px 18px rgba(110, 168, 254, 0.12); }
+  100% { box-shadow: 0 -2px 28px rgba(110, 168, 254, 0.38); }
+}
+
 /* Reserve space so dock never covers setup actions / feedback / results CTA */
 body.dock-active #setup,
 body.dock-active #game,
@@ -983,6 +1000,11 @@ body.dock-active #results { padding-bottom: 116px; }
    auto-rotate, ring pulse and camera tweens). */
 @media (prefers-reduced-motion: reduce) {
   #globe-dock, #globe-dock-canvas { transition: none; }
+  .prompt-card--flash,
+  #globe-dock.globe-dock--hover { animation: none; }
+  #globe-dock.globe-dock--hover {
+    box-shadow: 0 -2px 22px rgba(110, 168, 254, 0.25);
+  }
 }
 
 /* ================= JUICE ================= */
@@ -997,15 +1019,48 @@ body.dock-active #results { padding-bottom: 116px; }
 .btn:hover { transform: translateY(-1px); }
 .btn:active, .icon-btn:active, .mode-btn:active { transform: scale(0.97); }
 
-/* Timeline rail: the connecting line down the left edge (aligned with the
-   emoji column). Draws in on the first deal, pulses on each placement. */
+/* Timeline rail: the main vertical line in the LEFT GUTTER, outside the
+   cards (28px padding on .timeline makes room). Each card connects to it
+   with a horizontal stub (.tl-event::before) and a circle node at the
+   junction (.tl-node). The rail spans exactly the first→last card nodes
+   (JS sets --rail-top/--rail-bottom) and extends with a transition when a
+   card is placed above or below. Draws in on the first deal, pulses on
+   placement. */
 .timeline { position: relative; }
 .timeline::before {
-  content: ""; position: absolute; left: 27px; top: 10px; bottom: 10px;
+  content: ""; position: absolute; left: 7px;
+  top: var(--rail-top, 10px); bottom: var(--rail-bottom, 10px);
   width: 2px; border-radius: 2px; pointer-events: none;
-  background: linear-gradient(180deg, rgba(110, 168, 254, 0.12), rgba(110, 168, 254, 0.38));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.55));
   transform-origin: top center;
+  transition: top 0.35s ease, bottom 0.35s ease;
 }
+/* Horizontal connector: from the rail's right edge to the card's left edge.
+   Rail spans x=7..9 from the ol border; the card starts at x=28, so the
+   stub runs x=-19..0 relative to the card. */
+.tl-event::before {
+  content: ""; position: absolute; left: -19px; top: 50%;
+  width: 19px; height: 2px;
+  background: rgba(255, 255, 255, 0.45);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+/* Node: circle centered on the rail at each card's junction. White by
+   default; placed cards keep the state colour language (green = clean,
+   amber = slipped, red = 3+). */
+.tl-node {
+  position: absolute; left: -20px; top: 50%;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.tl-event.placed-clean .tl-node { background: var(--good); box-shadow: 0 0 6px rgba(74, 222, 128, 0.5); }
+.tl-event.placed-slipped .tl-node { background: var(--warn); box-shadow: 0 0 6px rgba(210, 153, 34, 0.5); }
+.tl-event.slip-2 .tl-node { background: #f0883e; box-shadow: 0 0 6px rgba(240, 136, 62, 0.5); }
+.tl-event.slip-3 .tl-node { background: var(--bad); box-shadow: 0 0 6px rgba(248, 81, 73, 0.5); }
+.tl-event.anchor .tl-node { background: rgba(255, 255, 255, 0.6); box-shadow: none; }
 .timeline--dealing::before {
   animation: rail-draw 0.5s ease-out both;
   animation-delay: 100ms;
@@ -1013,9 +1068,9 @@ body.dock-active #results { padding-bottom: 116px; }
 @keyframes rail-draw { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 .timeline--pulse::before { animation: rail-pulse 0.45s ease-out; }
 @keyframes rail-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(110, 168, 254, 0); }
-  40%  { box-shadow: 0 0 14px 3px rgba(110, 168, 254, 0.55); }
-  100% { box-shadow: 0 0 0 0 rgba(110, 168, 254, 0); }
+  0%   { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+  40%  { box-shadow: 0 0 14px 3px rgba(255, 255, 255, 0.55); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
 }
 
 /* First-deal stagger: cards cascade in as the curtain reveals. The game

@@ -4,7 +4,8 @@
 > subscription-based, cross-platform application (iOS, Android, macOS, Windows, Linux)
 > with AI-powered features, in-app purchases, and institutional licensing.
 >
-> **Last updated:** 2026-09-06 | **Version:** 2.0 (research-backed)
+> **Last updated:** 2026-09-09 | **Version:** 2.1 (no-build correction —
+> Capacitor/Tauri wrapping requires no bundler; see Decision Log)
 
 ---
 
@@ -50,7 +51,7 @@
 ### Key Strengths for Porting
 
 - **No framework lock-in** — vanilla JS is easy to wrap
-- **No build step** — simpler to integrate with native shells (but we'll add Vite for optimization)
+- **No build step** — simpler to integrate with native shells; no bundler required (see §5.1)
 - **Already responsive** — mobile-friendly CSS exists
 - **Offline-capable** — works without network (except satellite maps)
 - **Self-contained** — single HTML entry point
@@ -83,7 +84,7 @@
 │       └──────────────┴──────────────┴──────────────┘             │
 │                          │                                       │
 │              Shared Web Codebase (HTML/CSS/JS)                   │
-│              Built with Vite (tree-shaking, minification)        │
+│              Wrapped as-is (no bundler — see §5.1)               │
 │                          │                                       │
 └──────────────────────────┼───────────────────────────────────────┘
                            │
@@ -222,14 +223,19 @@ After stream completes:
 
 | Tool | Purpose | Why |
 |---|---|---|
-| **Vite** | Dev server + bundler | Fast HMR, tree-shaking, minification, code splitting |
-| **TypeScript** (optional) | Type safety | Catch errors at build time, better IDE support |
+| **Staging script** (`scripts/build-app.mjs`) | App-only copy of the game | Capacitor/Tauri require a web-assets directory, **not** a bundler; the script excludes web-only/dev-only files — including the service worker, which is mandatory to exclude (see §5.1) |
+| **esbuild (optional, per-file)** | Minification | One-shot `--minify` per file, no `--bundle`, no module graph; vendored libs are already minified |
+| **TypeScript** (server-side only) | Type safety | Edge Functions are Deno/TS; the client stays classic-script JS |
 
-**Critical:** Add Vite even though the current app has no build step. Benefits:
-- **Bundle size reduction**: Tree-shake unused code, target 170KB gzipped (critical threshold for WebView performance)
-- **Code splitting**: Load premium decks on-demand, not upfront
-- **Minification**: Smaller bundles = faster load on mobile
-- **Dev server**: Hot reload during development
+> **Size-budget note (corrected 2026-09-09):** the earlier "170KB gzipped
+> critical threshold for WebView performance" was a 2018 *network-transfer*
+> budget (Osmani 2018 / Russell 2017), not a WebView threshold. In
+> Capacitor/Tauri, assets load from disk via native scheme handlers — transfer
+> size is irrelevant; parse cost for this app's payload is ~100–500ms once at
+> startup on mid-range hardware. Current web budgets (Russell 2024) allow
+> 365–650KB compressed JS; the real-world median page ships ~646KB. No bundler
+> is justified by size for this app, and tree-shaking cannot apply to
+> classic-script/UMD globals anyway.
 
 ### AI / LLM
 
@@ -669,47 +675,52 @@ $$;
 
 **Goal:** Package the existing web app for iOS, Android, and Desktop.
 
-### 5.1 Build Tooling Setup (Vite)
+### 5.1 App-Only Staging Directory (No Bundler Required)
 
-**Add Vite first** — this is required before Capacitor wrapping.
+**No bundler is needed.** Capacitor's official requirements are exactly three:
+a `package.json`, a web-assets directory, and an `index.html` (with a `<head>`)
+at its root — `webDir` can point at plain static files (verified against the
+official docs; Ionic's own vanilla starter uses Vite only as a dev server with
+`minify: false`). Tauri likewise embeds `frontendDist` as-is; its official
+vanilla template points `frontendDist` directly at the source directory with
+no dev server and no build commands.
+
+Instead of a bundler, use a staging script that copies the game into an
+app-only directory:
 
 ```bash
-# Install Vite
-npm install -D vite
-
-# Create vite.config.js
-cat > vite.config.js << 'EOF'
-import { defineConfig } from 'vite';
-import { resolve } from 'path';
-
-export default defineConfig({
-  base: './',  // CRITICAL: relative paths for Capacitor/Tauri
-  build: {
-    outDir: 'dist',
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-      },
-    },
-    // Target 170KB gzipped (critical threshold for WebView performance)
-    reportCompressedSize: true,
-    chunkSizeWarningLimit: 200,
-  },
-  server: {
-    port: 8000,
-  },
-});
-EOF
-
-# Update package.json scripts
-# "dev": "vite",
-# "build": "vite build",
-# "preview": "vite preview"
+# scripts/build-app.mjs — run before every `npx cap sync` / `tauri build`
+# Copies the game into app/ EXCLUDING web-only and dev-only files:
+#   sw.js + SW registration script, robots.txt, sitemap.xml, llms.txt,
+#   cookie-consent, doc/, scripts/, node_modules/
+node scripts/build-app.mjs
 ```
 
-**Critical rule:** Never ship your website inside the app. Build a separate app-only bundle that filters out site-only assets (robots.txt, sitemap.xml, service workers, cookie consent scripts, llms.txt).
+Then point the shells at the staging directory:
+- Capacitor: `webDir: 'app'` in `capacitor.config.ts`
+- Tauri: `"build": { "frontendDist": "../app" }` in `src-tauri/tauri.conf.json`
+
+**Optional minification (later, if ever wanted):** add a per-file
+`esbuild --minify` step (no `--bundle`, no module graph) inside the staging
+script. The vendored libs are already minified and tree-shaking cannot apply
+to classic-script/UMD globals, so a full bundler buys almost nothing here.
+
+**Critical rule:** Never ship your website inside the app. The staging script
+must filter out site-only assets (robots.txt, sitemap.xml, llms.txt, cookie
+consent) — and **the service worker is mandatory to exclude**: iOS WKWebView
+cannot register service workers on the `capacitor://` scheme, and a stale
+registered SW on Android serves cached old builds over new ones. Guard SW
+registration in first-party code with a shell check (e.g. skip when
+`window.__TAURI__` exists) so the same file works on web and in shells.
 
 ### 5.2 Capacitor Setup (iOS + Android)
+
+> **Android alternative (added 2026-09-09):** for a PWA this solid, a **TWA
+> via Bubblewrap** is Google's official, near-zero-maintenance Android path —
+> instant updates via web deploy, no per-release review, ~1MB shell. iOS has
+> no TWA equivalent, so Capacitor is required there regardless. Capacitor for
+> both stores remains valid if you want one wrapper tech and native plugins
+> (haptics, push, splash).
 
 ```bash
 # Initialize Capacitor (v8.5+)
@@ -732,8 +743,8 @@ npm install @capacitor/device @capacitor/network
 npm install -D @capacitor/assets
 npx capacitor-assets generate --iconBaseUrl "assets/images" --splashBackgroundColor "#1a1a2e"
 
-# Build and sync
-npm run build
+# Stage app-only assets and sync
+node scripts/build-app.mjs
 npx cap sync
 
 # Open native IDEs
@@ -750,12 +761,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.yourdomain.tlmg',
   appName: 'Timeline Game',
-  webDir: 'dist',
-
-  // REQUIRED for Android 12+ — fixes auth/cookies/localStorage
-  android: {
-    scheme: 'https',
-  },
+  webDir: 'app',
 
   // iOS-specific
   ios: {
@@ -786,6 +792,10 @@ const config: CapacitorConfig = {
 
   // SECURITY: limit navigation to known domains
   server: {
+    // https scheme is the default since Capacitor 6; set explicitly for
+    // clarity — fixes auth/cookies/localStorage on Android 12+. NOTE: the
+    // correct key is server.androidScheme (NOT android.scheme).
+    androidScheme: 'https',
     allowNavigation: ['https://yourdomain.com'],
     // REMOVE server.url for production builds — instant App Store rejection
   },
@@ -927,11 +937,12 @@ cargo add tauri-plugin-shell tauri-plugin-clipboard-manager tauri-plugin-dialog
   "version": "1.0.0",
   "identifier": "com.yourdomain.tlmg",
   "build": {
-    "frontendDist": "../dist",
+    "frontendDist": "../app",
     "devUrl": "http://localhost:8000",
     "removeUnusedCommands": true
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "Timeline Game",
@@ -1068,8 +1079,9 @@ timeline-game/
 ├── styles.css                    # Styles
 ├── timeline.js                   # Game engine
 ├── events-data.js                # Free deck content
-├── vite.config.js                # NEW: Vite build config
-├── dist/                         # NEW: Vite build output
+├── scripts/
+│   └── build-app.mjs              # NEW: app-only staging script (no bundler)
+├── app/                           # NEW: staging dir → Capacitor webDir / Tauri frontendDist
 ├── src/
 │   ├── auth.js                   # NEW: Supabase auth wrapper
 │   ├── cloud-sync.js             # NEW: profile sync
@@ -1123,6 +1135,15 @@ timeline-game/
 | **Email + Password** | Fallback for all platforms | All |
 
 ### 6.2 Client-Side Auth Integration
+
+> **Consumption note (no-build, added 2026-09-09):** supabase-js is vendored
+> as a UMD build (pin an exact version per AGENTS.md rule 2; ~56KB gzipped)
+> and lazy-loaded via script injection on first sign-in. The global is
+> `window.supabase` — so `import { createClient } from '@supabase/supabase-js'`
+> becomes `const supabase = window.supabase.createClient(url, key)`. Code
+> samples below show the npm-import form for brevity; adapt to the global.
+> Capacitor CORS note: allowlist both `capacitor://localhost` (iOS) and
+> `http://localhost` (Android) origins on the Supabase side.
 
 ```javascript
 // src/auth.js
@@ -2206,7 +2227,7 @@ Layer 7: Server-side features (AI, leaderboards) can't be replicated
 | Phase | Duration | Dependencies |
 |---|---|---|
 | Phase 1: Server infrastructure | 2-3 weeks | Supabase setup, schema, Edge Functions |
-| Phase 2: Cross-platform wrapping | 1-2 weeks | Vite setup, Capacitor + Tauri |
+| Phase 2: Cross-platform wrapping | 1-2 weeks | Staging script, Capacitor + Tauri |
 | Phase 3: Auth & cloud sync | 2 weeks | Supabase Auth integration |
 | Phase 4: Monetization system | 2-3 weeks | RevenueCat + App Store setup |
 | Phase 5: AI generation | 1-2 weeks | Edge Function + client integration |
@@ -2373,6 +2394,7 @@ Provide 30 days notice before sub-processor changes. Update ToS/DPA every time y
 | 2026-09-06 | $9.99/mo pricing | RevenueCat 2026 data: education apps charge highest; $9.99 is sweet spot |
 | 2026-09-06 | Hard paywall + free trial | Data: 10.7% conversion vs. 2.1% freemium (5x better) |
 | 2026-09-06 | Vite build tooling | Required for tree-shaking, minification, code splitting; target 170KB gzipped |
+| 2026-09-09 | **Supersedes the Vite decision:** no bundler for wrapping | Research-verified: Capacitor/Tauri officially accept raw static dirs (both ship vanilla templates); the 170KB figure was a 2018 web-transfer budget, irrelevant for locally-loaded WebView assets; vendored libs are already minified; tree-shaking is inapplicable to UMD/classic scripts. Vite demoted to optional per-file esbuild minification |
 | 2026-09-06 | Fat functions pattern | Supabase recommendation; avoids function-to-function call rate limits |
 | 2026-09-06 | (select auth.uid()) in RLS | Performance: 178,000ms → 12ms improvement per official benchmark |
 | 2026-09-06 | SSE streaming for AI | Industry standard; works everywhere; progressive rendering |
@@ -2380,5 +2402,5 @@ Provide 30 days notice before sub-processor changes. Update ToS/DPA every time y
 
 ---
 
-*Last updated: 2026-09-06*
-*Version: 2.0 — Research-backed, best-practice aligned*
+*Last updated: 2026-09-09*
+*Version: 2.1 — Research-backed, best-practice aligned; no-build wrapping verified against official Capacitor/Tauri docs*
