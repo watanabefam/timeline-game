@@ -1,7 +1,8 @@
 # AGENTS.md — timeline-game
 
 Agent-facing conventions for this repo. Player/content docs live in `README.md`;
-the cross-platform plan lives in `doc/CROSS_PLATFORM_ROADMAP.md`.
+the cross-platform plan lives in `doc/CROSS_PLATFORM_ROADMAP.md`; the ratified
+gamification-layer spec lives in `doc/GAMIFICATION_BRIEF.md`.
 
 ## What this is
 
@@ -10,6 +11,20 @@ order) built as **plain HTML/CSS/JS with no build step**. Decks are pluggable
 data files. Deployed as a static site served over **HTTPS** (the historical
 `file://` requirement was dropped 2026-09 — the final product is hosted, so
 secure-context-only APIs — service workers, notifications — are available).
+
+**Product direction (2026-09):** this is an **educational** game — primary
+audience homeschooling families, but accessible to everyone. Treat learning
+features accordingly: Focus practice is evolving from "replay missed events"
+into a mastery system. When building it, persist **raw review outcomes**
+`(event_id, profile_id, timestamp, outcome)` as an append-only log and derive
+scheduler state from it, behind a `rate(outcome) → nextDue` interface —
+target algorithm is **FSRS** ([ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs),
+MIT, vendored UMD); SM-2 is an acceptable starting point behind the same
+interface. Never make features educational-audience-only — everything stays
+playable by casual users. When building the motivational surfaces around the
+mastery core (streak/calendar, leveling, achievements, feedback copy), follow
+the ratified design in `doc/GAMIFICATION_BRIEF.md` (decisions D1–D8, amendments
+A1–A6, age-band gating, derived-state rule).
 
 ## Hard rules
 
@@ -55,6 +70,7 @@ secure-context-only APIs — service workers, notifications — are available).
 | `events-data.js` | Deck loader + `window.DECKS` registry |
 | `decks/*.js` | Deck data files (script-tag globals, not modules) |
 | `scripts/*.mjs` | Node content tooling only (never loaded by the game) |
+| `doc/GAMIFICATION_BRIEF.md` | Ratified spec for the gamification layer over the mastery review log (streaks, leveling, achievements, feedback copy) |
 
 ## FX layer (`fx.js` → `window.FX`)
 

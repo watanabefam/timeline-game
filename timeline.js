@@ -210,6 +210,7 @@
   const SOUND_KEY = "timeline.sound.v1";
   const MUSIC_ON_KEY = "timeline.music.on.v1";
   const MUSIC_VOL_KEY = "timeline.music.vol.v1";
+  const GAME_MUSIC_VOL_KEY = "timeline.game-music.vol.v1";
 
   // ---- background music ------------------------------------------
   // Autoplay policy (MDN/Chrome): audible playback is blocked until the user
@@ -225,9 +226,19 @@
       const v = parseFloat(localStorage.getItem(MUSIC_VOL_KEY));
       if (!isNaN(v)) return Math.min(1, Math.max(0, v));
     } catch (_) {}
-    return 0.35;
+    return 1;
   }
   function setMusicVol(v) { try { localStorage.setItem(MUSIC_VOL_KEY, String(v)); } catch (_) {} }
+  // Game-music volume is stored separately from the main music volume and
+  // defaults to 50% so narration stays audible.
+  function getGameMusicVol() {
+    try {
+      const v = parseFloat(localStorage.getItem(GAME_MUSIC_VOL_KEY));
+      if (!isNaN(v)) return Math.min(1, Math.max(0, v));
+    } catch (_) {}
+    return 0.5;
+  }
+  function setGameMusicVol(v) { try { localStorage.setItem(GAME_MUSIC_VOL_KEY, String(v)); } catch (_) {} }
   function ensureBgMusic() {
     if (bgMusic) return bgMusic;
     bgMusic = new Audio("assets/audio/alex-morgan-battle-boss-fight-game-music-583276.mp3");
@@ -249,8 +260,112 @@
     });
     return bgMusic;
   }
+  // Game-mode music: a separate track that plays ONLY on the game screen.
+  // The main bgMusic pauses while it plays and resumes when the player leaves
+  // the game screen. Source: https://pixabay.com/music/orchestral-battle-cinematic-heroic-orchestra-586988/
+  // Game-music volume is user-controllable via its own slider, defaulting to
+  // 50% so narration stays audible (see getGameMusicVol / setGameMusicVol).
+  // Set true on each NEW game so the game track starts from the top; cleared
+  // once consumed. Mid-game screen hops (game -> elsewhere -> game) resume the
+  // same loop instead of replaying the intro.
+  let gameMusicRestart = false;
+  let gameMusic = null;
+  function ensureGameMusic() {
+    if (gameMusic) return gameMusic;
+    gameMusic = new Audio("assets/audio/music-game.mp3");
+    gameMusic.loop = true;
+    gameMusic.preload = "auto";
+    gameMusic.id = "game-music";
+    gameMusic.className = "bg-music"; // hidden via CSS
+    gameMusic.volume = getGameMusicVol();
+    document.body.appendChild(gameMusic);
+    gameMusic.addEventListener("play", syncMusicControls);
+    gameMusic.addEventListener("pause", syncMusicControls);
+    gameMusic.addEventListener("ended", () => {
+      if (currentScreen === "game" && getMusicOn() && gameMusic) {
+        gameMusic.currentTime = 0;
+        gameMusic.play().catch(() => {});
+      }
+    });
+    return gameMusic;
+  }
+  // --- crossfade between tracks (Civ "folds over the next" / anti-pop) -----
+  const MUSIC_FADE_MS = 150;
+  let musicFadeRaf = null;
+  let musicSwitchToken = 0;
+  function fadeAudio(el, to, ms, done) {
+    if (!el) { if (done) done(); return; }
+    if (musicFadeRaf) { cancelAnimationFrame(musicFadeRaf); musicFadeRaf = null; }
+    const from = el.volume;
+    if (from === to) { el.volume = to; if (done) done(); return; }
+    const t0 = performance.now();
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / ms);
+      // easeOutCubic so the tail of the fade is quick and clean
+      const v = from + (to - from) * (1 - Math.pow(1 - p, 3));
+      el.volume = Math.max(0, Math.min(1, v));
+      if (p < 1) {
+        musicFadeRaf = requestAnimationFrame(step);
+      } else {
+        el.volume = to;
+        musicFadeRaf = null;
+        if (done) done();
+      }
+    };
+    musicFadeRaf = requestAnimationFrame(step);
+  }
+  // Route music to the correct track for the current screen: game music on the
+  // game screen, the main bgMusic everywhere else. The current track crossfades
+  // out before the incoming one starts, so there is no pop on the switch.
+  function syncGameMusic() {
+    const inGame = currentScreen === "game";
+    const on = getMusicOn();
+    const token = ++musicSwitchToken; // invalidates any in-flight fade from a prior switch
+    if (musicFadeRaf) { cancelAnimationFrame(musicFadeRaf); musicFadeRaf = null; }
+
+    if (inGame) {
+      const outgoing = bgMusic && !bgMusic.paused ? bgMusic : null;
+      const startGameTrack = () => {
+        if (token !== musicSwitchToken) return; // superseded by a newer switch
+        if (on) {
+          const gm = ensureGameMusic();
+          if (gameMusicRestart) { gm.currentTime = 0; gameMusicRestart = false; }
+          gm.volume = 0;
+          gm.play().then(() => {
+            if (token !== musicSwitchToken) return;
+            fadeAudio(gm, getGameMusicVol(), MUSIC_FADE_MS);
+          }).catch(() => {});
+        } else if (gameMusic) {
+          gameMusic.pause();
+        }
+      };
+      if (outgoing) fadeAudio(outgoing, 0, MUSIC_FADE_MS, () => { outgoing.pause(); startGameTrack(); });
+      else startGameTrack();
+    } else {
+      const outgoing = gameMusic && !gameMusic.paused ? gameMusic : null;
+      const startMain = () => {
+        if (token !== musicSwitchToken) return;
+        if (on) {
+          const m = ensureBgMusic();
+          if (m.paused) {
+            m.volume = 0;
+            m.play().then(() => {
+              if (token !== musicSwitchToken) return;
+              fadeAudio(m, getMusicVol(), MUSIC_FADE_MS);
+            }).catch(() => {});
+          }
+        } else if (bgMusic && !bgMusic.paused) {
+          bgMusic.pause(); // toggle off outside game: silence the main track
+        }
+      };
+      if (outgoing) fadeAudio(outgoing, 0, MUSIC_FADE_MS, () => { outgoing.pause(); startMain(); });
+      else startMain();
+    }
+    syncMusicControls();
+  }
   function syncMusicControls() {
-    const playing = !!(bgMusic && !bgMusic.paused);
+    const active = currentScreen === "game" ? gameMusic : bgMusic;
+    const playing = !!(active && !active.paused);
     document.querySelectorAll(".music-btn").forEach((b) => {
       b.textContent = playing ? "♫" : "♪";
       b.classList.toggle("off", !playing);
@@ -432,9 +547,13 @@
       clearTimeout(hoverDebounceTimer);
       setCardHovered(false);
     }
+    if (prev === "game" && name !== "game" && window.Narrator) {
+      window.Narrator.stop(); // silence narration off the game screen
+    }
     const swap = () => {
       Object.values(screens).forEach((s) => s.classList.add("hidden"));
       screens[name].classList.remove("hidden");
+      syncGameMusic(); // game screen swaps to game music; elsewhere resumes main
       initGlassOnScreen(); // glass newly-visible controls
       // Rail bounds need a visible screen (offsetTop is 0 while hidden).
       if (name === "game") updateRail();
@@ -853,10 +972,8 @@
     const hasCurrent = !!currentEvent();
     if (isCardHovered) {
       promptCard.classList.remove("prompt-card--flash");
-      if (window.GlobeDock) window.GlobeDock.flashHover(true);
     } else {
       promptCard.classList.toggle("prompt-card--flash", hasCurrent);
-      if (window.GlobeDock) window.GlobeDock.flashHover(false);
     }
   }
 
@@ -1425,6 +1542,9 @@
 
   function startGame(forcedPool) {
     const deck = ui.deck;
+    // Unlock WebAudio inside this click gesture so narration is audible even
+    // on a fresh session (autoplay policy suspends lazily-created contexts).
+    if (window.Narrator) window.Narrator.unlock();
     const dateKey = utcDateKey(new Date());
     // Always recompute from the live selections — never trust a cached subset.
     let subset = filterSubset(deck, ui.selections);
@@ -1481,6 +1601,7 @@
     $("score-max").textContent = maxScore();
     $("result-score-max").textContent = maxScore();
     renderGame();
+    gameMusicRestart = true; // fresh game -> game music starts from the top
     show("game");
   }
 
@@ -1544,18 +1665,30 @@
 
   // Rail bounds: the timeline line spans exactly the first→last card nodes.
   // Measured from layout (offsetTop is unaffected by the deal/expand
-  // animations), so it stays correct while cards animate in. The CSS
-  // transition on --rail-top/--rail-bottom animates the extension when a
-  // card is placed above or below the current span.
-  function updateRail() {
+  // animations), so it stays correct while cards animate in. When a card is
+  // placed above or below the current span, the extension is animated by the
+  // FX layer (anime.js); otherwise the bounds are set directly and the CSS
+  // transition covers non-placement updates (screen entry, resize).
+  function updateRail(animate) {
     const tl = $("timeline");
     if (!tl) return;
     const placed = tl.querySelectorAll(".tl-event");
     if (!placed.length) return;
     const firstY = placed[0].offsetTop + placed[0].offsetHeight / 2;
     const lastY = placed[placed.length - 1].offsetTop + placed[placed.length - 1].offsetHeight / 2;
-    tl.style.setProperty("--rail-top", firstY.toFixed(1) + "px");
-    tl.style.setProperty("--rail-bottom", (tl.offsetHeight - lastY).toFixed(1) + "px");
+    const newTop = firstY.toFixed(1) + "px";
+    const newBottom = (tl.offsetHeight - lastY).toFixed(1) + "px";
+    const oldTop = tl.style.getPropertyValue("--rail-top");
+    const oldBottom = tl.style.getPropertyValue("--rail-bottom");
+    if (animate && window.FX && window.FX.railExtend && oldTop && oldBottom &&
+        (oldTop !== newTop || oldBottom !== newBottom)) {
+      FX.railExtend(tl,
+        { top: parseFloat(oldTop), bottom: parseFloat(oldBottom) },
+        { top: parseFloat(newTop), bottom: parseFloat(newBottom) });
+    } else {
+      tl.style.setProperty("--rail-top", newTop);
+      tl.style.setProperty("--rail-bottom", newBottom);
+    }
   }
 
   function renderGame() {
@@ -1569,6 +1702,15 @@
     if (ev) {
       $("prompt-emoji").textContent = ev.emoji || "❓";
       $("prompt-title").textContent = ev.title;
+      if (window.Narrator) {
+        window.Narrator.speakEvent(ev);
+        // Keep the cache warm: prefetch the remaining queue so the next card
+        // load plays instantly from IndexedDB (low priority, no playback).
+        const upcoming = game.queue
+          .slice(game.roundIndex + 1)
+          .map((id) => eventById(ui.deck, id));
+        window.Narrator.prefetch(upcoming);
+      }
     } else {
       $("prompt-emoji").textContent = "✅";
       $("prompt-title").textContent = "Timeline complete!";
@@ -1598,7 +1740,9 @@
     }
     // Rail bounds: measurable only when the screen is visible — the first
     // render runs while hidden, so show()'s swap recomputes on reveal.
-    if (!screens.game.classList.contains("hidden")) updateRail();
+    // Animate the extension only when a card was just placed (roundIndex
+    // advanced); the first deal draws in via the CSS rail-draw animation.
+    if (!screens.game.classList.contains("hidden")) updateRail(game.roundIndex > 0);
 
     // Dock globe: placed markers coloured by outcome, current prompt on top.
     if (window.GlobeDock) {
@@ -1661,56 +1805,106 @@
     }).addTo(map);
   }
 
+  // Leaflet captures its container's size at init, and adding layers to a map
+  // whose container is still hidden (0×0) throws inside Leaflet's clip-path
+  // math. The curtain defers the screen swap to cover-end, so maps created
+  // while the destination screen is display:none end up broken or cropped
+  // until a window resize re-measures them. Defer the whole init until the
+  // container is actually laid out. (Check clientWidth/Height, not offsetParent
+  // — offsetParent is null for the position:fixed hover card.)
+  function whenRendered(el, fn, tries = 300) {
+    if (el.clientWidth > 0 && el.clientHeight > 0) { fn(); return; }
+    if (tries <= 0) return;
+    requestAnimationFrame(() => whenRendered(el, fn, tries - 1));
+  }
+
   function initFactMap(container) {
-    if (!window.L || !window.WORLD_LAND || container._map) return;
-    try {
-      const lat = parseFloat(container.dataset.lat);
-      const lng = parseFloat(container.dataset.lng);
-      const area = container.dataset.area || "";
-      const opts = {
-        zoomControl: false, attributionControl: false,
-        dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
-        boxZoom: false, keyboard: false, touchZoom: false,
-        minZoom: 1, maxZoom: 6,
-      };
-      const map = L.map(container, opts);
-      container._map = map;
-      container.style.background = "#0c1422";
-      const wantSat = mapMode !== "plain" && navigator.onLine !== false;
-      if (wantSat) {
-        const sat = L.tileLayer(
-          "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/2018-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg",
-          { maxZoom: 8, attribution: "" }
-        ).addTo(map);
-        sat.on("tileerror", () => { if (!container._satFallback) { container._satFallback = true; addVectorLand(map); } });
-        L.geoJSON(window.WORLD_LAND, {
-          style: { fill: false, fillOpacity: 0, color: "#9fb3d0", weight: 0.5, opacity: 0.7 },
-          interactive: false,
-        }).addTo(map);
-      } else {
-        addVectorLand(map);
+    if (!window.L || !window.WORLD_LAND || container._map || container._mapPending) return;
+    container._mapPending = true;
+    whenRendered(container, () => {
+      container._mapPending = false;
+      try {
+        const lat = parseFloat(container.dataset.lat);
+        const lng = parseFloat(container.dataset.lng);
+        const area = container.dataset.area || "";
+        const opts = {
+          zoomControl: true, attributionControl: false,
+          dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+          boxZoom: false, keyboard: false, touchZoom: true,
+          minZoom: 1, maxZoom: 6,
+        };
+        const map = L.map(container, opts);
+        container._map = map;
+        container.style.background = "#0c1422";
+        // Zoom must never move the event location off-center. Leaflet's wheel
+        // and double-click zoom anchor on the cursor/click point, which drifts
+        // the center; the zoom-control buttons already zoom around the center.
+        // Disable the cursor-anchored handlers and zoom around the map center
+        // instead (setZoomAround with the center point keeps the center fixed).
+        let wheelAccum = 0;
+        let wheelTimer = null;
+        container.addEventListener("wheel", (e) => {
+          e.preventDefault();
+          wheelAccum += e.deltaY;
+          if (wheelTimer) return;
+          wheelTimer = setTimeout(() => {
+            wheelTimer = null;
+            // Negative deltaY (scroll up) zooms in, matching Leaflet's convention.
+            const steps = Math.round(-wheelAccum / 60);
+            wheelAccum = 0;
+            if (steps) map.setZoomAround(map.getSize().divideBy(2), map.getZoom() + steps);
+          }, 40);
+        });
+        map.on("dblclick", () => {
+          map.setZoomAround(map.getSize().divideBy(2), map.getZoom() + 1);
+        });
+        const wantSat = mapMode !== "plain" && navigator.onLine !== false;
+        if (wantSat) {
+          const sat = L.tileLayer(
+            "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/2018-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg",
+            { maxZoom: 8, attribution: "" }
+          ).addTo(map);
+          sat.on("tileerror", () => { if (!container._satFallback) { container._satFallback = true; addVectorLand(map); } });
+          L.geoJSON(window.WORLD_LAND, {
+            style: { fill: false, fillOpacity: 0, color: "#9fb3d0", weight: 0.5, opacity: 0.7 },
+            interactive: false,
+          }).addTo(map);
+        } else {
+          addVectorLand(map);
+        }
+        if (area === "world") {
+          map.setView([20, 0], 1);
+        } else if (area) {
+          map.setView([lat, lng], 3); // establish projection before measuring bounds
+          const circ = L.circle([lat, lng], {
+            radius: parseFloat(area) * 1000,
+            color: "#ffb74d", weight: 1.4, fillColor: "#ffb74d", fillOpacity: 0.28,
+            interactive: false,
+          }).addTo(map);
+          map.fitBounds(circ.getBounds(), { padding: [8, 8], maxZoom: 3 });
+        } else {
+          // Set the view BEFORE adding the marker: a Path layer added to an
+          // unloaded map creates the renderer with a deferred _layerAdd, so
+          // the geoJSON outline (added during load) would render against an
+          // uninitialized renderer and throw inside Leaflet's _clipPoints.
+          map.setView([lat, lng], 3);
+          L.circleMarker([lat, lng], {
+            radius: 5, color: "#ffb74d", weight: 1.5, fillColor: "#ffd27f", fillOpacity: 1,
+            interactive: false,
+          }).addTo(map);
+        }
+        // Pinch zoom anchors on the gesture midpoint, which drifts the center;
+        // re-center on zoomend so the location stays centered no matter how the
+        // zoom happened. (Wheel/double-click/control zoom are already
+        // center-anchored, so this is a no-op for them.)
+        const anchor = map.getCenter();
+        map.on("zoomend", () => {
+          map.setView(anchor, map.getZoom());
+        });
+      } catch (e) {
+        console.error("fact-map init failed", e);
       }
-      if (area === "world") {
-        map.setView([20, 0], 1);
-      } else if (area) {
-        map.setView([lat, lng], 3); // establish projection before measuring bounds
-        const circ = L.circle([lat, lng], {
-          radius: parseFloat(area) * 1000,
-          color: "#ffb74d", weight: 1.4, fillColor: "#ffb74d", fillOpacity: 0.28,
-          interactive: false,
-        }).addTo(map);
-        map.fitBounds(circ.getBounds(), { padding: [8, 8], maxZoom: 3 });
-      } else {
-        L.circleMarker([lat, lng], {
-          radius: 5, color: "#ffb74d", weight: 1.5, fillColor: "#ffd27f", fillOpacity: 1,
-          interactive: false,
-        }).addTo(map);
-        map.setView([lat, lng], 3);
-      }
-      requestAnimationFrame(() => { try { map.invalidateSize(); } catch (_) {} });
-    } catch (e) {
-      console.error("fact-map init failed", e);
-    }
+    });
   }
   function ensureFactMap(li) {
     const c = li.querySelector(".fact-map");
@@ -1770,19 +1964,23 @@
     // Mouse users reveal the sheet on hover — init the map then too.
     li.addEventListener("mouseenter", () => {
       ensureFactMap(li);
-      if (hoverDebounceTimer) clearTimeout(hoverDebounceTimer);
+      if (hoverDebounceTimer) { clearTimeout(hoverDebounceTimer); hoverDebounceTimer = null; }
       setCardHovered(true);
       if (window.GlobeDock) window.GlobeDock.focus(e); // shift globe to this card
     });
-    li.addEventListener("mouseleave", (ev) => {
-      hoverDebounceTimer = setTimeout(() => setCardHovered(false), 200);
-      // Moving directly to another card (or the gap between cards) keeps the
-      // globe on that card — only reset to the current "place this event" spot
-      // when actually leaving the timeline (prompt, or outside). Otherwise
-      // the globe jerks back to the prompt event and then forward again.
-      const to = ev.relatedTarget;
-      if (to && to.closest && (to.closest(".tl-event") || to.closest(".gap"))) return;
-      if (window.GlobeDock) window.GlobeDock.focus(currentEvent());
+    li.addEventListener("mouseleave", () => {
+      // Debounce: a fast move to another card cancels this (the new card's
+      // mouseenter clears the timer), so the globe never jerks back to the
+      // prompt event mid-transition. When it DOES fire (pointer has actually
+      // left the cards — onto a gap, the prompt, or outside), return the
+      // globe to the current "place this event" spot and let the prompt
+      // card pulse again.
+      if (hoverDebounceTimer) clearTimeout(hoverDebounceTimer);
+      hoverDebounceTimer = setTimeout(() => {
+        hoverDebounceTimer = null;
+        setCardHovered(false);
+        if (window.GlobeDock) window.GlobeDock.focus(currentEvent());
+      }, 200);
     });
     return li;
   }
@@ -1806,6 +2004,10 @@
 
   function attemptPlace(index) {
     if (game.status !== "playing") return;
+    // Re-arm WebAudio inside this click gesture: browsers suspend the context
+    // after tab switches, and resume() outside a gesture is rejected — which
+    // made narration silently skip cards.
+    if (window.Narrator) window.Narrator.unlock();
     const ev = currentEvent();
     if (!ev) return;
 
@@ -2269,6 +2471,7 @@
         sfxBtn.setAttribute("aria-pressed", String(getSound()));
       }
       syncMusicControls();
+      if (window.Narrator) window.Narrator.syncControls();
     }
     // SFX lives in the Settings modal now
     const sfxBtn = $("sfx-btn");
@@ -2296,14 +2499,38 @@
       syncFxControls();
     }
 
+    // custom cursor set (Settings → Visual). The CSS applies the ornate set
+    // by default; this toggle swaps every cursor back to its native keyword.
+    const CURSOR_KEY = "timeline.cursor";
+    function cursorsOff() {
+      try { return localStorage.getItem(CURSOR_KEY) === "off"; } catch (_) { return false; }
+    }
+    function applyCursorPref() {
+      document.documentElement.classList.toggle("cursors-off", cursorsOff());
+    }
+    const cursorBtn = $("cursor-btn");
+    function syncCursorControls() {
+      if (!cursorBtn) return;
+      const on = !cursorsOff();
+      cursorBtn.textContent = on ? "🖱️ On" : "🖱️ Off";
+      cursorBtn.setAttribute("aria-pressed", String(on));
+    }
+    if (cursorBtn) {
+      cursorBtn.addEventListener("click", () => {
+        try { localStorage.setItem(CURSOR_KEY, cursorsOff() ? "on" : "off"); } catch (_) {}
+        applyCursorPref();
+        syncCursorControls();
+      });
+    }
+    applyCursorPref();
+    syncCursorControls();
+
     // background music: play/pause + volume next to the SFX control
     document.querySelectorAll(".music-btn").forEach((b) =>
       b.addEventListener("click", () => {
-        const m = ensureBgMusic();
-        const shouldPlay = m.paused; // paused -> user wants play; playing -> pause
+        const shouldPlay = !getMusicOn(); // paused -> user wants play; playing -> pause
         setMusicOn(shouldPlay);
-        if (shouldPlay) m.play().catch(() => {}); else m.pause();
-        syncMusicControls();
+        syncGameMusic();
       })
     );
     document.querySelectorAll(".music-vol").forEach((s) => {
@@ -2311,7 +2538,20 @@
       s.addEventListener("input", () => {
         const v = Math.min(1, Math.max(0, s.value / 100));
         setMusicVol(v);
-        ensureBgMusic().volume = v;
+        if (bgMusic) bgMusic.volume = v;
+      });
+    });
+    // Game-music volume is a separate slider from the main music volume so the
+    // player can keep it low enough to hear narration.
+    document.querySelectorAll(".game-music-vol").forEach((s) => {
+      s.value = String(Math.round(getGameMusicVol() * 100));
+      s.addEventListener("input", () => {
+        const v = Math.min(1, Math.max(0, s.value / 100));
+        setGameMusicVol(v);
+        // Cancel any in-flight fade so a user drag isn't overridden by a stale
+        // crossfade target, then apply immediately.
+        if (musicFadeRaf) { cancelAnimationFrame(musicFadeRaf); musicFadeRaf = null; }
+        if (gameMusic) gameMusic.volume = v;
       });
     });
     tryStartMusic();
@@ -2319,7 +2559,7 @@
     // the gesture is on the music controls themselves — those own the intent.
     const musicKick = (ev) => {
       if (ev.target && ev.target.closest && ev.target.closest(".music-btn, .music-vol")) return;
-      if (getMusicOn()) ensureBgMusic().play().catch(() => {});
+      if (getMusicOn()) syncGameMusic();
       document.removeEventListener("pointerdown", musicKick);
       document.removeEventListener("keydown", musicKick);
     };
@@ -2411,6 +2651,8 @@
         alert("Choose a JSON file first.");
         return;
       }
+      // Hourglass cursor while the JSON is parsed (touch devices: no-op).
+      document.body.classList.add("busy");
       window.importDeckFromFile(importFileInput.files[0])
         .then(function () {
           if (decksStatus) decksStatus.textContent = "Import complete.";
@@ -2420,6 +2662,7 @@
           if (decksStatus) decksStatus.textContent = "Import failed: " + err.message;
         })
         .finally(function () {
+          document.body.classList.remove("busy");
           if (importFileInput) importFileInput.value = "";
         });
     });

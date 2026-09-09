@@ -31,6 +31,53 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* ---------- Custom cursors (assets/cursors/) ----------
+   Ornate ARPG-style set. The full-size files are the @2x assets; the @0.5x
+   files are the standard-DPI size (~30-39 CSS px). Hotspots were measured
+   from the alpha channel (solid core, alpha >= 128 — the soft outer edge is
+   drop shadow) and are written in the displayed 1x coordinate space, which
+   is what image-set expects. Each value ends with a native fallback. */
+:root {
+  --cur-default: -webkit-image-set(url("assets/cursors/pointer@0.5x.png") 1x, url("assets/cursors/pointer.png") 2x) 4 1, default;
+  --cur-default: image-set(url("assets/cursors/pointer@0.5x.png") 1x, url("assets/cursors/pointer.png") 2x) 4 1, default;
+  --cur-hand: -webkit-image-set(url("assets/cursors/pointer-hand@0.5x.png") 1x, url("assets/cursors/pointer-hand.png") 2x) 8 2, pointer;
+  --cur-hand: image-set(url("assets/cursors/pointer-hand@0.5x.png") 1x, url("assets/cursors/pointer-hand.png") 2x) 8 2, pointer;
+  --cur-grab: -webkit-image-set(url("assets/cursors/grab@0.5x.png") 1x, url("assets/cursors/grab.png") 2x) 16 18, grab;
+  --cur-grab: image-set(url("assets/cursors/grab@0.5x.png") 1x, url("assets/cursors/grab.png") 2x) 16 18, grab;
+  --cur-grabbing: -webkit-image-set(url("assets/cursors/grabbing@0.5x.png") 1x, url("assets/cursors/grabbing.png") 2x) 15 17, grabbing;
+  --cur-grabbing: image-set(url("assets/cursors/grabbing@0.5x.png") 1x, url("assets/cursors/grabbing.png") 2x) 15 17, grabbing;
+  --cur-move: -webkit-image-set(url("assets/cursors/move@0.5x.png") 1x, url("assets/cursors/move.png") 2x) 20 17, move;
+  --cur-move: image-set(url("assets/cursors/move@0.5x.png") 1x, url("assets/cursors/move.png") 2x) 20 17, move;
+  --cur-wait: -webkit-image-set(url("assets/cursors/wait@0.5x.png") 1x, url("assets/cursors/wait.png") 2x) 15 18, wait;
+  --cur-wait: image-set(url("assets/cursors/wait@0.5x.png") 1x, url("assets/cursors/wait.png") 2x) 15 18, wait;
+}
+/* Settings → Visual toggle: swap the whole set back to native keywords. */
+html.cursors-off {
+  --cur-default: auto;
+  --cur-hand: pointer;
+  --cur-grab: grab;
+  --cur-grabbing: grabbing;
+  --cur-move: move;
+  --cur-wait: wait;
+}
+/* Apply: arrow everywhere (cursor inherits), hand on clickables via the
+   per-component rules below, text caret in inputs, hourglass while a deck
+   import runs. Touch devices never render a cursor, so no media gate. */
+html { cursor: var(--cur-default); }
+input[type="text"], textarea { cursor: text; }
+body.busy, body.busy * { cursor: var(--cur-wait) !important; }
+
+/* Globe: drag rotates. globe.gl writes inline grab/grabbing on the canvas,
+   so these win with !important; globe.js toggles is-grabbing while the
+   pointer is down and marker-hover while over a clickable marker. */
+#globe-dock-canvas canvas { cursor: var(--cur-grab) !important; }
+#globe-dock-canvas.marker-hover canvas { cursor: var(--cur-hand) !important; }
+#globe-dock-canvas.is-grabbing canvas { cursor: var(--cur-grabbing) !important; }
+
+/* Library timelines: drag the panel to pan; items are hover-info only. */
+.tl-container .vis-panel.vis-center { cursor: var(--cur-move); }
+.tl-container .vis-item { cursor: var(--cur-default); }
+
 /* Accessible & Ethical: visible keyboard focus everywhere */
 :focus-visible {
   outline: none;
@@ -98,7 +145,7 @@ html, body {
   border-radius: var(--radius);
   padding: 18px 20px;
   color: var(--text);
-  cursor: pointer;
+  cursor: var(--cur-hand);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -112,7 +159,7 @@ html, body {
 
 .home-meta { display: flex; align-items: center; gap: 14px; justify-content: center; flex-wrap: wrap; }
 .badge { background: var(--card); border: 1px solid var(--border); padding: 6px 12px; border-radius: 999px; font-size: 0.85rem; }
-.link-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.85rem; text-decoration: underline; }
+.link-btn { background: none; border: none; color: var(--muted); cursor: var(--cur-hand); font-size: 0.85rem; text-decoration: underline; }
 .link-btn:hover { color: var(--accent); }
 .credit { text-align: center; color: #5d6b80; font-size: 0.78rem; margin-top: 30px; }
 
@@ -125,14 +172,14 @@ html, body {
 .score-tag b { color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
 .icon-btn {
   background: var(--card); border: 1px solid var(--border); color: var(--text);
-  width: 40px; height: 40px; border-radius: 10px; cursor: pointer; font-size: 1.05rem;
+  width: 40px; height: 40px; border-radius: 10px; cursor: var(--cur-hand); font-size: 1.05rem;
   display: inline-flex; align-items: center; justify-content: center;
   transition: border-color var(--t) ease, transform var(--t) ease;
 }
 .icon-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
 .icon-btn .ico { display: block; }
 .music-btn.off { opacity: 0.45; }
-.vol-slider { width: 72px; accent-color: var(--accent); cursor: pointer; }
+.vol-slider { width: 72px; accent-color: var(--accent); cursor: var(--cur-hand); }
 .bg-music { display: none; }
 .lives { font-size: 1.15rem; letter-spacing: 2px; }
 
@@ -149,7 +196,7 @@ html, body {
 }
 .appbar-left, .appbar-right { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .appbar-center { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
-.wordmark { font-weight: 800; letter-spacing: 1px; font-size: 0.95rem; color: var(--text); cursor: pointer; }
+.wordmark { font-weight: 800; letter-spacing: 1px; font-size: 0.95rem; color: var(--text); cursor: var(--cur-hand); }
 .wordmark span { opacity: 0.6; margin: 0 2px; }
 .home-hero { text-align: center; padding: 18px 0 8px; }
 
@@ -190,7 +237,7 @@ html, body {
 .scroll-tagline { margin: 0 0 10px; font-size: 1rem; font-weight: 600; line-height: 1.45; }
 .home-scroll .link-btn {
   color: #3a2c18; font-weight: 700; text-decoration: underline;
-  background: none; border: none; cursor: pointer; font-size: 0.92rem;
+  background: none; border: none; cursor: var(--cur-hand); font-size: 0.92rem;
 }
 .home-scroll .link-btn:hover { opacity: 0.75; }
 .setup-scroll .setup-summary,
@@ -273,7 +320,7 @@ html, body {
  .fact-toggle {
    align-self: flex-end; margin-left: auto; width: 22px; height: 22px;
    border-radius: 50%; border: 1px solid var(--border); background: transparent;
-   color: var(--muted); font-size: 0.78rem; line-height: 1; cursor: pointer;
+   color: var(--muted); font-size: 0.78rem; line-height: 1; cursor: var(--cur-hand);
    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
  }
  .fact-toggle:hover, .fact-toggle:focus-visible {
@@ -289,6 +336,16 @@ html, body {
  .tl-event:hover .fact-sheet,
  .tl-event:focus-within .fact-sheet,
  .tl-event.open .fact-sheet { display: block; }
+ /* Invisible hover bridge: the popover sits 12px right of the card
+    (left: calc(100% + 12px)); that gap is a hover dead-zone that would
+    dismiss the popover before the cursor reaches it. This pseudo-element
+    spans the gap (plus a 2px overlap onto the card) so the cursor can travel
+    from the card onto the popover — and its zoomable map — uninterrupted.
+    The visual 12px margin stays; only the interface gap is bridged. */
+ .tl-event .fact-sheet::before {
+   content: ""; position: absolute;
+   left: -14px; top: 0; bottom: 0; width: 14px;
+ }
  .fs-rows { display: flex; flex-direction: column; gap: 6px; }
   .fs-title {
     color: #fff;
@@ -313,7 +370,7 @@ html, body {
   display: flex; align-items: center; justify-content: center;
   height: 40px; border: 1px dashed var(--border); border-radius: 10px;
   color: var(--muted); font-size: 0.82rem; letter-spacing: 1px;
-  cursor: pointer; transition: all 0.12s ease; background: transparent;
+  cursor: var(--cur-hand); transition: all 0.12s ease; background: transparent;
 }
 .gap:hover, .gap:focus-visible {
   border-color: var(--accent); color: var(--accent);
@@ -364,7 +421,7 @@ html, body {
 .result-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .btn {
   background: var(--card); border: 1px solid var(--border); color: var(--text);
-  padding: 11px 18px; border-radius: 10px; cursor: pointer; font-size: 0.92rem; font-weight: 600;
+  padding: 11px 18px; border-radius: 10px; cursor: var(--cur-hand); font-size: 0.92rem; font-weight: 600;
 }
 .btn:hover { border-color: var(--accent); }
 .btn--primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; color: #0b1020; }
@@ -381,7 +438,7 @@ html, body {
 /* ---------- MODAL ---------- */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
 .modal-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; max-width: 420px; width: 100%; position: relative; }
-.modal-x { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; }
+.modal-x { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: var(--cur-hand); }
 .how-list { padding-left: 18px; line-height: 1.6; color: var(--text); }
 .how-note { color: var(--muted); font-size: 0.86rem; line-height: 1.5; }
 .modal-card .btn { width: 100%; margin-top: 8px; }
@@ -395,7 +452,7 @@ html, body {
   color: var(--text);
   border-radius: 8px;
   padding: 6px 12px;
-  cursor: pointer;
+  cursor: var(--cur-hand);
   margin-right: 10px;
 }
 
@@ -417,7 +474,7 @@ html, body {
   border-bottom: 2px solid transparent;
   padding: 12px 16px;
   color: var(--muted);
-  cursor: pointer;
+  cursor: var(--cur-hand);
   font-size: 0.95rem;
   font-weight: 600;
   transition: all 0.15s ease;
@@ -464,7 +521,7 @@ html, body {
 /* ---------- HUB: deck grid ---------- */
 .hub-prompt { text-align: center; color: var(--muted); margin: 18px 0 10px; font-size: 0.9rem; letter-spacing: 1px; }
 .deck-grid { display: grid; gap: 14px; margin: 8px 0 26px; }
-.deck-card { text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; color: var(--text); cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease; }
+.deck-card { text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; color: var(--text); cursor: var(--cur-hand); display: flex; flex-direction: column; gap: 4px; transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease; }
 .deck-card:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: var(--shadow); }
 .deck-emoji { font-size: 1.8rem; margin-bottom: 2px; }
 .deck-meta { color: var(--muted); font-size: 0.78rem; margin-top: 2px; }
@@ -474,7 +531,7 @@ html, body {
 .setup-title { font-size: 1.05rem; font-weight: 700; }
 .mode-toggle { display: flex; gap: 10px; justify-content: center; margin-bottom: 8px; }
 .mode-help { text-align: center; color: var(--muted); font-size: 0.82rem; margin: 0 0 16px; line-height: 1.4; }
-.mode-btn { flex: 1; max-width: 180px; background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 12px; border-radius: 12px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: all 0.12s ease; }
+.mode-btn { flex: 1; max-width: 180px; background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 12px; border-radius: 12px; cursor: var(--cur-hand); font-size: 0.95rem; font-weight: 600; transition: all 0.12s ease; }
 .mode-btn:hover { border-color: var(--accent); color: var(--text); }
 .mode-btn.sel { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; color: #0b1020; }
 .setup-filters { display: flex; flex-direction: column; gap: 18px; margin-bottom: 14px; }
@@ -483,10 +540,10 @@ html, body {
 .filter-label { font-weight: 700; font-size: 0.98rem; }
 .filter-state { color: var(--muted); font-size: 0.78rem; }
 .filter-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.filter-chip { background: var(--card-2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 999px; cursor: pointer; font-size: 0.84rem; transition: all 0.12s ease; }
+.filter-chip { background: var(--card-2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 999px; cursor: var(--cur-hand); font-size: 0.84rem; transition: all 0.12s ease; }
 .filter-chip:hover { border-color: var(--accent); }
 .filter-chip.sel { background: rgba(110, 168, 254, 0.18); border-color: var(--accent); color: var(--accent); font-weight: 600; }
-.filter-clear { display: block; margin-top: 10px; background: none; border: none; color: var(--muted); font-size: 0.8rem; cursor: pointer; text-decoration: underline; }
+.filter-clear { display: block; margin-top: 10px; background: none; border: none; color: var(--muted); font-size: 0.8rem; cursor: var(--cur-hand); text-decoration: underline; }
 .filter-clear:hover { color: var(--accent); }
 .setup-note { color: var(--muted); text-align: center; margin: 8px 0; }
 .setup-summary { text-align: center; color: var(--text); font-size: 0.9rem; margin: 12px 0 2px; }
@@ -495,7 +552,7 @@ html, body {
 .setup-count-control .count-label { color: var(--muted); font-size: 0.9rem; }
 .setup-count-control .count-select {
   background: var(--bg); color: var(--text); border: 1px solid var(--border);
-  border-radius: 10px; padding: 8px 12px; font-size: 0.95rem; cursor: pointer;
+  border-radius: 10px; padding: 8px 12px; font-size: 0.95rem; cursor: var(--cur-hand);
 }
  .setup-count-control .count-note { color: var(--accent); font-size: 0.85rem; }
  .setup-actions { display: flex; justify-content: center; margin: 10px 0 20px; }
@@ -668,6 +725,17 @@ html, body {
 .settings-row .mode-btn { flex: 0 0 auto; max-width: none; padding: 8px 14px; }
 .settings-row-controls { display: flex; align-items: center; gap: 10px; }
 .settings-row .vol-slider { width: 110px; }
+.settings-row-controls .count-select {
+  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 12px; font-size: 0.95rem; cursor: var(--cur-hand);
+  max-width: 230px; min-width: 170px;
+}
+.settings-row-controls .btn--small {
+  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 14px; font-size: 0.92rem; cursor: var(--cur-hand);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.settings-row-controls .btn--small:hover { background: var(--accent); color: #fff; }
 
 /* ================= USERS / STATS / FOCUS ================= */
 .playing-as { text-align: center; color: var(--muted); font-size: 0.85rem; margin: 2px 0 0; }
@@ -704,13 +772,13 @@ html, body {
   100% { background: rgba(110, 168, 254, 0.10); }
 }
 .user-name {
-  flex: 1; text-align: left; background: none; border: none; cursor: pointer;
+  flex: 1; text-align: left; background: none; border: none; cursor: var(--cur-hand);
   color: var(--text); font-size: 1rem; font-weight: 700; padding: 4px 2px;
 }
 .user-name:hover { color: var(--accent); text-decoration: underline; }
 .mini-btn {
   background: var(--card-2); border: 1px solid var(--border); color: var(--text);
-  padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+  padding: 6px 12px; border-radius: 999px; cursor: var(--cur-hand); font-size: 0.8rem; font-weight: 600;
   transition: border-color var(--t) ease;
 }
 .mini-btn:hover { border-color: var(--accent); }
@@ -758,7 +826,7 @@ html, body {
 .focus-head { text-align: center; color: var(--muted); font-size: 0.85rem; letter-spacing: 1px; margin: 6px 0 0; }
 .focus-card {
   display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
-  text-align: left; cursor: pointer;
+  text-align: left; cursor: var(--cur-hand);
   background: linear-gradient(160deg, var(--glass-tint), rgba(14, 22, 42, 0.45));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
@@ -792,7 +860,7 @@ html, body {
 .stats-danger { display: flex; justify-content: flex-end; margin: 0 0 30px; }
 .danger-btn {
   background: rgba(248, 81, 73, 0.10); border: 1px solid var(--bad); color: var(--bad);
-  padding: 9px 16px; border-radius: 999px; cursor: pointer;
+  padding: 9px 16px; border-radius: 999px; cursor: var(--cur-hand);
   font-weight: 700; font-size: 0.88rem;
   transition: background var(--t) ease, color var(--t) ease;
 }
@@ -928,7 +996,7 @@ html, body {
   padding: 6px 12px;
   border-radius: 999px;
   font-size: 0.85rem;
-  cursor: pointer;
+  cursor: var(--cur-hand);
 }
 .tl-group-chip.sel { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); }
 .tl-group-chip:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -977,19 +1045,10 @@ html, body {
   background: rgba(10, 16, 30, 0.75);
   color: #fff;
   font-size: 1.1rem;
-  cursor: pointer;
+  cursor: var(--cur-hand);
   pointer-events: auto; /* re-enable: dock container is pointer-events:none */
 }
 .globe-dock-close:hover { background: rgba(255,255,255,0.15); }
-
-/* Hover flash: subtle glow on the globe dock while a placed card is hovered. */
-#globe-dock.globe-dock--hover {
-  animation: globe-glow 0.7s ease-in-out infinite alternate;
-}
-@keyframes globe-glow {
-  0%   { box-shadow: 0 -2px 18px rgba(110, 168, 254, 0.12); }
-  100% { box-shadow: 0 -2px 28px rgba(110, 168, 254, 0.38); }
-}
 
 /* Reserve space so dock never covers setup actions / feedback / results CTA */
 body.dock-active #setup,
@@ -1000,11 +1059,7 @@ body.dock-active #results { padding-bottom: 116px; }
    auto-rotate, ring pulse and camera tweens). */
 @media (prefers-reduced-motion: reduce) {
   #globe-dock, #globe-dock-canvas { transition: none; }
-  .prompt-card--flash,
-  #globe-dock.globe-dock--hover { animation: none; }
-  #globe-dock.globe-dock--hover {
-    box-shadow: 0 -2px 22px rgba(110, 168, 254, 0.25);
-  }
+  .prompt-card--flash { animation: none; }
 }
 
 /* ================= JUICE ================= */

@@ -17,3 +17,13 @@ used. Full license text: https://creativecommons.org/publicdomain/zero/1.0/
 
 The background music track (alex-morgan-battle-boss-fight-game-music-583276.mp3)
 is a separate asset from Pixabay and is NOT part of the Kenney packs.
+
+The second background music track (music-game.mp3, "Orchestral Battle /
+Cinematic Heroic Orchestra") is also from Pixabay and NOT part of the Kenney
+packs. Royalty-free for commercial use under the Pixabay Content License
+(https://pixabay.com/service/license-summary/). No attribution required, but
+the source is recorded here and in the file's ID3 metadata for reference:
+
+  Title:   Orchestral Battle / Cinematic Heroic Orchestra
+  Artist:  Pixabay
+  URL:     https://pixabay.com/music/orchestral-battle-cinematic-heroic-orchestra-586988/

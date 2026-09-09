@@ -395,6 +395,50 @@
     }
   }
 
+  // ---- rail extension (timeline line grows to a newly placed node) ----
+  // The rail is a pseudo-element (.timeline::before) positioned by the
+  // --rail-top/--rail-bottom custom properties. anime.js cannot target
+  // pseudo-elements, so we animate a proxy object and write the CSS vars
+  // each frame (same pattern as scoreCount). The CSS transition on the
+  // pseudo-element is disabled for the duration so it can't fight the
+  // per-frame writes; it is restored on completion. Reduced motion / FX
+  // off: jump straight to the new bounds.
+  let railStyleInjected = false;
+  let railAnimSeq = 0;
+  function railExtend(tl, from, to, opts = {}) {
+    if (!tl) return;
+    const ms = opts.duration || 380;
+    if (!motionOn()) {
+      tl.style.setProperty("--rail-top", to.top.toFixed(1) + "px");
+      tl.style.setProperty("--rail-bottom", to.bottom.toFixed(1) + "px");
+      return;
+    }
+    if (!railStyleInjected) {
+      const s = document.createElement("style");
+      s.textContent = ".timeline--rail-animating::before { transition: none !important; }";
+      document.head.appendChild(s);
+      railStyleInjected = true;
+    }
+    const seq = ++railAnimSeq;
+    tl.classList.add("timeline--rail-animating");
+    const obj = { top: from.top, bottom: from.bottom };
+    animate(obj, {
+      top: to.top,
+      bottom: to.bottom,
+      duration: ms,
+      ease: opts.ease || "outCubic",
+      onUpdate: () => {
+        if (seq !== railAnimSeq) return; // superseded by a newer extension
+        tl.style.setProperty("--rail-top", obj.top.toFixed(1) + "px");
+        tl.style.setProperty("--rail-bottom", obj.bottom.toFixed(1) + "px");
+      },
+      onComplete: () => {
+        if (seq !== railAnimSeq) return;
+        tl.classList.remove("timeline--rail-animating");
+      },
+    });
+  }
+
   // ---- public API ----------------------------------------------------
   window.FX = {
     get enabled() { return getFxOn(); },
@@ -407,5 +451,6 @@
     floatText,
     vignette,
     confetti,
+    railExtend,
   };
 })();

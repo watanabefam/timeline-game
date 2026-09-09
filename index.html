@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Timeline Game — place history in order</title>
-  <link rel="stylesheet" href="styles.css?v=86" />
+  <link rel="stylesheet" href="styles.css?v=89" />
   <link rel="stylesheet" href="assets/leaflet/leaflet.css" />
   <link rel="stylesheet" href="assets/vendor/vis-timeline-graph2d.min.css" />
 </head>
@@ -307,9 +307,46 @@
                   <span class="settings-row-label">Music</span>
                   <span class="settings-row-controls">
                     <button class="icon-btn music-btn" aria-label="Toggle music" aria-pressed="false">♪</button>
-                    <input class="vol-slider music-vol" type="range" min="0" max="100" value="35" aria-label="Music volume" />
+                    <input class="vol-slider music-vol" type="range" min="0" max="100" value="100" aria-label="Music volume" />
                   </span>
                 </div>
+                <div class="settings-row">
+                  <span class="settings-row-label">Game music volume</span>
+                  <span class="settings-row-controls">
+                    <input class="vol-slider game-music-vol" type="range" min="0" max="100" value="50" aria-label="Game music volume" />
+                  </span>
+                </div>
+              </div>
+              <div class="settings-group">
+                <h3 class="settings-group-title">Narration</h3>
+                <p class="settings-group-note">Reads each event title aloud while you play, so a reader and a player can listen together. Never reads the answer — only what's already on the card. Standard quality works offline; High and Best download a larger voice model once.</p>
+                <div class="settings-row">
+                  <span class="settings-row-label">Voice narration</span>
+                  <button class="mode-btn" id="narration-btn" type="button" aria-pressed="false">🔇 Off</button>
+                </div>
+                <div class="settings-row">
+                  <span class="settings-row-label">Voice</span>
+                  <span class="settings-row-controls">
+                    <select class="count-select" id="narration-voice" aria-label="Narration voice"></select>
+                  </span>
+                </div>
+                <div class="settings-row">
+                  <span class="settings-row-label">Quality</span>
+                  <span class="settings-row-controls">
+                    <select class="count-select" id="narration-quality" aria-label="Narration quality">
+                      <option value="standard">Standard (offline)</option>
+                      <option value="high">High (~160 MB first use)</option>
+                      <option value="best">Best (~320 MB first use)</option>
+                    </select>
+                  </span>
+                </div>
+                <div class="settings-row">
+                  <span class="settings-row-label">Test</span>
+                  <span class="settings-row-controls">
+                    <button class="btn btn--small" id="narration-test" type="button">Play sample</button>
+                  </span>
+                </div>
+                <p class="settings-group-note" id="narration-status">Off</p>
               </div>
             </div>
           </div>
@@ -330,6 +367,11 @@
                   <button class="mode-btn" id="fx-btn" type="button" aria-pressed="true">✨ On</button>
                 </div>
                 <p class="settings-group-note">Screen transitions, shake and score animations. Your system's reduced-motion setting always takes precedence.</p>
+                <div class="settings-row">
+                  <span class="settings-row-label">Custom cursor</span>
+                  <button class="mode-btn" id="cursor-btn" type="button" aria-pressed="true">🖱️ On</button>
+                </div>
+                <p class="settings-group-note">Ornate pointer art for mouse and trackpad (arrow, hand, grab, hourglass). Touch devices are unaffected.</p>
               </div>
             </div>
           </div>
@@ -372,15 +414,16 @@
   </div>
 
   <script src="events-data.js"></script>
-  <script src="decks-io.js?v=1"></script>
+  <script src="decks-io.js?v=2"></script>
   <script src="assets/leaflet/leaflet.js"></script>
   <script src="assets/world-land.js"></script>
   <script src="assets/vendor/liquid-glass.js"></script>
   <script src="assets/vendor/vis-timeline-graph2d.min.js"></script>
   <script src="assets/vendor/anime.umd.min.js"></script>
   <script src="assets/vendor/canvas-confetti-1.9.3.min.js"></script>
-<script src="fx.js?v=14"></script>
-<script src="globe.js?v=3"></script>
-<script src="timeline.js?v=90"></script>
+<script src="fx.js?v=15"></script>
+<script src="globe.js?v=13"></script>
+<script src="narration.js?v=14"></script>
+<script src="timeline.js?v=108"></script>
 </body>
 </html>

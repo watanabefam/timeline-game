@@ -31,7 +31,19 @@
   }
 
   // ---- export -------------------------------------------------------
+  // Edge (Chromium) opens a leftover blank tab for anchor-triggered
+  // downloads — a known quirk (the file downloads, but the tab stays open
+  // and blank). Copy to clipboard instead so the export never spawns a
+  // tab. Other browsers keep the native download.
+  function isEdge() {
+    return /Edg\//.test(navigator.userAgent || "");
+  }
+
   function downloadJson(filename, jsonString) {
+    if (isEdge()) {
+      copyExport(filename, jsonString);
+      return;
+    }
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -40,7 +52,24 @@
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Revoke on the next tick (not synchronously): browsers that open the
+    // blob URL in a tab instead of downloading need the URL alive to
+    // resolve it — revoking immediately left those tabs blank.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function copyExport(filename, jsonString) {
+    const status = document.getElementById("decks-status");
+    const note = (msg) => { if (status) status.textContent = msg; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(jsonString).then(() => {
+        note(`Copied ${filename} to clipboard — Edge opens a blank tab on downloads, so the JSON is on your clipboard instead.`);
+      }).catch(() => {
+        note("Clipboard blocked — serve the game over http:// to download decks.");
+      });
+    } else {
+      note("Clipboard unavailable — serve the game over http:// to download decks.");
+    }
   }
 
   window.exportDeck = function (deckId) {

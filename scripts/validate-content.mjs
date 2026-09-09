@@ -20,6 +20,14 @@
  * report coverage but do not fail the build on them yet, so existing
  * decks can opt in gradually.
  *
+ *   RULE — "Years live only in the year field."
+ *
+ * Narration reads the title + fact aloud, so any year embedded in
+ * fact/who/where/why would give the answer away before placement. New
+ * decks must keep years solely in `year` (and `yearEnd`/`sortYear`).
+ * Existing decks are grandfathered: this is reported as a warning for
+ * them so the gate stays green while content is cleaned up over time.
+ *
  * Run:  node scripts/validate-content.mjs
  * Exit code 1 on any failure (wire into CI / pre-commit).
  */
@@ -40,13 +48,19 @@ vm.runInContext(src, sandbox);
 
 // Load deck files from decks/manifest.json
 const decksDir = join(here, "..", "decks");
+const manifestFiles = new Set();
+const deckFile = new Map(); // deck id -> manifest file it was loaded from
 try {
   const manifestPath = join(decksDir, "manifest.json");
   if (existsSync(manifestPath)) {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     for (const file of manifest) {
+      manifestFiles.add(file);
       const deckSrc = readFileSync(join(decksDir, file), "utf8");
+      const before = (sandbox.window.DECKS || []).length;
       vm.runInContext(deckSrc, sandbox);
+      const after = sandbox.window.DECKS || [];
+      if (after.length > before) deckFile.set(after[after.length - 1].id, file);
     }
   }
 } catch (e) {
@@ -150,6 +164,20 @@ for (const deck of decks) {
     );
     if (missing.length === 3) {
       warn(deck.id, id, "no structured fields (who/where/why) — consider adding");
+    }
+
+    // RULE — "Years live only in the year field." Narration reads title+fact
+    // aloud, so a year in fact/who/where/why leaks the answer. Existing decks
+    // (in the manifest) are grandfathered with a warning; new decks fail.
+    const YearRe =
+      /\b(?:c\.|circa)?\s*\d{1,4}s?\s*(?:–|-|to)?\s*\d{0,4}s?\s*(?:BC|AD|BCE|CE)\b|\b(?:1[0-9]{3}|2[0-9]{3})s?\b/i;
+    const leaky = ["fact", "who", "where", "why"].filter(
+      (k) => ev[k] && YearRe.test(ev[k])
+    );
+    if (leaky.length) {
+      const msg = `year mentioned in ${leaky.join("/")} — keep years in the year field only (narration reads this aloud)`;
+      if (deckFile.has(deck.id)) warn(deck.id, id, msg);
+      else err(deck.id, id, msg);
     }
   }
 }
