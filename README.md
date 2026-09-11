@@ -93,7 +93,7 @@ timeline-game/
 ├── index.html         # markup: hub / setup / game / results / browse
 ├── styles.css         # dark theme
 ├── events-data.js     # pluggable DECK registry (window.DECKS) + content
-├── timeline.js        # core engine: deck select → filters → anchors, insert, score, lives, daily seed
+├── timeline.js        # core engine: deck select → filters → anchors, insert, score, share text
 ├── generate-events.mjs  # AI content generator (optional)
 ├── assets/
 │   ├── leaflet/        # vendored Leaflet 1.9.4 (offline map engine)
@@ -107,7 +107,8 @@ timeline-game/
 └── README.md
 ```
 
-## The two bundled decks
+## The bundled decks
+
 1. **World History** — the original 33-event starter library (tech / culture / discovery / world).
 2. **Classical Conversations** — the 161-event CC timeline (the user-supplied source list from `fiveintheforest.com/classical-conversations-timeline`), with:
    - **researched/confirmed years**, joined from two authoritative CC sources:
@@ -123,6 +124,8 @@ timeline-game/
    - filter screens **By Ages**, **By Weeks**, and **By Continents**.
 
    > CC teaches order, not exact years — dates marked `circa` are approximate by nature. "Creation" uses the Ussher chronology (c. 4004 BC) as a conventional earliest anchor. The CC card "Rising Tide of Freedom" is placed at c. 2000 AD per the CC song's closing.
+
+3. **World Literature** — 80 famous literary works ordered by the story's **setting** date, not its composition date; each card carries a display-only `composed` field. Filters: Era (7), Genre (7), Region (5).
 
 ## Add your own deck (pluggable)
 Append one object to `window.DECKS` in `events-data.js`. No engine changes needed:
@@ -199,6 +202,11 @@ score still rewards careful thinking).
 - Ending a run after N mistakes would cut practice volume short and often deny
   the student the full timeline reveal — the actual history content. Points
   provide the stakes; the retry loop provides the learning.
+
+Research behind the learning and retention layer is filed in the repo:
+`doc/GAMIFICATION_BRIEF.md` (ratified spec, with its own peer-reviewed evidence
+list) and `doc/SUCCESS_FACTORS.md` (external "why education apps succeed"
+research, evidence-graded, and explicitly subordinate to the other two).
 
 ## Credits & attribution
 
