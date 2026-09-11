@@ -172,3 +172,34 @@ Legend: ✅ = supported · 🟡 = partial/limited · ❌ = not supported · — 
 ---
 
 *Research compiled from OpenCode session `ses_f80534df6ffeKuq3dtXfM24EEs` (2026-09-08) plus live web verification.*
+
+---
+
+## 8. Corroborating research (added 2026-09-11)
+
+A second, independent line of research — **why successful education apps succeed**
+(Duolingo, Khan Academy, Coursera, Quizlet, SplashLearn, Seesaw, Socratic) — has
+been filed, source-by-source and evidence-graded, in
+[`SUCCESS_FACTORS.md`](./SUCCESS_FACTORS.md).
+
+What it changes here:
+
+- **§5.2 #1 (daily challenge), #3 (shareable result grid), #4 (streak tracking)**
+  each gain a second, independent practitioner line of support. Their priority is
+  unchanged and their evidence grade is **not** upgraded — that corpus carries no
+  effect sizes and no peer-reviewed source.
+- **§5.2 #6 (deck import/export + community sharing)** is re-read as the *growth*
+  mechanic rather than a convenience: for a static, backend-free app the only
+  organic loop is the artefact a learner can hand to another learner. Quizlet's
+  verified growth came from user-created content, not marketing.
+- Its monetization lessons (IAP, subscriptions, "profitability from day one") do
+  **not** apply while this game is free, ad-free, and IAP-free — see
+  `SUCCESS_FACTORS.md` §5 and §9 Q1.
+- It must **not** be cited in a commercial plan (`SUCCESS_FACTORS.md` §6.5, §7).
+
+**Footnote on the "Daily challenge ❌" row above:** that means *no shared
+Wordle-style daily puzzle*, which is still accurate. The app's own on-screen
+`DAILY` tag is a vestigial label — the game runs a single mode (wrong placements
+bounce back; `ENDLESS_LIVES` survives only in unreachable loss copy). See
+`SUCCESS_FACTORS.md` §3.
+
