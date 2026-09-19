@@ -42,6 +42,9 @@ processFile("events-data.js");
 const manifest = JSON.parse(
   readFileSync(join(ROOT, "decks", "manifest.json"), "utf8"),
 );
-for (const file of manifest) {
+const deckFiles = (Array.isArray(manifest) ? manifest : manifest.decks || []).map(
+  (d) => (typeof d === "string" ? d : d.file),
+);
+for (const file of deckFiles) {
   processFile(join("decks", file));
 }

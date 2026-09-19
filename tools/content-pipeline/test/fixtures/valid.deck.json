@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "pilot",
+  "name": "Pilot Deck",
+  "emoji": "🔺",
+  "events": [
+    {
+      "id": "pyramids",
+      "title": "Great Pyramid of Giza completed",
+      "year": -2560,
+      "circa": true,
+      "category": "world",
+      "fact": "Workers stacked more than two million stone blocks into place.",
+      "who": "Khufu's builders",
+      "where": "Giza, Egypt",
+      "why": "It stood as the tallest building on Earth for millennia.",
+      "summary": "The Great Pyramid was built as a tomb for the pharaoh Khufu. Crews moved over two million blocks without wheels or engines. It remained the tallest structure on Earth for a very long time.",
+      "source": {
+        "name": "Wikipedia, Great Pyramid of Giza",
+        "url": "https://en.wikipedia.org/wiki/Great_Pyramid_of_Giza",
+        "license": "CC-BY-SA-4.0",
+        "attribution": "Wikipedia contributors, 'Great Pyramid of Giza', CC BY-SA 4.0",
+        "revision": "1280000000"
+      },
+      "lat": 29.98,
+      "lng": 31.13
+    }
+  ]
+}

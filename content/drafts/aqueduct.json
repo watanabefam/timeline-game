@@ -1,0 +1,262 @@
+{
+  "id": "aqueduct",
+  "storySource": "invented",
+  "format": "narrative",
+  "pointOfView": "third",
+  "characters": [
+    "Neria"
+  ],
+  "storySpine": {
+    "want": "Finish the far stretch of the aqueduct line before afternoon, so the water reaches the public fountain.",
+    "obstacle": "The flow is thin and the cause is buried out of sight; a leak or blockage in a buried channel is almost impossible to see.",
+    "turn": "At the fourth cover she finds a tree root and a thick travertine crust, and sees that nothing pushes the water — the fall does all the work, so anything that slows it starves the end of the line.",
+    "outcome": "She clears the crust and the root end, marks the spot for the pavers, and the fountain runs full again."
+  },
+  "changed": "Rewritten as an imagined scene for younger readers. The source's facts are reordered around one morning's walk along an aqueduct line, and all wording is ours.",
+  "storyNote": "The gravity gradient, the buried conduit, the access covers, travertine, tree-root damage, the castella and the fountain-first rule are from the record. Neria, her father and their walk are invented.",
+  "story": "This morning is imagined. The channels, the working crews and the water rules are from the Roman record. One girl is invented. Her long walk along the buried line is the invented part.\n\nNeria was twelve. That morning the far stretch of the buried line was hers alone. Her father walked it every single day and had shown her how. She wanted to finish the whole stretch before the afternoon. Then she could stand at the fountain and hear the water come.\n\nThe water never needed any pushing at all. It came from springs in the hills and moved by falling. The slope was very gentle, almost flat. Vitruvius wrote that it should never be less than 1 in 4800. Most of the channel lay buried, out of sight, and followed the shape of the land.\n\nHer daily work was easy to describe and very hard to do. At every access cover she lifted the stone lid and looked inside. She checked that the water ran high and clear. She pulled out gravel and sticks. She scraped the pale crust off the walls.\n\nThat particular day the water came very low. At the third cover the channel ran half full, not two-thirds. She counted her steps to the next cover and listened. The sound was thin, like water pulled through a straw.\n\nA buried channel can lose its water in many quiet ways. A slight leak in a buried wall is almost impossible to see. You find it by taste, because fresh water tastes different from the ground. Tree roots can push through the wall and drink. A crust of travertine can slow the stream by a quarter.\n\nAt the fourth cover she found it. A tree root had pushed through the mortar. Behind the root a crust had grown, thick and rough. The water crawled over it. Neria understood something then. Nothing pushed the water along. The fall did all the work. Anything that slowed it starved the end of the line.\n\nShe scraped the heavy crust away and pulled the root end free. She marked the spot for the pavers, who would come with mortar. Then she walked carefully on to the last cover. The water there was already rising. At the public fountain the pipe ran full again.\n\nDown the hill the water reached the castella, the tank that split the flow. Sluices and stopcocks sent it where the rules said. The public fountain came first. Then came the baths, then the private pipes that paid. Neria sat by the great basin and watched the buckets fill.\n\nThat was one ordinary morning, imagined from what the Romans wrote down. The idea is still the same. Water moves downhill, a little at a time, for as long as the fall lasts.",
+  "claims": [
+    {
+      "id": "C001",
+      "text": "Aqueducts carried water using gravity alone, along a slight downward slope.",
+      "quote": "Aqueducts moved water through gravity alone, along a slight overall downward gradient",
+      "confidence": "high"
+    },
+    {
+      "id": "C002",
+      "text": "Most aqueduct channels were buried under the ground.",
+      "quote": "Most conduits were buried beneath the ground and followed the contours of the terrain",
+      "confidence": "high"
+    },
+    {
+      "id": "C003",
+      "text": "Buried channels had inspection-and-access covers at regular intervals.",
+      "quote": "with inspection-and-access covers at regular intervals",
+      "confidence": "high"
+    },
+    {
+      "id": "C004",
+      "text": "Work crews cleared gravel, debris and travertine from inside the channel.",
+      "quote": "removed accretions of calcium carbonate (also known as travertine) in systems fed by hard water sources",
+      "confidence": "high"
+    },
+    {
+      "id": "C005",
+      "text": "Travertine on the channel wall could cut the flow by up to a quarter.",
+      "quote": "could significantly reduce the water's velocity, and thus its rate of flow, by up to 1/4",
+      "confidence": "high"
+    },
+    {
+      "id": "C006",
+      "text": "Tree roots pushing into a channel were especially damaging.",
+      "quote": "Frontinus describes the penetration of conduits by tree-roots as particularly damaging",
+      "confidence": "high"
+    },
+    {
+      "id": "C007",
+      "text": "Sluices, distribution tanks and stopcocks controlled the water supply.",
+      "quote": "Sluices, castella aquae (distribution tanks) and stopcocks regulated the supply to individual destinations",
+      "confidence": "high"
+    },
+    {
+      "id": "C008",
+      "text": "Public fountains had first claim, then baths, then fee-paying private users.",
+      "quote": "The supply to public fountains took priority over the supply to public baths, and both took priority over supplies to wealthier, fee-paying private users.",
+      "confidence": "high"
+    },
+    {
+      "id": "C009",
+      "text": "Aqueduct work crews included pavers, plasterers and other workmen.",
+      "quote": "pavers, plasterers, and other workmen",
+      "confidence": "high"
+    },
+    {
+      "id": "C010",
+      "text": "Vitruvius advised a gradient of not less than 1 in 4800.",
+      "quote": "Vitruvius recommends a low gradient of not less than 1 in 4800 for the channel",
+      "confidence": "high"
+    },
+    {
+      "id": "C011",
+      "text": "Small leaks in a buried channel were hard to find except by the fresh taste of the water.",
+      "quote": "Water lost through multiple, slight leaks in buried conduit walls could be hard to detect except by its fresh taste",
+      "confidence": "high"
+    },
+    {
+      "id": "C012",
+      "text": "Most channels ran about two-thirds full.",
+      "quote": "most conduits ran about two-thirds full",
+      "confidence": "high"
+    },
+    {
+      "id": "C013",
+      "text": "The flow of water depended on gravity alone.",
+      "quote": "The flow of water depended on gravity alone.",
+      "confidence": "high"
+    },
+    {
+      "id": "C014",
+      "text": "Aqueducts brought water from outside sources into cities and towns.",
+      "quote": "to bring water from outside sources into cities and towns",
+      "confidence": "high"
+    },
+    {
+      "id": "C015",
+      "text": "Where a valley intervened, the channel was carried on bridgework.",
+      "quote": "Where valleys or lowlands intervened, the conduit was carried on bridgework",
+      "confidence": "high"
+    },
+    {
+      "id": "C016",
+      "text": "Springs were the most common source of aqueduct water.",
+      "quote": "Springs were by far the most common sources for aqueduct water",
+      "confidence": "high"
+    }
+  ],
+  "storyTrace": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "C001"
+    ],
+    [
+      "C001",
+      "C016"
+    ],
+    [
+      "C001"
+    ],
+    [
+      "C010"
+    ],
+    [
+      "C002"
+    ],
+    [],
+    [
+      "C003"
+    ],
+    [],
+    [
+      "C004"
+    ],
+    [
+      "C004",
+      "C005"
+    ],
+    [],
+    [
+      "C012"
+    ],
+    [],
+    [],
+    [
+      "C011"
+    ],
+    [
+      "C011"
+    ],
+    [
+      "C011"
+    ],
+    [
+      "C006"
+    ],
+    [
+      "C005"
+    ],
+    [],
+    [
+      "C006"
+    ],
+    [
+      "C005"
+    ],
+    [],
+    [],
+    [
+      "C001",
+      "C013"
+    ],
+    [
+      "C001"
+    ],
+    [
+      "C001"
+    ],
+    [
+      "C004"
+    ],
+    [
+      "C009"
+    ],
+    [],
+    [],
+    [],
+    [
+      "C007"
+    ],
+    [
+      "C007"
+    ],
+    [
+      "C008"
+    ],
+    [
+      "C008"
+    ],
+    [],
+    [],
+    [],
+    [
+      "C001"
+    ]
+  ],
+  "fieldTrace": {
+    "fact": [
+      [
+        "C001",
+        "C013"
+      ]
+    ],
+    "why": [
+      [
+        "C001",
+        "C013"
+      ]
+    ],
+    "summary": [
+      [
+        "C014",
+        "C001"
+      ],
+      [
+        "C002",
+        "C015"
+      ],
+      [
+        "C001",
+        "C013"
+      ]
+    ],
+    "details": []
+  },
+  "sources": [
+    {
+      "author": "Wikipedia contributors",
+      "title": "Roman aqueduct",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Roman_aqueduct",
+      "revision": "1372086410",
+      "license": "CC-BY-SA-4.0",
+      "usedFor": "Engineering, maintenance, distribution and staffing of Roman aqueducts"
+    }
+  ]
+}

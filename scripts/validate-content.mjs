@@ -54,7 +54,10 @@ try {
   const manifestPath = join(decksDir, "manifest.json");
   if (existsSync(manifestPath)) {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-    for (const file of manifest) {
+    const deckFiles = (
+      Array.isArray(manifest) ? manifest : manifest.decks || []
+    ).map((d) => (typeof d === "string" ? d : d.file));
+    for (const file of deckFiles) {
       manifestFiles.add(file);
       const deckSrc = readFileSync(join(decksDir, file), "utf8");
       const before = (sandbox.window.DECKS || []).length;
@@ -68,6 +71,13 @@ try {
 }
 
 const decks = sandbox.window.DECKS || [];
+
+// Decks that predate the "years live only in the year field" rule are
+// grandfathered so the gate stays green while their content is cleaned up.
+// NEW decks are deliberately NOT listed here and must pass — listing a deck in
+// the manifest used to grandfather it automatically, which made the rule
+// impossible to fail.
+const LEGACY_DECKS = new Set(["cc-timeline", "world-literature"]);
 
 const STOP = new Set(
   "the a an and or of to in on for with by at from into over under is was were be been being as that this these those it its their his her our your my we they he she you i them us than then so but not no do did does".split(
@@ -167,8 +177,8 @@ for (const deck of decks) {
     }
 
     // RULE — "Years live only in the year field." Narration reads title+fact
-    // aloud, so a year in fact/who/where/why leaks the answer. Existing decks
-    // (in the manifest) are grandfathered with a warning; new decks fail.
+    // aloud, so a year in fact/who/where/why leaks the answer. Legacy decks
+    // (LEGACY_DECKS) warn; every other deck fails.
     const YearRe =
       /\b(?:c\.|circa)?\s*\d{1,4}s?\s*(?:–|-|to)?\s*\d{0,4}s?\s*(?:BC|AD|BCE|CE)\b|\b(?:1[0-9]{3}|2[0-9]{3})s?\b/i;
     const leaky = ["fact", "who", "where", "why"].filter(
@@ -176,7 +186,7 @@ for (const deck of decks) {
     );
     if (leaky.length) {
       const msg = `year mentioned in ${leaky.join("/")} — keep years in the year field only (narration reads this aloud)`;
-      if (deckFile.has(deck.id)) warn(deck.id, id, msg);
+      if (LEGACY_DECKS.has(deck.id)) warn(deck.id, id, msg);
       else err(deck.id, id, msg);
     }
   }

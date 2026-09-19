@@ -1,0 +1,245 @@
+{
+  "id": "homer",
+  "storySource": "invented",
+  "format": "narrative",
+  "pointOfView": "third",
+  "characters": [
+    "Myrto",
+    "Philon"
+  ],
+  "storySpine": {
+    "want": "Sing the opening of the Iliad through to the end without stopping or being prompted.",
+    "obstacle": "In the middle of a line her memory goes blank, in front of a waiting, laughing crowd.",
+    "turn": "Philon shows her that the song is built from set phrases, and those phrases are what carry a singer.",
+    "outcome": "She begins again, lets the phrases carry her, and reaches the end of the opening without stopping."
+  },
+  "changed": "Rewritten as an imagined scene for younger readers, centred on a young singer at a festival on Chios. The wording, the order and the invented apprentice are ours.",
+  "storyNote": "The festival singing, the invocation to the Muse, the epithets, the oral telling and the two poems are from the record, as are Chios and Ionia. Myrto, Philon and their evening are invented.",
+  "story": "The Homeric poems were sung for a long time before they were written down. Singers performed them at religious festivals, in front of crowds. Many stories about the poet came later. The most common said he was a blind bard from Ionia. This scene is imagined. It is one evening on the island of Chios, in Ionia.\n\nChios was one of the places people named as the poet's home. Myrto, who was twelve, was learning the songs. There were two of them. The Iliad told of a quarrel between King Agamemnon and the warrior Achilles. That quarrel filled the last year of the Trojan War. The Odyssey told of Odysseus, king of Ithaca, and his ten-year journey home after the fall of Troy. Tonight Myrto had to sing the opening of the Iliad on her own.\n\nThe opening was an invocation to the Muse. The singer asked her to sing of the anger of Achilles. The crowd knew the words as well as Myrto did. She began.\n\nHer voice was steady for a few lines. Then it was not. In the middle of a line she could not find the next word. She stopped. The crowd waited. Someone laughed.\n\nThe evening was warm, and the lamplight was low. Myrto wanted to run out of the courtyard. Then an old singer crouched beside her. His name was Philon.\n\nHe did not tell her to try harder. He asked for the next few words, and she gave them. Then he said two words: 'Rosy-fingered Dawn.'\n\nHe showed her that the song was built from set phrases. The singers called them epithets. There were many: 'rosy-fingered Dawn', 'owl-eyed Athena', 'crafty Odysseus'. A singer did not hold every word in his mind at once. The phrases carried him forward. The same phrases helped singers make the song again, in many places, for many years. That was how a long poem could live in a voice instead of a book.\n\nMyrto began again. 'Sing,' she sang, 'of the anger of Achilles.' This time the next words came. The phrases were like stepping stones across a stream. The next phrase was there: rosy-fingered Dawn. She reached the end of the opening and did not stop.\n\nHere the imagined scene ends. What the record holds is this. The songs were passed from singer to singer, and only later were they put into writing. They were not the work of one language alone. They were made in Homeric Greek, a literary language that mixed older dialects of different centuries. Today scholars still debate who made them, and whether one poet or several did.",
+  "claims": [
+    {
+      "id": "C001",
+      "text": "The Homeric poems were originally transmitted orally.",
+      "quote": "Most researchers believe that the poems were originally transmitted orally."
+    },
+    {
+      "id": "C002",
+      "text": "The orally transmitted poems were put into written form between the eighth and sixth centuries BC.",
+      "quote": "The orally transmitted Homeric poems were put into written form at some point between the eighth and sixth centuries BC."
+    },
+    {
+      "id": "C003",
+      "text": "Some traditions imagined Homer as a singer who performed at religious festivals.",
+      "quote": "imagined Homer to have been a rhapsode or singer who performed at religious festivals"
+    },
+    {
+      "id": "C004",
+      "text": "Many accounts of Homer's life circulated in classical antiquity.",
+      "quote": "Many accounts of Homer's life circulated in classical antiquity"
+    },
+    {
+      "id": "C005",
+      "text": "The most widespread account was that he was a blind bard from Ionia.",
+      "quote": "the most widespread that he was a blind bard from Ionia"
+    },
+    {
+      "id": "C006",
+      "text": "Ionia included the western coast of Anatolia and the islands of Chios and Samos.",
+      "quote": "a region including the central part of the western coast of Anatolia in present-day Turkey, and the Greek islands of Chios and Samos"
+    },
+    {
+      "id": "C007",
+      "text": "Pindar is credited with saying Homer originated from Chios and Smyrna.",
+      "quote": "The poet Pindar is credited with saying that Homer originated from Chios and Smyrna"
+    },
+    {
+      "id": "C008",
+      "text": "The Iliad centers on a quarrel between Agamemnon and Achilles in the last year of the Trojan War.",
+      "quote": "The Iliad centers on a quarrel between King Agamemnon and the warrior Achilles during the last year of the Trojan War."
+    },
+    {
+      "id": "C009",
+      "text": "The Odyssey chronicles Odysseus's ten-year journey home after the fall of Troy.",
+      "quote": "The Odyssey chronicles the ten-year journey of Odysseus, king of Ithaca, back to his home after the fall of Troy."
+    },
+    {
+      "id": "C010",
+      "text": "Both Homeric poems begin with an invocation to the Muse.",
+      "quote": "Both of the Homeric poems begin with an invocation to the Muse."
+    },
+    {
+      "id": "C011",
+      "text": "The Iliad asks the Muse to sing of the anger of Achilles.",
+      "quote": "the anger of Achilles"
+    },
+    {
+      "id": "C012",
+      "text": "Homer frequently uses epithets such as \"rosy-fingered Dawn\", \"owl-eyed Athena\" and \"crafty Odysseus\".",
+      "quote": "\"crafty Odysseus\", \"rosy-fingered Dawn\", \"owl-eyed Athena\""
+    },
+    {
+      "id": "C013",
+      "text": "These habits aid the extemporizing bard and are characteristic of oral poetry.",
+      "quote": "These habits aid the extemporizing bard and are characteristic of oral poetry."
+    },
+    {
+      "id": "C014",
+      "text": "The poems are in Homeric Greek, a literary mix of Ionic and Aeolic dialects of different centuries.",
+      "quote": "The poems are in Homeric Greek, also known as Epic Greek, a literary language that shows a mixture of features of the Ionic and Aeolic dialects from different centuries"
+    },
+    {
+      "id": "C015",
+      "text": "The question of Homer's identity and existence continues to be debated.",
+      "quote": "the question of Homer's identity and existence"
+    },
+    {
+      "id": "C016",
+      "text": "Scholars generally regard the two poems as the works of separate authors.",
+      "quote": "scholars generally regard the two poems as the works of separate authors."
+    },
+    {
+      "id": "C017",
+      "text": "The Iliad and Odyssey are foundational works of ancient Greek literature.",
+      "quote": "two epic poems that are foundational works of ancient Greek literature"
+    },
+    {
+      "id": "C018",
+      "text": "Most modern scholars agree the two poems were not produced by the same author.",
+      "quote": "they agree that the Iliad and the Odyssey were not produced by the same author"
+    }
+  ],
+  "storyTrace": [
+    [
+      "C001",
+      "C002"
+    ],
+    [
+      "C003"
+    ],
+    [
+      "C004"
+    ],
+    [
+      "C005",
+      "C006"
+    ],
+    [],
+    [
+      "C006"
+    ],
+    [
+      "C007"
+    ],
+    [],
+    [
+      "C017"
+    ],
+    [
+      "C008"
+    ],
+    [
+      "C008"
+    ],
+    [
+      "C009"
+    ],
+    [],
+    [
+      "C010"
+    ],
+    [
+      "C011"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "C012"
+    ],
+    [
+      "C012"
+    ],
+    [
+      "C012"
+    ],
+    [
+      "C012"
+    ],
+    [
+      "C013"
+    ],
+    [
+      "C013"
+    ],
+    [
+      "C013"
+    ],
+    [
+      "C001"
+    ],
+    [],
+    [
+      "C011"
+    ],
+    [],
+    [],
+    [
+      "C012"
+    ],
+    [],
+    [],
+    [],
+    [
+      "C001",
+      "C002"
+    ],
+    [
+      "C014"
+    ],
+    [
+      "C014"
+    ],
+    [
+      "C015",
+      "C016"
+    ]
+  ],
+  "fieldTrace": {
+    "fact": [
+      [
+        "C001",
+        "C002"
+      ]
+    ],
+    "why": [
+      [
+        "C001",
+        "C002"
+      ]
+    ],
+    "summary": [],
+    "details": []
+  },
+  "sources": [
+    {
+      "author": "Wikipedia contributors",
+      "title": "Homer",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Homer",
+      "revision": "1375197687",
+      "license": "CC-BY-SA-4.0",
+      "usedFor": "Festival singing, oral transmission, epithets, the invocation to the Muse, the two poems and the Homeric Question"
+    }
+  ]
+}

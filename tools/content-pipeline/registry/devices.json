@@ -1,0 +1,95 @@
+{
+  "note": "Device registry. A device shapes HOW the story is told; it never changes WHAT is true. Borrowed from history-tales' Narrative Lens Registry, whose per-lens `forbidden_moves` already catalogue the exact error shapes this project hit.",
+  "universalRules": [
+    "Never assert a fact that is not covered by a declared claim.",
+    "Never give a REAL historical figure words, thoughts or motives they did not leave.",
+    "Never assert an outcome the record does not support \u2014 a character's fate, or what became of them. A scene shows a moment, not an ending.",
+    "Never imply events the sources do not mention (disasters, causes, meetings, journeys).",
+    "Never assert a social or cultural generalisation (life expectancy, literacy, beliefs) that no claim supports.",
+    "Never suppress uncertainty the sources record \u2014 say 'we do not know' where they do.",
+    "Invented people are COMPOSITES: declare them in `characters`, never give one a real historical figure's identity \u2014 and their inner life is the invention (only a real figure's is off-limits).",
+    "Never give the protagonist a want that only the future can settle. Choose a stake the scene itself can resolve \u2014 the record cannot answer what became of them next, and reaching for it is how unsupported omniscience enters.",
+    "Do not voice the disclosure inside the story prose. No 'this scene is imagined' and no closing remark about what the record holds or what is left. The product renders that as a box AFTER the story, built from storyNote and changed \u2014 so write those two fields and nothing else about it. Keep the story inside its own time: retrospective or record-commentary material belongs in details."
+  ],
+  "devices": {
+    "narrative": {
+      "description": "A scene told in the third person, following one figure through a moment.",
+      "preferredSources": [
+        "secondary histories",
+        "excavation reports",
+        "inscribed/administrative records"
+      ],
+      "forbiddenMoves": [
+        "Making the narrator omniscient \u2014 it may describe only what the scene shows."
+      ]
+    },
+    "diary": {
+      "description": "First person: a person's own recorded voice.",
+      "preferredSources": [
+        "real diaries",
+        "journals",
+        "letter-books"
+      ],
+      "forbiddenMoves": [
+        "Giving a real diarist words they did not write.",
+        "Presenting an invented diarist without the `invented` disclosure."
+      ]
+    },
+    "letter": {
+      "description": "Correspondence between two people.",
+      "preferredSources": [
+        "collected correspondence",
+        "state papers"
+      ],
+      "forbiddenMoves": [
+        "Inventing an exchange between real people."
+      ]
+    },
+    "newspaper": {
+      "description": "Reportage \u2014 the event as the public read it at the time.",
+      "preferredSources": [
+        "contemporary newspapers",
+        "gazettes",
+        "dispatches"
+      ],
+      "forbiddenMoves": [
+        "Fabricating a quotation or a headline.",
+        "Modernising the paper's judgement into ours."
+      ]
+    },
+    "biography": {
+      "description": "One life, told across time.",
+      "preferredSources": [
+        "vital records",
+        "obituaries",
+        "memoirs",
+        "catalogues raisonn\u00e9s"
+      ],
+      "forbiddenMoves": [
+        "Inventing a real person's motives or inner life."
+      ]
+    },
+    "micro-history": {
+      "description": "One object, one day, one place \u2014 the whole through a single thing.",
+      "preferredSources": [
+        "museum records",
+        "object catalogues",
+        "site reports"
+      ],
+      "forbiddenMoves": [
+        "Overstating what the single object proves."
+      ]
+    },
+    "multi-perspective": {
+      "description": "The same event from two or more accounts.",
+      "preferredSources": [
+        "at least two independent sources",
+        "accounts that disagree"
+      ],
+      "forbiddenMoves": [
+        "Presenting one account as the whole truth.",
+        "Blending accounts into a false consensus."
+      ]
+    }
+  }
+}

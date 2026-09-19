@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "broken",
+  "name": "Broken Deck",
+  "events": [
+    {
+      "id": "bastille",
+      "title": "Storming of the Bastille",
+      "year": 1789,
+      "fact": "In 1789, Parisians stormed the Bastille prison.",
+      "why": "In 1789 the Bastille was stormed by Parisians.",
+      "summary": "In 1789, Parisians stormed the Bastille prison to seize weapons.",
+      "source": {
+        "url": "https://history-blog.example.com/bastille",
+        "license": "CC-BY-NC-4.0"
+      }
+    }
+  ]
+}

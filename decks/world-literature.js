@@ -1422,6 +1422,7 @@ const LIT_EVENTS = [
 // ================================================================
 
 const LITERATURE_DECK = {
+  schemaVersion: 1,
   id: "world-literature",
   name: "World Literature",
   blurb: "Famous literary works ordered by when their stories take place.",

@@ -1,0 +1,22 @@
+{
+  "policyVersion": 1,
+  "note": "Machine-readable source allowlist. SPDX identifiers only, never invented. Unknown/unlisted = blocked.",
+  "unknownLicense": "forbidden",
+  "licenses": {
+    "CC0-1.0": { "category": "allowed", "attributionRequired": false },
+    "public-domain": { "category": "allowed", "attributionRequired": false, "note": "Not an SPDX id; explicit public-domain / cleared rights" },
+    "CC-BY-4.0": { "category": "allowed", "attributionRequired": true },
+    "CC-BY-SA-4.0": { "category": "conditional", "attributionRequired": true, "note": "Wikimedia text; close paraphrase may be a derivative (ShareAlike)" },
+    "MIT": { "category": "allowed", "attributionRequired": true },
+    "Apache-2.0": { "category": "allowed", "attributionRequired": true },
+    "CC-BY-NC-4.0": { "category": "forbidden", "attributionRequired": true, "note": "Non-commercial" },
+    "GPL-3.0-only": { "category": "forbidden", "attributionRequired": true },
+    "AGPL-3.0-only": { "category": "forbidden", "attributionRequired": true }
+  },
+  "sources": [
+    { "domain": "en.wikipedia.org", "license": "CC-BY-SA-4.0", "rights": "verified", "verifiedOn": "2026-09-12" },
+    { "domain": "simple.wikipedia.org", "license": "CC-BY-SA-4.0", "rights": "verified", "verifiedOn": "2026-09-12" },
+    { "domain": "www.wikidata.org", "license": "CC0-1.0", "rights": "verified", "verifiedOn": "2026-09-12" },
+    { "domain": "www.loc.gov", "license": "public-domain", "rights": "cleared", "verifiedOn": "2026-09-12" }
+  ]
+}

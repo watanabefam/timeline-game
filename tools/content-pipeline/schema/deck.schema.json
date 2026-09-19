@@ -1,0 +1,375 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://timeline-game.local/schema/deck.schema.json",
+  "title": "Timeline Game deck (draft contract)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "events"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "blurb": {
+      "type": "string"
+    },
+    "emoji": {
+      "type": "string"
+    },
+    "tier": {
+      "type": "string"
+    },
+    "filters": {
+      "type": "array"
+    },
+    "groupStrategies": {
+      "type": "array"
+    },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    }
+  },
+  "$defs": {
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "fact"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "yearEnd": {
+          "type": "integer"
+        },
+        "sortYear": {
+          "type": "integer"
+        },
+        "circa": {
+          "type": "boolean"
+        },
+        "category": {
+          "type": "string"
+        },
+        "continent": {
+          "type": "string"
+        },
+        "era": {
+          "type": "string"
+        },
+        "week": {
+          "type": "integer"
+        },
+        "songOrder": {
+          "type": "integer"
+        },
+        "composed": {
+          "type": "string"
+        },
+        "emoji": {
+          "type": "string"
+        },
+        "fact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "who": {
+          "type": "string"
+        },
+        "where": {
+          "type": "string"
+        },
+        "why": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "story": {
+          "type": "string",
+          "minLength": 1
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "narrative",
+            "diary",
+            "letter",
+            "newspaper",
+            "biography",
+            "micro-history",
+            "multi-perspective"
+          ]
+        },
+        "storySource": {
+          "type": "string",
+          "enum": [
+            "retold",
+            "adapted",
+            "abridged",
+            "paraphrased",
+            "summarised",
+            "translated",
+            "quoted",
+            "invented",
+            "original"
+          ]
+        },
+        "storyNote": {
+          "type": "string",
+          "minLength": 1
+        },
+        "characters": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "storyTrace": {
+          "$ref": "#/$defs/traceLines"
+        },
+        "pointOfView": {
+          "type": "string",
+          "enum": [
+            "third",
+            "first",
+            "second"
+          ]
+        },
+        "changed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sourceRow"
+          }
+        },
+        "details": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/claim"
+          }
+        },
+        "lat": {
+          "type": "number"
+        },
+        "lng": {
+          "type": "number"
+        },
+        "area": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "noMap": {
+          "type": "boolean"
+        },
+        "fieldTrace": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "fact": {
+              "$ref": "#/$defs/traceLines"
+            },
+            "why": {
+              "$ref": "#/$defs/traceLines"
+            },
+            "summary": {
+              "$ref": "#/$defs/traceLines"
+            },
+            "details": {
+              "$ref": "#/$defs/traceLines"
+            }
+          }
+        },
+        "storySpine": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "want",
+            "obstacle",
+            "turn",
+            "outcome"
+          ],
+          "properties": {
+            "want": {
+              "type": "string",
+              "minLength": 1
+            },
+            "obstacle": {
+              "type": "string",
+              "minLength": 1
+            },
+            "turn": {
+              "type": "string",
+              "minLength": 1
+            },
+            "outcome": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "identityClaims": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^C[0-9]+$"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "license"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attribution": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "rights": {
+          "type": "string"
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^C[0-9]+$"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quote": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "high",
+            "moderate",
+            "contested"
+          ]
+        }
+      }
+    },
+    "sourceRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "author": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publisher": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "usedFor": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "traceLines": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^C[0-9]+$|^\\?$"
+        }
+      }
+    }
+  }
+}

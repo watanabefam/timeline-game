@@ -1,0 +1,99 @@
+{
+  "id": "rome-founded",
+  "storySource": "invented",
+  "format": "narrative",
+  "pointOfView": "third",
+  "characters": ["Vibia"],
+  "storySpine": {
+    "want": "Lay her grandmother's small pot at the old family grave in the valley.",
+    "obstacle": "The graves have been closed and the valley floor is being levelled and paved as a public space.",
+    "turn": "She sees that people from several hills are leaving gifts together at one central place.",
+    "outcome": "She adds her pot to the shared offerings and walks home through the new gate, understanding that the hills are becoming one town."
+  },
+  "changed": "The source's archaeological and legendary material was reordered around an imagined scene, and the summary, details and story prose were written for this draft. The wording and the invented character are ours.",
+  "storyNote": "The wall on the Palatine, the graves and paving in the valley, the shared offerings, and the joining of the hill villages come from the archaeological record. Vibia and her walk are invented. Romulus, Remus and the she-wolf belong to legend, and the scene never presents them as fact.",
+  "summary": "Rome began as several villages on the hills beside the Tiber. Over the centuries they grew into one town, with a wall around its first hill and a shared meeting place in the valley below. Later Romans told a different story: that a man named Romulus founded the city in 753 BC, and that he and his twin Remus had been raised by a she-wolf. Most modern historians treat that story as myth.",
+  "details": "Ancient writers gave Rome many different founding years. The earliest placed it around 1100 BC, in the age of the Trojan War, and Varro's date of 753 BC eventually became the standard. The Parilia, held on 21 April, commemorated the founding. The legend said the twins quarrelled and Remus was murdered. Modern scholars dismiss most of these accounts as myths, and the name Romulus itself is thought to come from the city's name.",
+  "story": "This scene is imagined. It takes place on the Palatine, one of the hills above the Tiber, in the years when the separate villages there were becoming a single town. The hill and the valley below it are real places, and the objects found in their ground are real. Vibia is not.\n\nVibia was ten. Her grandmother had died in the winter, and the family had laid her in the ground down in the valley. That valley held the graves of the hill people, and it had held them for a very long time. The graves there went back hundreds of years, generation after generation.\n\nNow the valley was changing. Men were cutting the ground flat, and the old graves were being covered over with a hard surface of packed stone. Burials there had stopped, and the dead were not to be brought there any more.\n\nVibia carried a small pot down the hill, and it held a little grain saved from the last of the harvest. She wanted to set it at her grandmother's grave, because she had not been able to say goodbye.\n\nAt the edge of the valley she stopped. The ground was flat and hard, and she could not find the place where her grandmother lay. A man told her the graves were not to be used now, because the open space belonged to everyone.\n\nShe stood with the pot in her hands. The valley was busier than she had ever seen it, and people were coming down from all the hills around her. Some came from the Capitoline, which she knew, and others came from places she had never walked.\n\nThen she saw the offerings. People had set small gifts in a low place at the centre of the valley. There were pots, and little figures, and food. The gifts were not for one family; they were for the town, and for all the hills that made it.\n\nVibia set her pot with the others. She stood there a moment, then turned back up the hill.\n\nOn the hill a wall had gone up. It was new, and it followed the edge of the hill all the way round. Vibia had watched the men set the stones the summer before, and she had thought then that it was only a fence.\n\nThere was a gate in the wall, and people passed through it both ways. Vibia saw that the wall did not shut the hills apart; it drew one line around all of them together. She went home through the gate, and she understood a little of what was happening.",
+  "claims": [
+    { "id": "C001", "text": "Rome grew from several hilltop villages that gradually united.", "quote": "Rome developed from the gradual union of several hilltop villages", "confidence": "high" },
+    { "id": "C002", "text": "By 1000 BC the Forum valley held a necropolis of cremation graves.", "quote": "By 1000 BC, a necropolis existed in the Forum for cremation graves.", "confidence": "high" },
+    { "id": "C003", "text": "Four major settlements emerged, on the Palatine, the Capitoline, the Quirinal and Viminal, and the Caelian, Oppian and Velia.", "quote": "The nuclei appeared on the Palatine, the Capitoline, the Quirinal and Viminal, and the Caelian, Oppian, and Velia.", "confidence": "high" },
+    { "id": "C004", "text": "The Forum was turned into a public space; burials stopped and parts were paved.", "quote": "The area of the Forum also was converted at this time into a public space. Burials there discontinued and portions of it were paved over.", "confidence": "high" },
+    { "id": "C005", "text": "Votive offerings appeared in the comitium in the eighth century, showing a more central cult.", "quote": "Votive offerings appear in the comitium in the eighth century, indicating a more central religious cult", "confidence": "high" },
+    { "id": "C006", "text": "The first wall on the Palatine is dated between 730 and 720 BC.", "quote": "The first evidence of a wall appears in the middle or late eighth century on the Palatine, dated between 730 and 720 BC.", "confidence": "high" },
+    { "id": "C007", "text": "The wall may have marked the boundary later Romans called the pomerium.", "quote": "It is possible that the circuit of the wall marked out what later Romans believed to be the original pomerium", "confidence": "moderate" },
+    { "id": "C008", "text": "Gates and streets were found connected to the wall.", "quote": "The discovery of gates and streets connected to the wall", "confidence": "high" },
+    { "id": "C009", "text": "The hilltop settlements combined into a single polity by the later eighth century BC.", "quote": "The combination of the hilltop settlements into a single polity by the later 8th century BC", "confidence": "high" },
+    { "id": "C010", "text": "Roman myth said Romulus founded the city; he was the son of Mars and Rhea Silvia.", "quote": "their city was founded by Romulus, son of the war god Mars and the Vestal virgin Rhea Silvia", "confidence": "high" },
+    { "id": "C011", "text": "Romulus and Remus were suckled by a she-wolf and raised by the shepherd Faustulus.", "quote": "suckled by a she-wolf at the Lupercal before being raised by the shepherd Faustulus", "confidence": "high" },
+    { "id": "C012", "text": "The twins quarrelled and Remus was murdered.", "quote": "quarrelled over some details, ending with Remus's murder", "confidence": "high" },
+    { "id": "C013", "text": "The 753 BC date is the basis for most modern calculations of the AUC era.", "quote": "it is the 753 BC date that continues to form the basis for most modern calculations of the AUC calendar era", "confidence": "high" },
+    { "id": "C014", "text": "Most modern historians treat the single-founder Trojan account as fiction.", "quote": "Most modern historians dismiss these ancient accounts of a single founder descended from a Trojan lineage establishing the city at specific point in time as fiction.", "confidence": "high" },
+    { "id": "C015", "text": "The Parilia festival on 21 April commemorated the founding of the city.", "quote": "The Parilia Festival on 21 April was considered to commemorate the anniversary of the city's founding", "confidence": "high" },
+    { "id": "C016", "text": "Modern scholars disregard most traditional accounts as myths.", "quote": "Modern scholars disregard most of the traditional accounts as myths", "confidence": "high" },
+    { "id": "C017", "text": "The name Romulus is thought to be retrojected from the city's name.", "quote": "Even the name Romulus is now generally believed to have been retrojected from the city's name", "confidence": "high" },
+    { "id": "C018", "text": "The earliest dates placed the founding around 1100 BC, when Romulus was thought to be Aeneas's grandson.", "quote": "The earliest dates placed it c. 1100 BC out of a belief that Romulus had been Aeneas's grandson.", "confidence": "high" }
+  ],
+  "storyTrace": [
+    [],
+    ["C001", "C009", "C003"],
+    ["C003", "C002"],
+    [],
+    [],
+    [],
+    ["C002"],
+    ["C002"],
+    ["C004"],
+    ["C004"],
+    ["C004"],
+    [],
+    [],
+    [],
+    ["C004"],
+    ["C004"],
+    [],
+    ["C003"],
+    ["C003"],
+    ["C005"],
+    ["C005"],
+    [],
+    ["C005", "C009"],
+    [],
+    [],
+    ["C006"],
+    ["C006"],
+    [],
+    ["C008"],
+    ["C007", "C009"],
+    []
+  ],
+  "fieldTrace": {
+    "fact": [["C010", "C003"]],
+    "why": [["C010", "C014"]],
+    "summary": [
+      ["C001", "C003"],
+      ["C009", "C006", "C004"],
+      ["C010", "C011", "C013"],
+      ["C014", "C016"]
+    ],
+    "details": [
+      ["C018"],
+      ["C018", "C013"],
+      ["C015"],
+      ["C012"],
+      ["C016", "C017"]
+    ]
+  },
+  "sources": [
+    {
+      "author": "Wikipedia contributors",
+      "title": "Founding of Rome",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Founding_of_Rome",
+      "revision": "1362218189",
+      "license": "CC-BY-SA-4.0",
+      "usedFor": "The archaeology of the hilltop settlements, the early wall, the Forum and its offerings, and the Romulus legend and its dates"
+    }
+  ]
+}

@@ -114,7 +114,7 @@ const CC_EVENTS = [
   { id: "cc-096", songOrder: 96, title: "Calvin's Institutes of the Christian Religion", year: 1536, circa: false, continent: "europe", week: 14, sortYear: -66, fact: "Calvin's 1536 work systematized Reformed Protestantism.", who: "John Calvin", where: "Geneva / France", why: "Shaped Presbyterianism and many Reformed churches.", emoji: "📜", lat: 46.2, lng: 6.14 },
   { id: "cc-097", songOrder: 97, title: "Council of Trent", year: 1563, circa: false, continent: "europe", week: 14, sortYear: -65, fact: "The Catholic Church's response, clarifying doctrine and reform.", who: "Catholic bishops", where: "Trent (Italy)", why: "Launched the Counter-Reformation.", emoji: "📜", lat: 46.07, lng: 11.12 },
   { id: "cc-098", songOrder: 98, title: "Baroque Period of the Arts", year: 1750, circa: true, continent: "europe", week: 14, sortYear: -64, fact: "Dramatic, ornate art and music (Bach, Bernini) after the Reformation.", who: "Bach; Bernini; Rubens", where: "Europe", why: "Art used to stir emotion and faith.", emoji: "📜", lat: 50, lng: 12, area: 3000 },
-  { id: "cc-099", songOrder: 99, title: "Japan's Isolation", year: 1853, circa: false, continent: "asia", week: 15, sortYear: -63, fact: "The Tokugawa shut Japan off from most foreign contact (1630s–1853).", who: "Tokugawa shoguns", where: "Japan", why: "Two centuries of near-total seclusion.", emoji: "📜", lat: 36.2, lng: 138, area: 500 },
+  { id: "cc-099", songOrder: 99, title: "Japan's Isolation", year: 1635, yearEnd: 1853, circa: true, continent: "asia", week: 15, sortYear: -63, fact: "The Tokugawa shut Japan off from most foreign contact (1630s–1853).", who: "Tokugawa shoguns", where: "Japan", why: "Two centuries of near-total seclusion.", emoji: "📜", lat: 36.2, lng: 138, area: 500 },
   { id: "cc-100", songOrder: 100, title: "Jamestown and Plymouth Colony Founded", year: 1620, circa: false, continent: "europe", week: 15, sortYear: -62, fact: "England's first permanent (1607) and Pilgrim (1620) settlements.", who: "English colonists", where: "Virginia / Massachusetts", why: "The beginnings of English America.", emoji: "📜", lat: 37.5, lng: -79, area: 200 },
   { id: "cc-101", songOrder: 101, title: "Age of Enlightenment", year: 1800, circa: true, continent: "europe", week: 15, sortYear: -61, fact: "Reason and individual rights challenged tradition and throne.", who: "Locke, Voltaire, Rousseau", where: "Europe", why: "Ideas that fueled the American and French Revolutions.", emoji: "📜", lat: 50, lng: 12, area: 3000 },
   { id: "cc-102", songOrder: 102, title: "Hudson's Bay Company", year: 1670, circa: false, continent: "asia", week: 15, sortYear: -60, fact: "A 1670 fur-trading company that shaped Canada's development.", who: "English & French traders", where: "Canada", why: "A corporate force in North American exploration.", emoji: "📜", lat: 56, lng: -106, area: 3000 },
@@ -180,6 +180,7 @@ const CC_EVENTS = [
 ];
 
 window.registerDeck({
+  schemaVersion: 1,
   id: "cc-timeline",
   name: "Classical Conversations",
   blurb: "The 161-event CC timeline, filterable by age, week, or continent.",

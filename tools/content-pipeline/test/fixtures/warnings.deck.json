@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "warn-only",
+  "name": "Warnings Only",
+  "events": [
+    {
+      "id": "telescope",
+      "title": "Galileo uses a telescope",
+      "year": 1609,
+      "fact": "In 1609 Galileo turned a spyglass on the night sky.",
+      "source": {
+        "url": "https://en.wikipedia.org/wiki/Galileo_Galilei",
+        "license": "CC-BY-SA-4.0",
+        "attribution": "Wikipedia contributors, 'Galileo Galilei', CC BY-SA 4.0"
+      }
+    }
+  ]
+}

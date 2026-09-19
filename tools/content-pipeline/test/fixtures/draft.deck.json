@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "draft",
+  "name": "Draft Deck",
+  "events": [
+    {
+      "id": "pyramids",
+      "title": "Great Pyramid of Giza completed",
+      "year": -2560,
+      "circa": true,
+      "fact": "Workers stacked more than two million stone blocks into place.",
+      "source": {
+        "url": "https://en.wikipedia.org/wiki/Great_Pyramid_of_Giza",
+        "license": "CC-BY-SA-4.0",
+        "attribution": "Wikipedia contributors, 'Great Pyramid of Giza', CC BY-SA 4.0"
+      },
+      "claims": [
+        {
+          "id": "C001",
+          "text": "The pyramid is the tomb of Khufu.",
+          "quote": "the tomb of the pharaoh Khufu",
+          "confidence": "high"
+        },
+        {
+          "id": "C002",
+          "text": "Crews moved about 2.3 million blocks.",
+          "quote": "roughly 2.3 million blocks",
+          "confidence": "moderate"
+        },
+        {
+          "id": "C003",
+          "text": "It was built of solid marble.",
+          "quote": "built of solid marble",
+          "confidence": "high"
+        }
+      ]
+    }
+  ]
+}

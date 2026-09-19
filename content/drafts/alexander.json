@@ -1,0 +1,270 @@
+{
+  "id": "alexander",
+  "storySource": "invented",
+  "format": "narrative",
+  "pointOfView": "third",
+  "characters": [
+    "Dromon"
+  ],
+  "storySpine": {
+    "want": "Dromon wants to stand with his unit and say he will not cross the river.",
+    "obstacle": "The king has crossed every river so far and will not turn back; the far bank is full of horses and elephants.",
+    "turn": "Coenus, a general, speaks for the men and asks the king to return.",
+    "outcome": "The king agrees; the army turns south along the Indus, and Dromon learns that even this king can be refused."
+  },
+  "changed": "Rewritten as a short imagined scene for younger readers, with the source's facts reordered around one morning at the river. The wording and the order are ours.",
+  "storyNote": "The Hyphasis, its width and depth, the army's mutiny, the numbers on the far bank, Coenus's plea and Alexander's agreement to turn south are all from the record. Dromon, his unit and his morning are made up.",
+  "story": "Alexander's army crossed into Asia in 334 BC and marched for ten years. By the end, the empire stretched from Greece to northwestern India. The morning on the bank of the Hyphasis is imagined. The river, the numbers and the king's decision are all in the record.\n\nDromon was a soldier in the phalanx, and he had been away from his homeland of Macedon for many years. His cloak was patched and his heavy spear was long. That morning his unit stood on the bank of the river. No one would step into the water.\n\nThe river was the Hyphasis, and the men also called it the Beas. It was thirty-two furlongs wide and one hundred fathoms deep. Dromon could not see the end of the far bank.\n\nAcross the water stood an enormous host. The far bank was covered with men, horses and elephants. The men had been told the numbers by the scouts. There were eighty thousand horsemen waiting on the other side. There were two hundred thousand footmen, eight thousand chariots and six thousand war elephants. The scouts said the kings of the Ganderites and the Praesii were waiting with those men.\n\nDromon had crossed the Hellespont with the king. He had marched through the burning plains of Asia. He had seen the king charge first, and the line break after him. They had defeated King Porus, but the victory had emptied the men. Dromon was exhausted in a way that sleep did not mend. That morning he did not want another battle. He wanted to stand with his unit and say so.\n\nThe king had thrown a spear into Asian soil. He had said he took Asia as a gift from the gods. Dromon had cheered with the rest. Now the king wanted to cross this river too. The men had followed him for ten years, from Greece to this river. Who would tell such a king no?\n\nThen Coenus, a general, spoke for the army. He was one of the oldest and most experienced men in the camp. He asked the king to change his mind and turn back. The men, he said, wanted to see their parents again. They wanted their wives, their children and their homeland.\n\nAlexander listened carefully, and for a while he said nothing. Then he agreed. The exhausted army would not cross the Hyphasis. That river marked the eastern edge of the conquests. The army turned south and marched along the Indus. Dromon waited for a shout, but the camp was quiet. After ten years, the army that had never lost a battle turned away from the river.\n\nDromon had thought a king could not be refused. That morning he learned better. He packed his bedroll and faced south, with the wide river behind him at last.",
+  "claims": [
+    {
+      "id": "C001",
+      "text": "Alexander's army crossed the Hellespont into Asia in 334 BC.",
+      "quote": "Alexander's army crossed the Hellespont in 334 BC",
+      "confidence": "high"
+    },
+    {
+      "id": "C002",
+      "text": "The campaign lasted ten years.",
+      "quote": "a series of campaigns which lasted for ten years",
+      "confidence": "high"
+    },
+    {
+      "id": "C003",
+      "text": "The army mutinied at the Hyphasis River and refused to march farther east.",
+      "quote": "Alexander's army mutinied at the Hyphasis River (Beas), refusing to march farther east",
+      "confidence": "high"
+    },
+    {
+      "id": "C004",
+      "text": "The Hyphasis was also called the Beas.",
+      "quote": "the Hyphasis River (Beas)",
+      "confidence": "high"
+    },
+    {
+      "id": "C005",
+      "text": "The river was thirty-two furlongs wide and one hundred fathoms deep.",
+      "quote": "thirty-two furlongs [6.4 km], its depth one hundred fathoms [180 m]",
+      "confidence": "high"
+    },
+    {
+      "id": "C006",
+      "text": "The far bank was covered with men, horses and elephants.",
+      "quote": "its banks on the further side were covered with multitudes of men-at-arms and horsemen and elephants",
+      "confidence": "high"
+    },
+    {
+      "id": "C007",
+      "text": "The men were told of eighty thousand horsemen, two hundred thousand footmen, eight thousand chariots and six thousand war elephants.",
+      "quote": "eighty thousand horsemen, two hundred thousand footmen, eight thousand chariots, and six thousand war elephants",
+      "confidence": "high"
+    },
+    {
+      "id": "C008",
+      "text": "Alexander led the charge in the center and routed the opposing army.",
+      "quote": "Alexander personally led the charge in the center, routing the opposing army",
+      "confidence": "high"
+    },
+    {
+      "id": "C009",
+      "text": "The struggle with Porus blunted the men's courage.",
+      "quote": "their struggle with Porus blunted their courage",
+      "confidence": "high"
+    },
+    {
+      "id": "C010",
+      "text": "Alexander threw a spear into Asian soil and said he accepted Asia as a gift from the gods.",
+      "quote": "throwing a spear into Asian soil and saying he accepted Asia as a gift from the gods",
+      "confidence": "high"
+    },
+    {
+      "id": "C011",
+      "text": "Coenus pleaded with Alexander to change his mind and turn back.",
+      "quote": "his general Coenus pleaded with him to change his opinion and return",
+      "confidence": "high"
+    },
+    {
+      "id": "C012",
+      "text": "The men longed to see their parents, wives, children and homeland.",
+      "quote": "longed to again see their parents, their wives and children, their homeland",
+      "confidence": "high"
+    },
+    {
+      "id": "C013",
+      "text": "Alexander agreed and turned south, marching along the Indus.",
+      "quote": "Alexander eventually agreed and turned south, marching along the Indus",
+      "confidence": "high"
+    },
+    {
+      "id": "C014",
+      "text": "The Hyphasis marked the easternmost extent of the conquests.",
+      "quote": "This river thus marks the easternmost extent of Alexander's conquests",
+      "confidence": "high"
+    },
+    {
+      "id": "C015",
+      "text": "Alexander had created one of the largest empires in history by the age of 30.",
+      "quote": "by the age of 30, he had created one of the largest empires in history",
+      "confidence": "high"
+    },
+    {
+      "id": "C016",
+      "text": "Alexander died at age 32.",
+      "quote": "Alexander died in the palace of Nebuchadnezzar II, in Babylon, at age 32",
+      "confidence": "high"
+    },
+    {
+      "id": "C017",
+      "text": "Alexander tried to persuade his soldiers to march farther.",
+      "quote": "Alexander tried to persuade his soldiers to march farther",
+      "confidence": "high"
+    },
+    {
+      "id": "C018",
+      "text": "The empire stretched from Greece to northwestern India.",
+      "quote": "stretching from Greece to northwestern India",
+      "confidence": "high"
+    },
+    {
+      "id": "C019",
+      "text": "The kings of the Ganderites and the Praesii were awaiting them.",
+      "quote": "the kings of the Ganderites and Praesii were awaiting them",
+      "confidence": "high"
+    },
+    {
+      "id": "C020",
+      "text": "Alexander was undefeated in battle.",
+      "quote": "He was undefeated in battle",
+      "confidence": "high"
+    }
+  ],
+  "storyTrace": [
+    [
+      "C001",
+      "C002"
+    ],
+    [
+      "C018"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "C003"
+    ],
+    [
+      "C003",
+      "C004"
+    ],
+    [
+      "C005"
+    ],
+    [],
+    [
+      "C006"
+    ],
+    [
+      "C006"
+    ],
+    [
+      "C007"
+    ],
+    [
+      "C007"
+    ],
+    [
+      "C007"
+    ],
+    [
+      "C019"
+    ],
+    [
+      "C001"
+    ],
+    [],
+    [
+      "C008"
+    ],
+    [
+      "C009"
+    ],
+    [],
+    [],
+    [],
+    [
+      "C010"
+    ],
+    [
+      "C010"
+    ],
+    [],
+    [
+      "C017"
+    ],
+    [
+      "C002"
+    ],
+    [],
+    [
+      "C011"
+    ],
+    [],
+    [
+      "C011"
+    ],
+    [
+      "C012"
+    ],
+    [
+      "C012"
+    ],
+    [],
+    [
+      "C013"
+    ],
+    [
+      "C003"
+    ],
+    [
+      "C014"
+    ],
+    [
+      "C013"
+    ],
+    [],
+    [
+      "C002",
+      "C020",
+      "C013"
+    ],
+    [],
+    [],
+    []
+  ],
+  "fieldTrace": {
+    "fact": [
+      [
+        "C015",
+        "C016"
+      ]
+    ],
+    "why": [
+      [
+        "C015",
+        "C016"
+      ]
+    ]
+  },
+  "sources": [
+    {
+      "author": "Wikipedia contributors",
+      "title": "Alexander the Great",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Alexander_the_Great",
+      "revision": "1373897726",
+      "license": "CC-BY-SA-4.0",
+      "usedFor": "The army, the mutiny at the Hyphasis, Coenus, the numbers, and Alexander's death"
+    }
+  ]
+}
