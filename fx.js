@@ -397,17 +397,18 @@
 
   // ---- rail extension (timeline line grows to a newly placed node) ----
   // The rail is a pseudo-element (.timeline::before) positioned by the
-  // --rail-top/--rail-bottom custom properties. anime.js cannot target
-  // pseudo-elements, so we animate a proxy object and write the CSS vars
-  // each frame (same pattern as scoreCount). The CSS transition on the
-  // pseudo-element is disabled for the duration so it can't fight the
+  // --rail-top/--rail-bottom custom properties. anime.js v4 animates CSS
+  // variables directly (docs: "enables animation of properties defined on
+  // pseudo-elements like ::after and ::before"), so we pass the variable
+  // names as string keys — no proxy object needed. The CSS transition on
+  // the pseudo-element is disabled for the duration so it can't fight the
   // per-frame writes; it is restored on completion. Reduced motion / FX
   // off: jump straight to the new bounds.
   let railStyleInjected = false;
   let railAnimSeq = 0;
   function railExtend(tl, from, to, opts = {}) {
     if (!tl) return;
-    const ms = opts.duration || 380;
+    const ms = opts.duration || 600;
     if (!motionOn()) {
       tl.style.setProperty("--rail-top", to.top.toFixed(1) + "px");
       tl.style.setProperty("--rail-bottom", to.bottom.toFixed(1) + "px");
@@ -421,22 +422,221 @@
     }
     const seq = ++railAnimSeq;
     tl.classList.add("timeline--rail-animating");
-    const obj = { top: from.top, bottom: from.bottom };
-    animate(obj, {
-      top: to.top,
-      bottom: to.bottom,
+    animate(tl, {
+      "--rail-top": [from.top.toFixed(1) + "px", to.top.toFixed(1) + "px"],
+      "--rail-bottom": [from.bottom.toFixed(1) + "px", to.bottom.toFixed(1) + "px"],
       duration: ms,
       ease: opts.ease || "outCubic",
-      onUpdate: () => {
-        if (seq !== railAnimSeq) return; // superseded by a newer extension
-        tl.style.setProperty("--rail-top", obj.top.toFixed(1) + "px");
-        tl.style.setProperty("--rail-bottom", obj.bottom.toFixed(1) + "px");
-      },
       onComplete: () => {
-        if (seq !== railAnimSeq) return;
+        if (seq !== railAnimSeq) return; // superseded by a newer extension
         tl.classList.remove("timeline--rail-animating");
       },
     });
+  }
+
+  // ---- rail glow (energy travels outward from a newly placed node) ----
+  // On every correct placement a bright streak appears at the new card's
+  // node and splits, traveling up and down the rail to both ends while
+  // fading out — the line "lights up" from the placed item. Native WAAPI
+  // (transform + opacity are composited) so it stays time-locked even while
+  // the timeline rebuilds. Reduced motion / FX off: no-op.
+  const RAIL_GLOW_MS = 700;
+  function railGlow(tl, cardEl, opts = {}) {
+    if (!tl || !cardEl || !motionOn()) return;
+    const delay = opts.delay || 40;
+    const color = opts.color || "110, 168, 254"; // --accent blue
+    const r = cardEl.getBoundingClientRect();
+    const nodeY = r.top + r.height / 2;
+    const tlRect = tl.getBoundingClientRect();
+    const railX = tlRect.left + 8; // rail center: left:7px + 1px half-width
+    const railTopY = tlRect.top + (parseFloat(tl.style.getPropertyValue("--rail-top")) || 0);
+    const railBottomY = tlRect.bottom - (parseFloat(tl.style.getPropertyValue("--rail-bottom")) || 0);
+    const upDist = railTopY - nodeY;
+    const downDist = railBottomY - nodeY;
+    if (Math.abs(upDist) < 2 && Math.abs(downDist) < 2) return; // nothing to travel
+
+    const make = () => {
+      const g = document.createElement("div");
+      g.dataset.railGlow = "1";
+      g.style.cssText =
+        `position:fixed;left:${railX - 3}px;top:${nodeY - 7}px;` +
+        `width:6px;height:14px;border-radius:999px;pointer-events:none;z-index:9996;` +
+        `background:radial-gradient(closest-side, rgba(255,255,255,0.95), rgba(${color},0.55) 55%, rgba(${color},0));` +
+        `box-shadow:0 0 10px 3px rgba(${color},0.55);will-change:transform,opacity;`;
+      document.body.appendChild(g);
+      return g;
+    };
+    const travel = (el, dist) => {
+      const anim = el.animate(
+        [
+          { transform: "translateY(0px)", opacity: 0.95 },
+          { transform: `translateY(${dist.toFixed(1)}px)`, opacity: 0 },
+        ],
+        { duration: RAIL_GLOW_MS, easing: "cubic-bezier(0.16, 1, 0.3, 1)", delay }
+      );
+      anim.finished.then(() => el.remove()).catch(() => el.remove());
+    };
+    if (Math.abs(upDist) >= 2) travel(make(), upDist);
+    if (Math.abs(downDist) >= 2) travel(make(), downDist);
+  }
+
+  // ---- focus scale (scroll-linked scale falloff) --------------------
+  // Items nearest the viewport's vertical centre render slightly larger and
+  // ease back to native size at the top/bottom edges — a "you are here" depth
+  // cue, not a readability aid.
+  //
+  // Scale-only, never rotation: isotropic scale preserves glyph shape (the
+  // 3D-carousel legibility penalty comes from foreshortened rotation), and
+  // because transform does not affect flow, the layout never reflows — scroll
+  // length, drop targets and any rail stay put. Transform an INNER wrapper,
+  // not the scroll item, so the item's box (and everything positioned against
+  // it — nodes, connectors, popovers) is untouched.
+  //
+  // Falloff is a raised cosine (Hann): w(0)=1, w(±1)=0, zero slope at both
+  // ends — a stable 2-3 item plateau instead of a single jumpy peak. `peak`
+  // and `edge` are the scales at the viewport centre and at the top/bottom
+  // threshold (e.g. 1.025 / 0.975); both default to 1 for a grow-only effect.
+  // (Research: 1.03-1.08 reads as subtle; >1.15 aggressive.)
+  //
+  // Reduced motion / FX off: flattened to native size, content stays visible
+  // (scroll-linked scale is a vestibular trigger — WCAG 2.3.3 / MDN flags
+  // zoom animations). Reads the preference at call time, never cached.
+  //
+  // Layout-neutral by design: measure() is the only layout read and it caches
+  // document-space centres once; the per-frame path reads scrollY only and
+  // writes transform only. Returns a controller: refresh() after the list is
+  // rebuilt, destroy() to remove listeners and clear inline styles.
+  function focusScale(list, opts = {}) {
+    if (!list) return null;
+    const peak = opts.peak != null ? opts.peak : 1.05;  // scale at the viewport centre
+    const edge = opts.edge != null ? opts.edge : 1;     // scale at the top/bottom threshold
+    const sharp = opts.sharp != null ? opts.sharp : 1;  // falloff exponent: >1 = peakier
+    const minOpacity = opts.minOpacity != null ? opts.minOpacity : 1; // opacity at the threshold
+    // Profile shape:
+    //   "sphere" — constant-curvature dome (parabolic sagitta). A broad, evenly
+    //              curved arc like a patch of a large sphere: no flat top, no
+    //              sharp peak, so it reads as curvature rather than a highlight.
+    //   "cosine" — raised cosine (Hann). Gentler: plateaus at the centre and
+    //              flattens at the ends.
+    const curve = opts.curve === "sphere" ? "sphere" : "cosine";
+    const origin = opts.origin || "center center";
+    // Optional: publish each item's current scale as a CSS custom property on
+    // its parent, so sibling/decoration CSS can track the transformed box (e.g.
+    // a connector stub that must always meet the card's visual edge). Skipped
+    // when the item IS a direct child of the list (nothing to publish to).
+    const scaleVar = opts.scaleVar || null;
+    const selector = opts.selector || null;
+    const disabledWhen = typeof opts.disabledWhen === "function" ? opts.disabledWhen : null;
+
+    let items = [];
+    let centers = [];   // document-space vertical centres (valid across scroll:
+                        // transforms never reflow, so they cannot shift)
+    let ticking = false;
+    let rafId = 0;
+    let lifted = -1;    // index currently promoted with z-index
+
+    function collect() {
+      items = selector
+        ? Array.prototype.slice.call(list.querySelectorAll(selector))
+        : Array.prototype.filter.call(list.children, (n) => n.nodeType === 1);
+    }
+
+    function clearAll() {
+      for (const el of items) {
+        el.style.transform = ""; el.style.zIndex = ""; el.style.transformOrigin = "";
+        el.style.opacity = "";
+        if (scaleVar && el.parentElement && el.parentElement !== list) {
+          el.parentElement.style.removeProperty(scaleVar);
+        }
+      }
+      lifted = -1;
+    }
+
+    function measure() {
+      collect();
+      // Batch-write: drop any live scale BEFORE reading rects (a transform
+      // would otherwise be measured), then batch-read in one reflow.
+      for (const el of items) {
+        el.style.transform = "";
+        if (!el.style.transformOrigin) el.style.transformOrigin = origin;
+      }
+      const sy = window.scrollY || window.pageYOffset || 0;
+      centers = items.map((el) => {
+        const r = el.getBoundingClientRect();
+        return sy + r.top + r.height / 2;
+      });
+    }
+
+    function paint() {
+      ticking = false;
+      if (!items.length) return;
+      if (!motionOn() || (disabledWhen && disabledWhen())) { clearAll(); return; }
+
+      const H = window.innerHeight || document.documentElement.clientHeight;
+      const half = (H / 2) || 1;
+      const vCenter = (window.scrollY || window.pageYOffset || 0) + half;
+
+      let best = -1, bestW = -1;
+      for (let i = 0; i < items.length; i++) {
+        let d = (centers[i] - vCenter) / half;
+        if (d < -1) d = -1; else if (d > 1) d = 1;
+        const w = curve === "sphere"
+          ? Math.max(0, 1 - d * d)                    // parabolic sagitta → constant curvature
+          : 0.5 * (1 + Math.cos(Math.PI * d));        // raised cosine
+        const ws = sharp === 1 ? w : Math.pow(w, sharp); // sharpened → peakier centre
+        const s = edge + (peak - edge) * ws;         // peak at centre, edge at the threshold
+        const next = Math.abs(s - 1) > 0.0005 ? "scale(" + s.toFixed(4) + ")" : "";
+        if (items[i].style.transform !== next) items[i].style.transform = next;
+        if (minOpacity < 1) {
+          // Fade tracks the un-smoothed falloff so the edge dims without the
+          // steeper drop of the sharpened scale — coordinated, not identical.
+          const o = minOpacity + (1 - minOpacity) * w;
+          const ov = o < 0.9995 ? o.toFixed(3) : "";
+          if (items[i].style.opacity !== ov) items[i].style.opacity = ov;
+        }
+        if (scaleVar) {
+          const host = items[i].parentElement;
+          if (host && host !== list) host.style.setProperty(scaleVar, s.toFixed(4));
+        }
+        if (w > bestW) { bestW = w; best = i; }
+      }
+      // Lift only the centred card above its neighbours. z-index is not a
+      // compositor property, so write it only when the centre changes — not
+      // every frame, which would invite flicker.
+      if (best !== lifted) {
+        if (lifted >= 0 && items[lifted]) items[lifted].style.zIndex = "";
+        if (best >= 0 && items[best]) items[best].style.zIndex = "2";
+        lifted = best;
+      }
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      rafId = requestAnimationFrame(paint);
+    }
+
+    function onResize() { measure(); schedule(); }
+
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
+    if (mq.addEventListener) mq.addEventListener("change", schedule);
+
+    measure();
+    schedule();
+
+    return {
+      refresh() { measure(); schedule(); },
+      destroy() {
+        window.removeEventListener("scroll", schedule);
+        window.removeEventListener("resize", onResize);
+        if (mq.removeEventListener) mq.removeEventListener("change", schedule);
+        if (rafId) cancelAnimationFrame(rafId);
+        clearAll();
+        items = []; centers = [];
+      },
+    };
   }
 
   // ---- public API ----------------------------------------------------
@@ -452,5 +652,7 @@
     vignette,
     confetti,
     railExtend,
+    railGlow,
+    focusScale,
   };
 })();

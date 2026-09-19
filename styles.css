@@ -87,7 +87,7 @@ body.busy, body.busy * { cursor: var(--cur-wait) !important; }
 button:focus-visible,
 a:focus-visible,
 select:focus-visible,
-.tl-event:focus-visible { box-shadow: var(--focus-ring); }
+.tl-event:focus-visible > .tl-card { box-shadow: var(--focus-ring); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -177,7 +177,12 @@ html, body {
   transition: border-color var(--t) ease, transform var(--t) ease;
 }
 .icon-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
-.icon-btn .ico { display: block; }
+.icon-btn .ico { display: block; fill: currentColor; }
+/* Appbar controls sit over the busy photo — lighter glass + white glyphs. */
+.appbar .icon-btn {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.08));
+  color: #fff;
+}
 .music-btn.off { opacity: 0.45; }
 .vol-slider { width: 72px; accent-color: var(--accent); cursor: var(--cur-hand); }
 .bg-music { display: none; }
@@ -280,10 +285,18 @@ html, body {
 /* ---------- TIMELINE ---------- */
 .timeline-wrap { margin: 4px 0; }
 .timeline { list-style: none; margin: 0; padding: 0 0 0 28px; display: flex; flex-direction: column; gap: 0; }
-.tl-event {
+/* Card skin lives on an inner wrapper (.tl-card) so FX.focusScale can scale
+   the card without moving the rail node/connector or the fact-sheet popover,
+   both of which stay on the untransformed .tl-event layout box. Scaled about
+   the centre so it enlarges symmetrically; the gutter is wide enough (19px)
+   that a ~7px leftward travel never reaches the rail. */
+.tl-event { position: relative; }
+.tl-card {
   display: flex; align-items: center; gap: 12px;
   background: var(--card); border: 1px solid var(--border);
   border-radius: 12px; padding: 12px 16px;
+  position: relative;
+  transform-origin: center center;
 }
 .tl-event--entering {
   transform-origin: top center;
@@ -293,7 +306,7 @@ html, body {
   from { opacity: 0; transform: scaleY(0); }
   to   { opacity: 1; transform: scaleY(1); }
 }
-.tl-event.anchor,
+.tl-event.anchor > .tl-card,
 .result-timeline .anchor { border-color: #3a4d74; background: linear-gradient(135deg, #1b2740, #1c2330); }
 .tl-emoji { font-size: 1.4rem; }
 .tl-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -304,16 +317,16 @@ html, body {
   /* Placed-card state, shared by the game timeline and the results page.
      Green = first-try clean. Dashed border escalates amber → orange → red
      with the number of slips (color + border style, never color-only). */
-  .placed-clean,
+  .tl-event.placed-clean > .tl-card,
   .result-timeline .placed-clean { box-shadow: 0 0 0 1px var(--good) inset; }
-  .placed-slipped,
+  .tl-event.placed-slipped > .tl-card,
   .result-timeline .placed-slipped {
     border-style: dashed; border-color: var(--warn);
     box-shadow: 0 0 0 1px rgba(210, 153, 34, 0.45) inset;
   }
-  .slip-2,
+  .tl-event.slip-2 > .tl-card,
   .result-timeline .slip-2 { border-color: #f0883e; box-shadow: 0 0 0 1px rgba(240, 136, 62, 0.5) inset; }
-  .slip-3,
+  .tl-event.slip-3 > .tl-card,
   .result-timeline .slip-3 { border-color: var(--bad); box-shadow: 0 0 0 1px rgba(248, 81, 73, 0.55) inset; }
 
  /* fact-sheet: subtle ? toggle + hover/tap popover table */
@@ -326,7 +339,6 @@ html, body {
  .fact-toggle:hover, .fact-toggle:focus-visible {
    background: var(--accent); color: #0b0e14; border-color: var(--accent);
  }
- .tl-event { position: relative; }
   .fact-sheet {
     display: none; position: absolute; left: calc(100% + 12px); top: 8px; z-index: 30;
     width: min(340px, 86vw); padding: 10px 12px; border-radius: 12px;
@@ -346,7 +358,189 @@ html, body {
    content: ""; position: absolute;
    left: -14px; top: 0; bottom: 0; width: 14px;
  }
- .fs-rows { display: flex; flex-direction: column; gap: 6px; }
+  .fs-rows { display: flex; flex-direction: column; gap: 6px; }
+  .fs-summary {
+    margin: 0 0 8px; padding-bottom: 8px;
+    font-size: 0.82rem; line-height: 1.45; color: var(--text);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ---- Story panel: the fact-sheet window, grown -----------------------------
+     It is the SAME window the tooltip was: it opens at the fact sheet's rect and
+     its box (left/top/width/height) animates to full screen. Animating the box —
+     not a transform or clip-path — is what reflows the text as it widens. A
+     native <dialog> gives focus containment / inert / Escape / top-layer. */
+  .story-takeover {
+    position: fixed; inset: auto; margin: 0; padding: 0;
+    max-width: none; max-height: none; border: none; overflow: hidden;
+    color: var(--text);
+    /* Same glass as the result cards and the fact-sheet tooltip — never opaque. */
+    background: linear-gradient(160deg, var(--glass-tint), rgba(14, 22, 42, 0.45));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    border-radius: 0;
+    transition:
+      left 340ms cubic-bezier(0.2, 0, 0, 1),
+      top 340ms cubic-bezier(0.2, 0, 0, 1),
+      width 340ms cubic-bezier(0.2, 0, 0, 1),
+      height 340ms cubic-bezier(0.2, 0, 0, 1),
+      border-radius 340ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  /* Start state: dressed as the tooltip window it grows out of. */
+  .story-takeover.is-morph {
+    border-radius: 14px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  }
+  .story-takeover.is-morph .story-scroll { padding: 0.7rem 0.85rem; max-width: none; }
+  .story-takeover.is-morph .story-deep { opacity: 0; }
+  .story-takeover.is-morph .story-back { opacity: 0; }
+  .story-takeover::backdrop { background: rgba(0, 0, 0, 0.6); }
+  /* Lock the page behind the modal, so wheel/touch scroll can't move the game. */
+  html:has(dialog.story-takeover[open]) { overflow: hidden; scrollbar-gutter: stable; }
+  .story-scroll {
+    height: 100%; overflow-y: auto;
+    /* Full width, so a scroll gesture anywhere on the panel scrolls the panel —
+       the reading column is constrained *inside* it, not by the scroller. */
+    padding: 4.25rem 1.25rem 6rem;
+    scroll-padding-block-end: 5rem;
+    overscroll-behavior: contain; /* never chain the scroll to the page behind */
+    transition: padding 340ms cubic-bezier(0.2, 0, 0, 1);
+    -webkit-overflow-scrolling: touch;
+  }
+  .story-col { max-width: 62ch; margin: 0 auto; }
+  .story-deep { transition: opacity 220ms ease-out 120ms; }
+  /* ---- The story block -------------------------------------------------------
+     The rule marks ONLY the story prose, so the section's labels sit cleanly
+     above it; the relationship reads as an oval label (the panel-badge treatment). */
+  .story-body .story-block { margin-top: 1.9rem; }
+  .story-body .story-heading {
+    margin: 0 0 0.4rem;
+    font-size: 0.78rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text);
+  }
+  .story-body .story-rel {
+    display: inline-block; margin: 0 0 0.9rem; padding: 3px 11px;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em;
+    color: var(--text); background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--glass-rim); border-radius: 999px;
+  }
+  /* Fiction must announce itself — the one case the label is a warning. */
+  .story-body .story-rel--disclosure {
+    color: var(--warn); border-color: var(--warn); background: rgba(255, 190, 90, 0.12);
+  }
+  .story-body .story-text {
+    margin: 0; padding: 0;
+  }
+  /* Web convention: separate paragraphs with whitespace, never a first-line indent.
+     The gap must clearly exceed the leading inside a paragraph (1.65), so use 1.25em
+     (the long-form end of the 1–1.5em guidance) rather than the 1em minimum. */
+  .story-body .story-text + .story-text { margin-top: 1.25em; }
+  /* The rule wraps the story content — prose + its own "what's real" disclosure —
+     so the disclosure sits inside the lined section, not after the details. */
+  .story-body .story-ruled {
+    padding-left: 1.05rem;
+    border-left: 3px solid var(--accent);
+  }
+  .story-body .details-block { margin-top: 1.6rem; }
+  .story-whatreal { margin-top: 0.5rem; font-size: 0.9rem; }
+  .story-whatreal summary { cursor: var(--cur-hand); color: var(--accent); }
+  .story-whatreal p { margin-top: 0.5rem; color: var(--muted); }
+  /* ---- Sources & attribution: one table, titled by the relationship ---- */
+  .story-sources {
+    margin-top: 2rem; padding-top: 0.9rem;
+    border-top: 1px solid var(--border);
+  }
+  .sources-title {
+    margin: 0 0 0.5rem; font-size: 0.78rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);
+  }
+  .story-sources table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .story-sources th {
+    text-align: left; padding: 0 0 0.4rem; font-size: 0.68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .story-sources td { padding: 0.55rem 0; vertical-align: top; color: var(--muted); }
+  .story-sources td + th, .story-sources td + td { padding-left: 1rem; }
+  .story-sources tbody tr + tr td { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+  .story-sources th:last-child, .story-sources td:last-child { width: 34%; }
+  .story-sources .src-cite { color: var(--text); }
+  .story-sources a { color: var(--accent); }
+  /* The changes line: CC's "indicate if changes were made", closing the
+     attribution. Close to the sources it belongs to — not a footnote marker. */
+  .story-body .story-changed {
+    margin: 0.75rem 0 0;
+    font-size: 0.8rem; color: var(--muted);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 0.6rem;
+  }
+  /* Stack on narrow screens — a three-col table is cramped on a phone. */
+  @media (max-width: 640px) {
+    .story-sources thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .story-sources tr { display: block; padding: 0.5rem 0; }
+    .story-sources tr + tr { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+    .story-sources td { display: block; padding: 0; }
+    .story-sources td + td { padding-left: 0; margin-top: 0.35rem; }
+    .story-sources td.src-used::before { content: "Used for: "; color: var(--muted); }
+  }
+  .story-title { font-size: 1.5rem; line-height: 1.25; margin: 0 0 1rem; }
+  .story-title:focus { outline: none; }
+  .story-body p { margin: 0 0 1rem; font-size: 1.02rem; line-height: 1.65; }
+  .story-body h3 {
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted); margin: 1.75rem 0 0.5rem;
+  }
+  .story-src {
+    margin-top: 2rem; padding-top: 0.75rem; border-top: 1px solid var(--border);
+    font-size: 0.82rem; color: var(--muted);
+  }
+  .story-src a { color: var(--accent); }
+  /* The formal credit (creator + work + licence) sits tight under the citation. */
+  .story-credit { margin: 0.15rem 0 0; font-size: 0.76rem; color: var(--muted); }
+  .story-back {
+    position: absolute; top: 12px; left: 12px; z-index: 2;
+    padding: 8px 14px; font: inherit; font-size: 0.9rem; cursor: pointer;
+    color: var(--text); background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border); border-radius: 999px;
+    transition: opacity 200ms ease-out, background 160ms ease-out;
+  }
+  .story-back:hover { background: rgba(255, 255, 255, 0.15); }
+  .story-back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* "Read the Story" — an explicit, labelled affordance. A trailing ARROW, not a
+     caret: the caret means "this expands in place", but this opens a separate
+     window. The control is the tap target and is >=44px tall, so it works on
+     touch where a cursor cannot help; the hand cursor is only a desktop extra. */
+  .fs-learn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; min-height: 44px; margin: 10px 0 2px; padding: 10px 14px;
+    font: inherit; font-size: 0.9rem; font-weight: 600;
+    cursor: var(--cur-hand); color: #fff; background: var(--accent);
+    border: none; border-radius: 10px;
+  }
+  .fs-learn:hover { filter: brightness(1.08); }
+  .fs-learn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .fs-learn-arrow { font-size: 0.95em; transition: transform 160ms ease; }
+  .fs-learn:hover .fs-learn-arrow { transform: translateX(3px); }
+  @media (prefers-reduced-motion: reduce) {
+    .fs-learn-arrow { transition: none; }
+    .fs-learn:hover .fs-learn-arrow { transform: none; }
+    .story-takeover, .story-scroll, .story-back, .story-deep { transition: none; }
+  }
+  /* Back button: top-left on desktop, a thumb-friendly bottom bar on mobile */
+  @media (max-width: 640px) {
+    .story-back {
+      position: fixed; top: auto; left: 0; right: 0; bottom: 0;
+      border-radius: 0; border-left: none; border-right: none; border-bottom: none;
+      border-top: 1px solid var(--border);
+      background: var(--bg-2);
+      padding: 15px; font-size: 1rem; text-align: center;
+    }
+    .story-scroll { padding-bottom: 5.5rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .story-takeover { transition: none; }
+  }
   .fs-title {
     color: #fff;
     font-size: 0.9rem;
@@ -370,7 +564,10 @@ html, body {
   display: flex; align-items: center; justify-content: center;
   height: 40px; border: 1px dashed var(--border); border-radius: 10px;
   color: var(--muted); font-size: 0.82rem; letter-spacing: 1px;
-  cursor: var(--cur-hand); transition: all 0.12s ease; background: transparent;
+  cursor: var(--cur-hand); background: transparent;
+  /* Exclude transform from the transition: FX.focusScale drives scale every
+     scroll frame, and a transition on `all` would smear/lag it. */
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
 }
 .gap:hover, .gap:focus-visible {
   border-color: var(--accent); color: var(--accent);
@@ -519,7 +716,6 @@ html, body {
 }
 
 /* ---------- HUB: deck grid ---------- */
-.hub-prompt { text-align: center; color: var(--muted); margin: 18px 0 10px; font-size: 0.9rem; letter-spacing: 1px; }
 .deck-grid { display: grid; gap: 14px; margin: 8px 0 26px; }
 .deck-card { text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; color: var(--text); cursor: var(--cur-hand); display: flex; flex-direction: column; gap: 4px; transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease; }
 .deck-card:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: var(--shadow); }
@@ -586,7 +782,7 @@ html, body {
 }
 /* Timeline / results cards: glass background only — border + box-shadow stay
    owned by the state rules (clean / slipped / anchor). */
-.tl-event, .result-timeline li {
+.tl-event > .tl-card, .result-timeline li {
   background: linear-gradient(160deg, var(--glass-tint), rgba(14, 22, 42, 0.45));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
@@ -616,15 +812,15 @@ html, body {
 }
 .filter-chip.sel { background: rgba(110, 168, 254, 0.18); border-color: var(--accent); color: var(--accent); }
 /* Re-assert anchor identity over the glass backgrounds. */
-.tl-event.anchor, .result-timeline .anchor {
+.tl-event.anchor > .tl-card, .result-timeline .anchor {
   background: linear-gradient(135deg, #1b2740, #1c2330);
 }
 
 /* Mouse-tracked specular sheen on frosted surfaces. */
-.card:hover::after, .deck-card:hover::after, .tl-event:hover::after,
+.card:hover::after, .deck-card:hover::after, .tl-event:hover > .tl-card::after,
 .result-timeline li:hover::after, .settings-group:hover::after,
 .filter-group:hover::after, .appbar:hover::after { opacity: 1; }
-.card::after, .deck-card::after, .tl-event::after, .result-timeline li::after,
+.card::after, .deck-card::after, .tl-event > .tl-card::after, .result-timeline li::after,
 .settings-group::after, .filter-group::after, .appbar::after {
   content: ""; position: absolute; inset: 0; border-radius: inherit;
   pointer-events: none; mix-blend-mode: screen;
@@ -647,26 +843,28 @@ html, body {
 
 /* Fallbacks: no backdrop-filter support, or user prefers reduced transparency. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .card, .deck-card, .tl-event, .result-timeline li, .settings-group, .filter-group,
+  .card, .deck-card, .tl-event > .tl-card, .result-timeline li, .settings-group, .filter-group,
   .browse-list, .appbar, .btn, .icon-btn, .mode-btn, .count-select, .modal-card,
-  .prompt-card, .filter-chip, .btn--primary, .mode-btn.sel, .card--primary {
+  .prompt-card, .filter-chip, .btn--primary, .mode-btn.sel, .card--primary,
+  .fact-sheet, .story-takeover {
     background: var(--card);
     -webkit-backdrop-filter: none; backdrop-filter: none;
   }
   .btn--primary, .mode-btn.sel { background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
-  .card::after, .deck-card::after, .tl-event::after, .result-timeline li::after,
+  .card::after, .deck-card::after, .tl-event > .tl-card::after, .result-timeline li::after,
   .settings-group::after, .filter-group::after, .appbar::after { content: none; }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .card, .deck-card, .tl-event, .result-timeline li, .settings-group, .filter-group,
+  .card, .deck-card, .tl-event > .tl-card, .result-timeline li, .settings-group, .filter-group,
   .browse-list, .appbar, .btn, .icon-btn, .mode-btn, .count-select, .modal-card,
-  .prompt-card, .filter-chip, .btn--primary, .mode-btn.sel, .card--primary {
+  .prompt-card, .filter-chip, .btn--primary, .mode-btn.sel, .card--primary,
+  .fact-sheet, .story-takeover {
     background: var(--card);
     -webkit-backdrop-filter: none; backdrop-filter: none;
     box-shadow: var(--shadow);
   }
   .btn--primary, .mode-btn.sel { background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
-  .card::after, .deck-card::after, .tl-event::after, .result-timeline li::after,
+  .card::after, .deck-card::after, .tl-event > .tl-card::after, .result-timeline li::after,
   .settings-group::after, .filter-group::after, .appbar::after { content: none; }
 }
 
@@ -738,8 +936,6 @@ html, body {
 .settings-row-controls .btn--small:hover { background: var(--accent); color: #fff; }
 
 /* ================= USERS / STATS / FOCUS ================= */
-.playing-as { text-align: center; color: var(--muted); font-size: 0.85rem; margin: 2px 0 0; }
-.playing-as b { color: var(--text); }
 
 .user-avatar {
   display: inline-flex; align-items: center; justify-content: center;
@@ -868,8 +1064,8 @@ html, body {
 
 /* Print: a clean, readable progress report */
 @media print {
-  .appbar, .deck-chips, .mini-btn, .modal, #focus-panel, .playing-as,
-  .stats-danger, .hub-prompt, .deck-grid, .scroll-frame { display: none !important; }
+  .appbar, .deck-chips, .mini-btn, .modal, #focus-panel,
+  .stats-danger, .deck-grid, .scroll-frame { display: none !important; }
   html, body { background: #fff !important; }
   #stats-body {
     background: #fff !important;
@@ -1091,11 +1287,16 @@ body.dock-active #results { padding-bottom: 116px; }
   transition: top 0.35s ease, bottom 0.35s ease;
 }
 /* Horizontal connector: from the rail's right edge to the card's left edge.
-   Rail spans x=7..9 from the ol border; the card starts at x=28, so the
-   stub runs x=-19..0 relative to the card. */
+   Rail spans x=7..9 from the ol border; the card starts at x=28, so the stub
+   runs x=-19..0 relative to the card. The width tracks the card's scroll-linked
+   scale (--fs, published by FX.focusScale): a centre-origin scale moves the
+   card's visual left edge to (1 - --fs)/2 x width from its layout edge, so the
+   stub must shorten when the card enlarges and lengthen when it shrinks —
+   otherwise the enlarged centre swallows it and the shrunk edges detach. */
 .tl-event::before {
   content: ""; position: absolute; left: -19px; top: 50%;
-  width: 19px; height: 2px;
+  width: calc(19px + (1 - var(--fs, 1)) * 50%);
+  height: 2px;
   background: rgba(255, 255, 255, 0.45);
   transform: translateY(-50%);
   pointer-events: none;
@@ -1140,3 +1341,17 @@ body.dock-active #results { padding-bottom: 116px; }
   from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+
+/* Disclosure box — after the story, never inside it. See CONTENT_PIPELINE §disclosure. */
+.story-disclosure {
+  margin: 1.4rem 0 0.4rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line, rgba(255,255,255,0.18));
+  border-left: 3px solid var(--accent, #c9a227);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+}
+.story-disclosure .disclosure-title { margin: 0 0 0.5rem; font-size: 0.95rem; letter-spacing: 0.01em; }
+.story-disclosure p { margin: 0.35rem 0; font-size: 0.9rem; line-height: 1.5; opacity: 0.9; }
+.story-disclosure .disclosure-changed { font-size: 0.82rem; opacity: 0.68; font-style: italic; }

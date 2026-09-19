@@ -182,7 +182,7 @@
     const letter = (u.name.trim()[0] || "?").toUpperCase();
     const showAvatar = !isDefaultName(u.name);
     document.querySelectorAll(".user-btn").forEach((btn) => {
-      const icon = btn.querySelector(".user-icon");
+      const icon = btn.querySelector(".ico");
       const av = btn.querySelector(".appbar-avatar");
       if (!icon || !av) return;
       if (showAvatar) {
@@ -556,7 +556,7 @@
       syncGameMusic(); // game screen swaps to game music; elsewhere resumes main
       initGlassOnScreen(); // glass newly-visible controls
       // Rail bounds need a visible screen (offsetTop is 0 while hidden).
-      if (name === "game") updateRail();
+      if (name === "game") { updateRail(); refreshFocusScale(); }
       // Dock globe lives on setup/game/results only (its mode-setting calls
       // handle visibility); leaving those screens hides + pauses it.
       if (window.GlobeDock && name !== "setup" && name !== "game" && name !== "results") {
@@ -1027,8 +1027,6 @@
     });
 
     // Active user + focus options (only once this user has finished a run).
-    const u = activeUser();
-    $("playing-as").innerHTML = `Playing as <b>${escapeHtml(u.name)}</b>`;
     updateAppbarAvatars();
     renderFocusPanel();
 
@@ -1691,6 +1689,35 @@
     }
   }
 
+  // Scroll-linked focus scale: cards and placement slots nearest the viewport
+  // centre render slightly larger (1.025x) and ease down to 0.975x at the
+  // top/bottom threshold. Scale-only, so glyphs keep their shape and nothing
+  // reflows; the .tl-card is transformed symmetrically about its centre
+  // (leaving the rail, node dots, connectors and the fact-sheet popover
+  // untouched) and the .gap slots scale with the same falloff. The reusable
+  // controller lives in FX.focusScale — created lazily, then refreshed after
+  // every rebuild and whenever the game screen becomes visible (measurement
+  // needs a laid-out, visible list).
+  let focusScaleCtl = null;
+  function refreshFocusScale() {
+    const tl = $("timeline");
+    if (!tl || !window.FX || typeof window.FX.focusScale !== "function") return;
+    if (!focusScaleCtl) {
+      focusScaleCtl = window.FX.focusScale(tl, {
+        selector: ".tl-event > .tl-card, .gap",
+        peak: 1.05,              // scale at the viewport centre
+        edge: 0.95,              // scale at the top/bottom threshold
+        curve: "sphere",         // constant-curvature dome: a broad arc, not a highlight
+        minOpacity: 0.9,         // light fade at the thresholds (no vignette/spotlight)
+        origin: "center center", // grow symmetrically
+        scaleVar: "--fs",        // publishes the scale so the rail stub tracks the card
+        disabledWhen: () => screens.game.classList.contains("hidden"),
+      });
+    } else {
+      focusScaleCtl.refresh();
+    }
+  }
+
   function renderGame() {
     // Cards are being rebuilt — clear any stale hover state.
     if (hoverDebounceTimer) clearTimeout(hoverDebounceTimer);
@@ -1743,6 +1770,9 @@
     // Animate the extension only when a card was just placed (roundIndex
     // advanced); the first deal draws in via the CSS rail-draw animation.
     if (!screens.game.classList.contains("hidden")) updateRail(game.roundIndex > 0);
+    // (Re)fit the focus scale to the rebuilt list. No-op while the screen is
+    // hidden (rects are 0); show() refreshes once it is laid out.
+    refreshFocusScale();
 
     // Dock globe: placed markers coloured by outcome, current prompt on top.
     if (window.GlobeDock) {
@@ -1771,7 +1801,13 @@
   // Structured "fact sheet" table (Who / Where / Why it matters) + a mini map.
   // includeMap is skipped on the Browse list (which can be ~160 items) to avoid
   // spinning up that many Leaflet instances at once.
+  // Optional post-placement "learn more" prose. Shown only where the fact
+  // sheet is (all post-reveal surfaces), so a year here does not leak the
+  // answer; it is never narrated. Absent on most events and on imported decks.
   function factSheetHtml(e, includeMap = true) {
+    const summary = e.summary
+      ? `<p class="fs-summary">${escapeHtml(e.summary)}</p>`
+      : "";
     const rows =
       factRow("Who", e.who) +
       factRow("Where", e.where) +
@@ -1786,8 +1822,282 @@
           `data-area="${e.area || ""}"></div>`;
       }
     }
-    const body = rows + mapHtml;
+    const body = summary + rows + mapHtml;
     return body ? `<div class="fs-rows">${body}</div>` : "";
+  }
+
+  // "Read the Story" opens a SEPARATE window, so it must not use a caret: a
+  // caret signals "this element expands in place" (NN/g), and on a button it
+  // signals "opens a menu". A labelled button with a trailing arrow is the
+  // honest signifier for "open/go", and aria-haspopup tells AT it opens a
+  // dialog. It is deliberately NOT placed inside a fact sheet — those are
+  // role="tooltip", which must not contain interactive content. The accessible
+  // name carries the event title so repeated controls on a list stay distinct.
+  function learnBtnHtml(e) {
+    if (!e || !e.story) return "";
+    return (
+      `<button type="button" class="fs-learn" data-story="${escapeHtml(e.id)}"` +
+      ` aria-haspopup="dialog" aria-controls="story-modal"` +
+      ` aria-label="Read the story: ${escapeHtml(e.title)}">` +
+      `Read the Story <span class="fs-learn-arrow" aria-hidden="true">&#8594;</span></button>`
+    );
+  }
+
+  // ---- story takeover (native <dialog>) --------------------------------
+  // "Read the Story" opens the deep layer: the fact sheet stays put, with the
+  // narrative and the deeper details revealed underneath. showModal() gives
+  // focus containment, an inert background, Escape and top-layer stacking for
+  // free; we add deliberate initial focus and a short fade.
+  function findEventById(id) {
+    const decks = window.DECKS || [];
+    for (let i = 0; i < decks.length; i++) {
+      const ev = (decks[i].events || []).find((x) => x.id === id);
+      if (ev) return ev;
+    }
+    return null;
+  }
+
+  // One statement per story, made where the story is. It names the relationship
+  // AND points at the evidence. (A panel-level badge proved redundant — the fact
+  // sheet is not the story — and it mislabelled the factual sections above it.)
+  const STORY_SOURCES = {
+    retold: { title: "Retold from" },
+    adapted: { title: "Adapted from" },
+    abridged: { title: "Abridged from" },
+    paraphrased: { title: "Paraphrased from" },
+    summarised: { title: "Summarised from" },
+    translated: { title: "Translated from" },
+    quoted: { title: "Quoted from" },
+    invented: { title: "An imagined story, based on", disclosure: true },
+    original: { title: "Written for this game", standalone: true },
+  };
+  const STORY_SOURCE_DEFAULT = { title: "From" };
+
+  // Rows: prefer the structured `sources[]`; fall back to a lone `source`.
+  function storySources(e) {
+    if (Array.isArray(e.sources) && e.sources.length) return e.sources;
+    return e.source ? [e.source] : [];
+  }
+
+  function storyRelText(e) {
+    const meta = STORY_SOURCES[e.storySource] || STORY_SOURCE_DEFAULT;
+    if (meta.standalone) return meta.title;
+    return storySources(e).length ? `${meta.title} the sources below` : "";
+  }
+
+  function sourceHref(s) {
+    // Cite the exact revision we pinned where the source is versioned — a link the
+    // reader can check and that can't drift.
+    if (s.url && s.revision && s.url.includes("/wiki/")) {
+      return s.url.replace("/wiki/", "/w/index.php?title=") + "&oldid=" + encodeURIComponent(s.revision);
+    }
+    return s.url || "";
+  }
+
+  // The citation cell: author, 'title', publisher · revision · licence (CC's TASL).
+  function sourceCiteHtml(s) {
+    const name = s.name || s.title || s.url || "source";
+    const href = sourceHref(s);
+    const title = s.title ? `'${escapeHtml(s.title)}'` : escapeHtml(name);
+    const link = href
+      ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${title}</a>`
+      : title;
+    const bits = [];
+    if (s.author) bits.push(escapeHtml(s.author));
+    bits.push(link);
+    if (s.publisher) bits.push(escapeHtml(s.publisher));
+    let out = bits.join(", ");
+    const tail = [];
+    if (s.revision) tail.push(`revision ${escapeHtml(s.revision)}`);
+    if (s.license) tail.push(escapeHtml(s.license));
+    if (tail.length) out += ` · ${tail.join(" · ")}`;
+    return out;
+  }
+
+  // One table, two columns: Source | Used for. The title is neutral because these
+  // sources back the whole panel (summary, story AND details) — the relationship
+  // is stated with the story, where it belongs. The changes line closes the
+  // attribution: it is a statement about the ADAPTATION, so it stays one line
+  // however many sources the table lists (CC's "indicate if changes were made").
+  function sourcesHtml(e) {
+    const rows = storySources(e);
+    if (!rows.length) return "";
+    const body = rows
+      .map(
+        (s) =>
+          `<tr><td class="src-cite">${sourceCiteHtml(s)}</td>` +
+          `<td class="src-used">${escapeHtml(s.usedFor || s.note || "")}</td></tr>`,
+      )
+      .join("");
+    return (
+      `<section class="story-sources">` +
+      `<h3 class="sources-title">Sources</h3>` +
+      `<table><thead><tr><th>Source</th><th>Used for</th></tr></thead><tbody>${body}</tbody></table>` +
+      `</section>`
+    );
+  }
+
+  function storyHtml(e) {
+    // The fact sheet itself stays in place — the same summary / who / where /
+    // why (and map) that the tooltip shows …
+    let html = factSheetHtml(e);
+    // … with the deep layer appended beneath it. The story is set apart by a rule
+    // down its left side and carries its own statement of what it is — a panel-level
+    // badge would sit above the factual sections and mislabel them.
+    html += `<div class="story-deep">`;
+    if (e.story) {
+      const meta = STORY_SOURCES[e.storySource] || STORY_SOURCE_DEFAULT;
+      const rel = storyRelText(e);
+      html += `<section class="story-block">`;
+      html += `<h3 class="story-heading">The Story</h3>`;
+      // The rule wraps the story CONTENT — the prose and its own disclosure — with
+      // the section's labels sitting above it, unruled.
+      html += `<div class="story-ruled">`;
+      // The story is stored as one string; a blank line separates paragraphs, so it
+      // renders as prose rather than a wall of text. Narrative paragraphing: a new
+      // beat, speaker, actor, or shift in time/place starts a new paragraph.
+      html += String(e.story)
+        .split(/\n\s*\n+/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map((p) => `<p class="story-text">${escapeHtml(p)}</p>`)
+        .join("");
+      html += `</div>`;
+      // The disclosure is a BOX after the story, not prose inside it (2026-09-14).
+      // Plain disclosure demonstrably fails to stop fiction leaking into memory as
+      // fact (Green & Brock 2000; Marsh & Fazio 2006) — and where it goes is not
+      // neutral: the only clean timing result favours disclosing AFTER exposure over
+      // labelling before it (Brashier, PNAS 2021). Museum practice puts a terse
+      // identity label adjacent to the object; children's fact/fiction hybrids put the
+      // substantive note in back matter. Hence: one box, adjacent, after the prose,
+      // assembled from fields — so it is written once and rendered identically every
+      // time instead of being re-voiced in prose by each drafter.
+      const disclosure = rel || e.storyNote || e.changed;
+      if (disclosure) {
+        html +=
+          `<section class="story-disclosure">` +
+          `<h3 class="disclosure-title">What's real in this story</h3>` +
+          (rel ? `<p class="disclosure-line">${escapeHtml(rel)}</p>` : "") +
+          (e.storyNote ? `<p class="disclosure-note">${escapeHtml(e.storyNote)}</p>` : "") +
+          (e.changed ? `<p class="disclosure-changed">Changes: ${escapeHtml(e.changed)}</p>` : "") +
+          `</section>`;
+      }
+      html += `</section>`;
+    }
+    if (e.details) {
+      html +=
+        `<section class="details-block"><h3 class="story-heading">More details</h3>` +
+        `<p>${escapeHtml(e.details)}</p></section>`;
+    }
+    html += sourcesHtml(e);
+    html += `</div>`;
+    return html;
+  }
+
+  // ---- expansion motion -------------------------------------------------
+  // The panel IS the window the tooltip was: it opens at the fact sheet's exact
+  // rect and animates its LEFT/TOP/WIDTH/HEIGHT to full screen. Animating the
+  // box (not transform / clip-path) is what makes the text reflow as the window
+  // widens. A native <dialog> supplies focus containment, an inert background,
+  // Escape and top-layer stacking for free.
+  const STORY_MOTION = 340;
+  let storyOriginEl = null;  // the tooltip window we grew out of
+  let storyOriginBox = null; // its rect, captured at open (the element may detach)
+
+  function prefersReduced() {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function boxOf(r) {
+    return r
+      ? { left: Math.round(r.left), top: Math.round(r.top), width: Math.round(r.width), height: Math.round(r.height) }
+      : null;
+  }
+
+  // The fact-sheet window the trigger belongs to — the thing that expands.
+  function storyOriginSheetFor(el) {
+    if (!el || !el.closest) return null;
+    const floating = document.querySelector(".fact-sheet.tl-hover");
+    if (floating && floating.isConnected) return floating;
+    const scope = el.closest(".tl-event, .rt-info, li") || document;
+    const sheet = scope.querySelector ? scope.querySelector(".fact-sheet, .fs-rows") : null;
+    if (sheet) {
+      const r = sheet.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) return sheet;
+    }
+    return null;
+  }
+
+  function placeAtBox(dlg, box) {
+    dlg.classList.add("is-morph");
+    dlg.style.left = box.left + "px";
+    dlg.style.top = box.top + "px";
+    dlg.style.width = box.width + "px";
+    dlg.style.height = box.height + "px";
+  }
+
+  function placeFull(dlg) {
+    dlg.classList.remove("is-morph");
+    dlg.style.left = "0px";
+    dlg.style.top = "0px";
+    dlg.style.width = "100vw";
+    dlg.style.height = "100vh";
+  }
+
+  function openStory(e, triggerEl) {
+    const dlg = $("story-modal");
+    if (!dlg || typeof dlg.showModal !== "function" || !e) return;
+
+    const sheet = storyOriginSheetFor(triggerEl);
+    storyOriginEl = sheet;
+    const box = boxOf(sheet ? sheet.getBoundingClientRect() : triggerEl && triggerEl.getBoundingClientRect());
+    storyOriginBox = box;
+
+    $("story-title").textContent = e.title || "Story";
+    $("story-body").innerHTML = storyHtml(e);
+
+    const animate = !!box && !prefersReduced();
+    if (animate) {
+      placeAtBox(dlg, box); // begin as the tooltip window
+      if (sheet) sheet.style.visibility = "hidden"; // never two windows at once
+    } else {
+      placeFull(dlg);
+    }
+
+    dlg.showModal();
+    initAllFactMaps(dlg); // the retained fact sheet carries its own mini-map
+    // Deliberate initial focus: the heading, so the panel is read from the top
+    // (never the close button, which is not even first in the tab order).
+    const title = $("story-title");
+    if (title) title.focus({ preventScroll: true });
+    const scroller = $("story-scroll");
+    if (scroller) scroller.scrollTop = 0;
+
+    if (animate) {
+      void dlg.offsetWidth; // flush the "start" geometry so the transition runs
+      requestAnimationFrame(() => placeFull(dlg));
+    }
+  }
+
+  function closeStory() {
+    const dlg = $("story-modal");
+    if (!dlg || !dlg.open) return;
+
+    const finish = () => {
+      if (storyOriginEl) storyOriginEl.style.visibility = "";
+      storyOriginEl = null;
+      storyOriginBox = null;
+      if (dlg.open) dlg.close();
+    };
+
+    if (prefersReduced() || !storyOriginBox) { finish(); return; }
+
+    // Shrink back to the tooltip window, then close.
+    let done = false;
+    const once = () => { if (!done) { done = true; finish(); } };
+    dlg.addEventListener("transitionend", once, { once: true });
+    setTimeout(once, STORY_MOTION + 120); // safety net
+    placeAtBox(dlg, storyOriginBox);
   }
 
   // ---- mini map (Leaflet + a tile-free Natural Earth land outline) ----
@@ -1933,8 +2243,13 @@
       (id, i) => id !== e.id && sortYearOf(eventById(ui.deck, id)) === sortYearOf(e)
     );
     const sheet = factSheetHtml(e);
+    // .tl-event is the untransformed layout box (rail node + connector + the
+    // fact-sheet popover live here); the card skin and its contents are the
+    // inner .tl-card, which is what FX.focusScale scales — so the rail and the
+    // popover never move or resize with the scroll-linked focus effect.
     li.innerHTML =
       `<span class="tl-node" aria-hidden="true"></span>` +
+      `<div class="tl-card">` +
       `<span class="tl-emoji">${e.emoji || "📌"}</span>` +
       `<div class="tl-info">` +
       `<span class="tl-title">${escapeHtml(e.title)}</span>` +
@@ -1942,12 +2257,14 @@
         ? (fmtYears(e) ? `<span class="tl-year">${fmtYears(e)}</span>` : "") +
           `<span class="tl-fact">${escapeHtml(revealed)}</span>` +
           (sheet
-            ? `<button class="fact-toggle" type="button" aria-label="Show fact sheet" aria-expanded="false">❔</button>` +
-              `<div class="fact-sheet" role="tooltip">${sheet}</div>`
+            ? `<button class="fact-toggle" type="button" aria-label="Show fact sheet" aria-expanded="false">❔</button>`
             : "") +
-          (sameYearNeighbor ? `<span class="same-year-note">shares a year with a neighbor</span>` : "")
+          (sameYearNeighbor ? `<span class="same-year-note">shares a year with a neighbor</span>` : "") +
+          learnBtnHtml(e)
         : "") +
-      `</div>`;
+      `</div>` +
+      `</div>` +
+      (revealed && sheet ? `<div class="fact-sheet" role="tooltip">${sheet}</div>` : "");
     // Tap/click the ? to toggle the sheet (hover covers mouse users).
     const btn = li.querySelector(".fact-toggle");
     if (btn) {
@@ -2051,6 +2368,12 @@
         const tl = $("timeline");
         tl.classList.add("timeline--pulse");
         setTimeout(() => tl.classList.remove("timeline--pulse"), 500);
+        // Rail glow: energy travels outward from the new node along the line
+        // (up and down to the rail ends), fading as it goes. Slight delay so
+        // it reads after the card's expand-in starts.
+        if (newEventEl && window.FX && window.FX.railGlow) {
+          FX.railGlow(tl, newEventEl, { delay: 60 });
+        }
       }
     } else {
       game.outcomes.push("wrong");
@@ -2203,6 +2526,7 @@
         `<div class="rt-info"><span class="rt-title">${escapeHtml(e.title)}${ptsChip}</span>` +
          `<span class="rt-fact">${escapeHtml(e.fact || "")}</span>` +
         factSheetHtml(e) +
+        learnBtnHtml(e) +
         `</div>`;
       tl.appendChild(li);
     });
@@ -2214,7 +2538,8 @@
       setTimeout(() => window.FX.confetti({ tier: perfect ? "heavy" : "medium" }), 650);
     }
     initAllFactMaps(tl);
-    // Dock globe becomes the expanded geographic recap of the run.
+    // Dock globe becomes the geographic recap of the run — docked and
+    // auto-rotating like setup; tapping it expands the full-screen view.
     if (window.GlobeDock) {
       window.GlobeDock.showResults(
         game.timeline.map((id) => {
@@ -2249,6 +2574,7 @@
         `<div class="rt-info"><span>${escapeHtml(e.title)}</span>` +
          `<span class="rt-fact">${escapeHtml(e.fact || "")}</span>` +
         factSheetHtml(e, false) +
+        learnBtnHtml(e) +
         `</div>` +
         `<span class="cat">${tags.join(" · ")}</span>`;
       list.appendChild(li);
@@ -2451,6 +2777,14 @@
     });
     $("how-x").addEventListener("click", () => closeModal($("how-modal")));
     $("how-gotit").addEventListener("click", () => closeModal($("how-modal")));
+    // story takeover (native <dialog>)
+    $("story-back").addEventListener("click", closeStory);
+    document.addEventListener("click", (ev) => {
+      const btn = ev.target.closest && ev.target.closest(".fs-learn");
+      if (!btn) return;
+      ev.preventDefault();
+      openStory(findEventById(btn.dataset.story), btn);
+    });
     // results
     $("home-btn").addEventListener("click", () => renderHub());
     $("again-btn").addEventListener("click", () => startGame());
@@ -2742,41 +3076,85 @@
     initGlassOnScreen();
   }
 
-  // Auto-load deck files from decks/manifest.json via <script> tags.
-  // Falls back to a hardcoded list when fetch fails (e.g. file:// protocol).
-  function loadExternalDecks() {
-    return new Promise((resolve) => {
-      const DECK_FILES = [
-        "world-history.js",
-        "classical-conversations.js",
-        "world-literature.js",
-      ];
-      const load = (files) => {
-        if (!files.length) return resolve();
-        let loaded = 0;
-        const check = () => { if (++loaded >= files.length) resolve(); };
-        for (const file of files) {
-          const s = document.createElement("script");
-          s.src = "decks/" + file;
-          s.onload = check;
-          s.onerror = check;
-          document.head.appendChild(s);
-        }
-      };
-      // Timeout: if fetch hangs (e.g. file:// protocol), fall back to DECK_FILES after 2s.
-      const manifest = Promise.race([
-        fetch("decks/manifest.json")
-          .then((r) => (r.ok ? r.json() : DECK_FILES))
-          .catch(() => DECK_FILES),
-        new Promise((ok) => setTimeout(() => ok(DECK_FILES), 2000)),
-      ]);
-      manifest.then(load);
+  // ---- deck sources -------------------------------------------------
+  // Bundled decks are listed in decks/manifest.js / .json, both GENERATED by
+  // scripts/gen-deck-manifest.mjs and never hand-edited. The .js form (a
+  // classic script exposing window.DECK_MANIFEST) is what the browser reads,
+  // because fetch()-ing the .json is blocked by CORS under file:// (origin
+  // "null") — which silently dropped every deck. User imports come from
+  // decks-io.js; downloaded packages and cloud entitlements will each register
+  // their own source later. Sources are isolated — one failure never blocks the
+  // rest — and there is no stale hardcoded fallback list.
+  function registerBundledDeckSource() {
+    const loadDeckScript = (entry) =>
+      new Promise((resolve) => {
+        const script = document.createElement("script");
+        // Content-hash revision from the manifest reaches returning players.
+        script.src = "decks/" + entry.file + (entry.revision ? "?v=" + entry.revision : "");
+        script.onload = resolve;
+        script.onerror = () => {
+          console.warn("deck script failed to load: " + entry.file);
+          resolve();
+        };
+        document.head.appendChild(script);
+      });
+
+    // Prefer the script-loadable manifest (works on file:// and http); fall
+    // back to fetch() only when the script is missing — e.g. an older checkout
+    // that predates manifest.js generation.
+    const loadManifest = () => {
+      if (window.DECK_MANIFEST) return Promise.resolve(window.DECK_MANIFEST);
+      return new Promise((resolve) => {
+        const script = document.createElement("script");
+        script.src = "decks/manifest.js";
+        script.onload = () => resolve(window.DECK_MANIFEST || null);
+        script.onerror = () => resolve(null);
+        document.head.appendChild(script);
+      }).then(
+        (manifest) =>
+          manifest ||
+          fetch("decks/manifest.json", { cache: "no-cache" }).then((r) => {
+            if (!r.ok) throw new Error("manifest HTTP " + r.status);
+            return r.json();
+          })
+      );
+    };
+
+    window.registerDeckSource({
+      id: "bundled",
+      priority: 0,
+      timeoutMs: 8000,
+      load: () =>
+        loadManifest().then((manifest) => {
+          // Accept both shapes: a flat array of filenames, or
+          // { schemaVersion, decks: [{ file, revision }] }.
+          const list = Array.isArray(manifest) ? manifest : (manifest && manifest.decks) || [];
+          const files = list
+            .map((d) => (typeof d === "string" ? { file: d } : d))
+            .filter((d) => d && d.file);
+          // The scripts self-register via window.registerDeck, so this source
+          // returns no deck objects of its own — only ensures they all ran.
+          return Promise.all(files.map(loadDeckScript)).then(() => []);
+        }),
     });
   }
 
-  loadExternalDecks().then(() => {
+  registerBundledDeckSource();
+
+  window.gatherDeckSources().then((result) => {
+    if (result && result.failed && result.failed.length) {
+      console.warn(
+        "deck source(s) failed: " +
+          result.failed
+            .map((f) => f.id + " (" + (f.error && f.error.message) + ")")
+            .join(", ")
+      );
+    }
     if (typeof window.loadImportedDecks === "function") {
       window.loadImportedDecks();
+    }
+    if (!window.DECKS.length) {
+      console.warn("No decks loaded — check decks/manifest.json.");
     }
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", init);

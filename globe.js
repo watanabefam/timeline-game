@@ -249,7 +249,7 @@
     try {
       const c = state.globe.controls();
       c.enableZoom = false; // zoom disabled by design — tap-to-expand is the zoom
-      c.autoRotate = motion && state.mode === "setup" && !state.expanded;
+      c.autoRotate = motion && (state.mode === "setup" || state.mode === "results") && !state.expanded;
       c.autoRotateSpeed = 0.55;
       c.enableDamping = motion;
     } catch (_) {}
@@ -478,7 +478,8 @@
     // carries the pulse glow. Kept as a no-op so old callers stay safe.)
     flashHover() {},
 
-    // RESULTS: full recap, expanded. items: [{ev, kind}]
+    // RESULTS: full recap, docked like setup — auto-rotating in the strip,
+    // only expanding (full-screen) when the user taps the globe.
     showResults(items) {
       setMode("results");
       ensureGlobe().then(() => {
@@ -491,7 +492,11 @@
         state.points.forEach((p) => { p.focused = false; });
         stopPulse();
         syncPoints();
-        expand();
+        // Start at the same POV as setup so the recap opens on a familiar
+        // view; auto-rotate (applyMotion) takes over from there.
+        try {
+          state.globe.pointOfView({ lat: SETUP_POV.lat, lng: SETUP_POV.lng, altitude: ALT_DOCKED }, 0);
+        } catch (_) {}
       });
     },
 

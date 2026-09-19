@@ -2364,6 +2364,174 @@ Provide 30 days notice before sub-processor changes. Update ToS/DPA every time y
 
 ---
 
+## 19. Deck Packages (Content Packs)
+
+**Status:** design note, ratified 2026-09-18. Extends §4.1 (`deck_access`), §7.7 (premium deck delivery), §9 (premium content delivery). Changes no game-core hard rule.
+
+### 19.1 Decision
+
+A deck becomes a **package**: one artifact that bundles its timeline data, background image, and theme song(s). Users import/hand-off/download **one file**, not three separate assets.
+
+Two layers, deliberately:
+
+| Layer | Format | Used by | Carries media? |
+|---|---|---|---|
+| **Theme fields** | fields on the existing deck object (`decks/*.js`, imported JSON) | in-tree decks, free decks, user-authored decks | paths / data-URIs only |
+| **`.timedeck` container** | ZIP: `manifest.json` + `assets/` | redistributable packs, premium/paid decks, cloud delivery | binary Blobs |
+
+**Why two.** The theme fields let a bundled/free deck choose a background and music with zero new machinery; the ZIP container is what carries real multi-MB audio and later flows through Supabase Storage behind an entitlement check. Both expose the same runtime contract (`deck.theme`), so the engine does not care which path produced the deck.
+
+### 19.2 `deck.theme` schema
+
+```js
+{
+  id, name, blurb, emoji, tier, filters, events,
+  license: {            // REQUIRED when bundling third-party media
+    name: "CC0-1.0",
+    attribution: "…",
+    source: "https://…"
+  },
+  theme: {
+    background: "…",    // background image
+    music: "…",         // theme song — main/home screens
+    gameMusic: "…",     // OPTIONAL in-game track
+    accent: "#c9a227"   // OPTIONAL colour token(s)
+  }
+}
+```
+
+- `theme` is the deck's **presentation skin** — the music and the image, plus an optional accent colour. Every field is optional; absent ⇒ today's globals (`styles.css:108` background, `timeline.js:244`/`:275` tracks).
+- A value is one of: a path relative to the app, a `blob:`/object URL resolved at runtime, or a data URI (small images only).
+- Resolution is centralised in one `resolveThemeSource()`; the engine never assumes provenance.
+- `license` is required by the content gate for any package containing third-party media (see §19.8).
+
+### 19.3 Container spec (`.timedeck`)
+
+ZIP archive, MIME `application/zip`, extension `.timedeck`.
+
+```
+manifest.json          # required, root, authoritative
+assets/
+  background.jpg
+  theme.mp3
+  game.mp3             # optional
+```
+
+`manifest.json`:
+
+```json
+{
+  "schemaVersion": 1,
+  "id": "deck_classical_conversations",
+  "name": "Classical Conversations",
+  "revision": 3,
+  "license": { "name": "CC0-1.0", "attribution": "…", "source": "…" },
+  "theme": { "background": "assets/background.jpg", "music": "assets/theme.mp3" },
+  "events": [  ],
+  "assets": [
+    { "path": "assets/background.jpg", "mime": "image/jpeg", "bytes": 437290, "sha256": "…" }
+  ]
+}
+```
+
+Format rules:
+
+- **Methods:** `store` (0) for already-compressed media (JPEG/MP3 — deflate saves ~0–5%), `deflate` (8) for the JSON manifest. No encryption, no multi-volume (ISO/IEC 21320-1 conforming subset).
+- **Integrity:** ZIP CRC-32 per entry is **corruption detection only** (forgeable). The manifest carries per-file `sha256` + `bytes`; the publisher records a `sha256` of the whole archive. Paid packages add an optional **Ed25519 detached signature** over the canonical manifest, verified with `crypto.subtle.verify` (public key baked into the app). Signed URLs authenticate transport, not bytes-at-rest.
+- **Entry paths** are relative, forward-slash, NFC-normalised, and drawn from the manifest allowlist.
+
+### 19.4 Import pipeline (web core)
+
+1. File / array buffer → ZIP bytes. Reject non-ZIP magic bytes, encrypted, or multi-volume archives.
+2. Enumerate the **central directory** (authoritative — do not scan local file headers from the top).
+3. **Guards, before any decode:** cap entry count; cap total uncompressed bytes; cap per-entry bytes; reject compression ratio >~200:1; reject overlapping/duplicate entries.
+4. **Path safety:** reject absolute paths, leading `/` or `\`, any `..` segment, drive letters, NUL/control chars, Windows reserved names, trailing dots/spaces. Resolve only allowlisted manifest paths. (This matters most once Capacitor/Tauri write to disk.)
+5. Decode with `fflate.unzipSync` for small packs (no worker/CSP concerns) or `fflate.unzip` (workers) above a few MB.
+6. Validate the manifest against a strict schema (`additionalProperties:false`, bounded strings, no external URLs).
+7. Verify per-file `sha256`/`bytes` (plus signature when present).
+8. Persist (§19.5), then register the deck and resolve `deck.theme`.
+
+**Vendoring.** `fflate` **0.8.3** (MIT, ~33 KB min / 12.5 KB gz, UMD `umd/index.js` → global `fflate`) into `assets/vendor/`, license header + pinned version, loaded as a classic `<script>` (hard rule 2). **Fallback:** `zip.js` 2.15.0 (BSD-3-Clause) — larger, but rejects path traversal by default (`ERR_UNSAFE_FILENAME`) and offers `checkCrc32` / `checkOverlappingEntry` / `strictness:"strict"`; ships UMD or ESM. `JSZip` is **not** chosen: no ESM build, no streaming reader, and a GPL branch that is a licensing consideration for a commercial product.
+
+### 19.5 Local persistence — `ContentPackStore` adapter
+
+`localStorage` is string-only and ~5 MB — it **must not** become the blob store. Two backends behind one interface:
+
+| Platform | Manifest record | Blob store | URL handed to the engine |
+|---|---|---|---|
+| Web / PWA | small IDB `packs` store (or localStorage) | **IndexedDB `assets` store, one `Blob` per asset** | `URL.createObjectURL(blob)` |
+| Capacitor native | Preferences / `Directory.Data` | `@capacitor/file-transfer` → `Directory.LibraryNoCloud` | `Capacitor.convertFileSrc(uri)` |
+
+Interface: `installPack(manifest)` · `hasPack(id, revision)` · `getAssetUrl(id, assetId)` · `removePack(id)` · `verifyIntegrity()`.
+
+Rules:
+
+- **Atomic install:** write assets under versioned keys, then commit the manifest pointer in one small transaction (generation swap), then GC the previous generation.
+- **Never `await` a non-IDB promise inside an open IDB transaction** (`TransactionInactiveError`); hash/fetch/serialise first.
+- Call `navigator.storage.persist()` once after install; check `estimate()` before large installs; **always** catch `QuotaExceededError` and degrade to online-only rather than crash.
+- **Object URLs:** one long-lived URL per asset per document session, shared by all consumers (CSS var + `<audio>`); regenerate every page load; revoke on replace/remove/`pagehide`; never revoke immediately after assigning `src`.
+- **Do not** use OPFS as the Capacitor durable tier (unverified/lost on close; Android WebView `SecurityError`), and never base64 multi-MB media across the Capacitor bridge.
+
+### 19.6 Runtime wiring
+
+- **Background:** `document.body.style.setProperty("--deck-bg", resolveThemeSource(theme.background))`, consumed by the `body` rule at `styles.css:108`; fall back to `assets/images/background.jpg`.
+- **Music:** `ensureBgMusic()` / `ensureGameMusic()` (`timeline.js:242` / `:273`) resolve `src` from the active deck's theme, else the current global tracks. The existing crossfade + `musicSwitchToken` machinery already handles switching; reuse the first-gesture autoplay unlock.
+- **Accent (optional):** set accent tokens on `<body>`; no new reader needed beyond existing CSS variables.
+- **No active deck** (home/stats) ⇒ global defaults.
+
+### 19.7 Cloud delivery (Phase 3 — extends §7.7)
+
+- Bucket **private**; objects at `deck-packages/<deck_id>/<revision>.zip`.
+- **Primary path: authenticated GET + Storage RLS**, enforced live at request time and keyed on `deck_access`:
+
+```sql
+create policy "Entitled users read deck packages"
+  on storage.objects for select to authenticated
+  using (
+    bucket_id = 'deck-packages'
+    and exists (
+      select 1 from public.deck_access da
+      where da.user_id = (select auth.uid())
+        and da.deck_id = (storage.foldername(name))[1]
+    )
+  );
+```
+
+  The private flag **and** RLS are independent switches — set both.
+- **Short signed URLs (5–15 min)** only for header-less hand-off (browser `<a download>`, share sheet); mint per request; never sign a client-supplied path (IDOR); never store signed URLs.
+- **Do not** proxy bytes through an Edge Function by default (256 MB memory cap, buffering, added cost) — reserve it for custom watermarking/authorization.
+- **Do not** expect CDN cache hits for private content (unique token = unique cache key) or front it with a second CDN.
+- Entitlement is **server-side state** (`deck_access` + `subscriptions`, written by the RevenueCat webhook); the client `CustomerInfo` is UX only.
+- Add rate limits + an append-only audit log (user, deck, revision, ts, ip_hash, bytes) and an optional per-user visible watermark.
+- **Offline lease:** cache the real expiry (`expirationDate`) — perpetual for one-time purchases, trust-window + store grace for subscriptions; add a clock-rollback guard; revalidate on foreground; on lapse **lock the UI, do not delete files**.
+
+### 19.8 Licensing (non-optional)
+
+Bundling a theme song or background image means **redistributing third-party media**. Every package's manifest must carry a `license` block (name, attribution, source), consistent with the existing `assets/audio/LICENSE.txt` handling, and the content gate must reject a package whose media lacks it. Prefer CC0/CC-BY and keep attribution with the asset.
+
+### 19.9 Prior art
+
+The convergent design is well-established: **dotLottie** (ZIP + mandatory root `manifest.json` + `i/ u/ f/ t/ a/` asset folders), **Minecraft resource packs** (`.zip`/`.mcpack` + `pack.mcmeta` + `assets/` bundling textures, sounds, and music), and the ZIP-based document family (EPUB, OOXML, JAR, APK/IPA). All of them: mandatory root manifest, assets folder, client unpacks to private storage. `.timedeck` follows the same shape.
+
+### 19.10 Phasing
+
+| Phase | Deliverable | Risk |
+|---|---|---|
+| **1** | `deck.theme` fields + runtime resolution (background + music), global fallbacks intact | low — no new deps |
+| **2** | `.timedeck` ZIP + vendored `fflate` + IndexedDB `ContentPackStore` + authoring script under `tools/` (exempt from no-build) | medium |
+| **3** | Supabase Storage private bucket + RLS + download screen (authenticated GET / signed URL) + offline lease | medium — depends on §4 and §6 |
+
+Phase 1 ships independently and proves the UX; Phase 2 is where real audio requires the container; Phase 3 reuses the exact same artifact.
+
+### 19.11 Open questions
+
+1. Does a package's `revision` map to `decks/manifest.json` `revision`, or a separate content version?
+2. Ed25519 signature from day one, or deferred to Phase 3 (paid content) only?
+3. Per-user watermark: visible (email/ID) vs metadata tag — or skip at launch?
+4. Do bundled free decks stay as `decks/*.js`, or migrate to pre-built `.timedeck` at launch?
+
+---
+
 ## Appendix A: Recommended Reading
 
 - [Capacitor Documentation](https://capacitorjs.com/docs)
@@ -2375,6 +2543,14 @@ Provide 30 days notice before sub-processor changes. Update ToS/DPA every time y
 - [RevenueCat Documentation](https://www.revenuecat.com/docs)
 - [RevenueCat 2026 State of Subscription Apps](https://www.revenuecat.com/blog/state-of-subscription-apps-2026/)
 - [RevenueCat Web Billing](https://www.revenuecat.com/docs/web)
+- [fflate (unzip/zip library)](https://github.com/101arrowz/fflate)
+- [zip.js (security-hardened fallback)](https://gildas-lormeau.github.io/zip.js/)
+- [dotLottie format spec (ZIP + manifest precedent)](https://dotlottie.io/spec/2.0/)
+- [IndexedDB API — MDN](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)
+- [Storage quotas & eviction — MDN](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria)
+- [Supabase Storage — serving private assets](https://supabase.com/docs/guides/storage/serving/downloads)
+- [Supabase Storage — access control / RLS](https://supabase.com/docs/guides/storage/security/access-control)
+- [Capacitor Filesystem](https://capacitorjs.com/docs/apis/filesystem) / [FileTransfer](https://capacitorjs.com/docs/apis/file-transfer)
 - [App Store Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
 - [Google Play Developer Policy](https://play.google.com/console/about/requirements)
 - [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
@@ -2399,8 +2575,15 @@ Provide 30 days notice before sub-processor changes. Update ToS/DPA every time y
 | 2026-09-06 | (select auth.uid()) in RLS | Performance: 178,000ms → 12ms improvement per official benchmark |
 | 2026-09-06 | SSE streaming for AI | Industry standard; works everywhere; progressive rendering |
 | 2026-09-06 | Web billing via Stripe | 27% savings vs. App Store; highest-margin channel most apps ignore |
+| 2026-09-18 | **Deck packages** — ZIP `.timedeck` (root `manifest.json` + `assets/`) | One artifact per deck; binary-safe for multi-MB audio; maps 1:1 onto one private Storage object + one `deck_access` row. Follows dotLottie / Minecraft resource-pack / EPUB precedent |
+| 2026-09-18 | `deck.theme` fields (background, music, gameMusic, accent) | Presentation skin on the existing deck object; all optional, falls back to current globals; lets Phase 1 ship with no new deps |
+| 2026-09-18 | fflate 0.8.3 vendored for client unzip | MIT, 12.5 KB gz, real UMD classic-script build (no bundler); zip.js 2.15.0 held as security-hardened fallback (traversal-safe by default) |
+| 2026-09-18 | IndexedDB `Blob`s primary (web); Capacitor Filesystem on device | localStorage is string-only/~5 MB and cannot hold media; native sandbox survives eviction. One `ContentPackStore` interface, two backends |
+| 2026-09-18 | Authenticated GET + Storage RLS primary; signed URLs short-TTL only | Live-revocable entitlement check; signed URLs are unrevocable bearer tokens and defeat CDN caching (unique token = unique cache key) for per-user content |
+| 2026-09-18 | Media entries `store` (level 0), manifest `deflate` | Deflate saves ~0–5% on MP3/JPEG; storing them cuts import CPU/battery |
+| 2026-09-18 | sha256 + optional Ed25519 detached signature for packages | ZIP CRC-32 is corruption detection only (forgeable); signature is the tamper layer for paid content |
 
 ---
 
-*Last updated: 2026-09-09*
-*Version: 2.1 — Research-backed, best-practice aligned; no-build wrapping verified against official Capacitor/Tauri docs*
+*Last updated: 2026-09-18*
+*Version: 2.2 — Adds §19 Deck Packages (content packs): `deck.theme` fields, `.timedeck` ZIP container, `ContentPackStore` persistence, and cloud delivery design; research-backed*

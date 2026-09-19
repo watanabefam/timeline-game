@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Timeline Game — place history in order</title>
-  <link rel="stylesheet" href="styles.css?v=89" />
+  <link rel="stylesheet" href="styles.css?v=112" />
   <link rel="stylesheet" href="assets/leaflet/leaflet.css" />
   <link rel="stylesheet" href="assets/vendor/vis-timeline-graph2d.min.css" />
 </head>
@@ -41,10 +41,8 @@
 
       <div class="home-hero">
         <img class="logo-img" src="assets/images/title.png" alt="Timeline Game" />
-        <p class="playing-as" id="playing-as"></p>
       </div>
 
-      <p class="hub-prompt">Choose a timeline deck</p>
       <div class="deck-grid" id="deck-grid"></div>
 
       <div id="focus-panel" class="hidden"></div>
@@ -413,7 +411,22 @@
     </div>
   </div>
 
-  <script src="events-data.js"></script>
+  <!-- STORY takeover: full-screen native <dialog> for the deep layer.
+       showModal() gives focus containment, an inert background, Escape-to-close
+       and top-layer stacking for free; we add the heading-first focus and fade. -->
+  <dialog class="story-takeover" id="story-modal" aria-labelledby="story-title">
+    <div class="story-scroll" id="story-scroll">
+      <div class="story-col">
+        <h2 class="story-title" id="story-title" tabindex="-1"></h2>
+        <div class="story-body" id="story-body"></div>
+      </div>
+    </div>
+    <button type="button" class="story-back" id="story-back" aria-label="Back to the event">
+      <span aria-hidden="true">&larr;</span> Back
+    </button>
+  </dialog>
+
+  <script src="events-data.js?v=2"></script>
   <script src="decks-io.js?v=2"></script>
   <script src="assets/leaflet/leaflet.js"></script>
   <script src="assets/world-land.js"></script>
@@ -421,9 +434,9 @@
   <script src="assets/vendor/vis-timeline-graph2d.min.js"></script>
   <script src="assets/vendor/anime.umd.min.js"></script>
   <script src="assets/vendor/canvas-confetti-1.9.3.min.js"></script>
-<script src="fx.js?v=15"></script>
-<script src="globe.js?v=13"></script>
-<script src="narration.js?v=14"></script>
-<script src="timeline.js?v=108"></script>
+<script src="fx.js?v=22"></script>
+<script src="globe.js?v=10"></script>
+<script src="narration.js?v=16"></script>
+<script src="timeline.js?v=142"></script>
 </body>
 </html>

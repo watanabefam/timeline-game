@@ -46,6 +46,10 @@
   // High/Best quality download a ~160/320 MB model on first use. Jobs queued
   // while that download runs must not die at 120s — wait for the model.
   var DOWNLOAD_TIMEOUT_MS = 15 * 60 * 1000;
+  // Kokoro is only used once the pipeline is warm (model loaded + a few jobs
+  // synthesized). Before that, synthesis is too slow to stay aligned with the
+  // screen, so narration uses the instant system voice instead.
+  var JOBS_WARM_THRESHOLD = 3;
 
   var worker = null;
   var pending = Object.create(null); // jobId -> {resolve, reject, timer}
@@ -58,6 +62,7 @@
   var booted = false;
   var modelDownloading = false; // worker is fetching the selected model
   var workerBroken = false; // module worker unavailable (e.g. file:// protocol)
+  var jobsCompleted = 0; // synthesis jobs finished — drives the warm-up gate
 
   var state = {
     enabled: readBool(LS_ENABLED, false),
@@ -179,7 +184,7 @@
     if (workerBroken) return;
     try {
       worker = new Worker(
-        "narration-worker.js?v=6",
+        "narration-worker.js?v=7",
         { type: "module", name: "narration-kokoro" }
       );
     } catch (e) {
@@ -207,6 +212,7 @@
     var m = ev.data;
     if (!m) return;
     if (m.type === "audio") {
+      jobsCompleted++;
       var p = pending[m.id];
       if (!p) return;
       clearTimeout(p.timer);
@@ -275,39 +281,36 @@
 
   // --- Synthesis request -----------------------------------------------------------
 
+  // Synthesis request. Priorities:
+//   "now"     — screen-aligned speech: cache hit plays Kokoro instantly; a
+//               cache miss speaks the system voice immediately (aligned) and
+//               posts a background Kokoro job that ONLY warms the cache.
+//   "prefetch" — warm the cache; never plays.
+//   "test"    — deliberate sample: waits for Kokoro and plays when ready.
   function synth(clientText, priority) {
     var text = String(clientText || "").trim();
     if (!text || !state.enabled) return Promise.resolve(null);
     var key = cacheKey(clientText);
-    // A "now" request for a text that's already being synthesized (prefetch in
-    // flight) should wait for that PCM and play it — posting a duplicate job
-    // would race the cache and delay/duplicate playback. If the prefetch gets
-    // dropped (superseded by this very now job), fall back to a fresh job.
-    if (priority === "now" && inFlight[text]) {
-      return inFlight[text].then(function (pcm) {
-        if (pcm) playPcm(pcm, 24000);
-        return pcm;
-      }).catch(function () {
-        delete inFlight[text];
-        return synth(text, "now");
-      });
-    }
+    var isNow = priority === "now";
+    var isTest = priority === "test";
     return idbGet(key).then(function (hit) {
       if (hit && hit.pcm) {
-        if (priority === "now") playPcm(hit.pcm, hit.sampleRate || 24000);
+        // Instant aligned playback — the only place Kokoro plays for "now".
+        if (isNow || isTest) playPcm(hit.pcm, hit.sampleRate || 24000);
         return hit.pcm;
       }
-      ensureWorker();
-      if (!worker) {
-        // Module worker unavailable (file:// etc.) — speak with the system
-        // voice for "now" requests; prefetch has nothing to warm.
-        if (priority === "now") speakSystem(text);
+      // Not cached. "now" requests speak instantly with the system voice so
+      // audio always matches the screen; a background job warms the cache.
+      if (isNow) {
+        speakSystem(text);
         if (booted) {
           var st = $("narration-status");
-          if (st) st.textContent = "System voice (file:// preview — Kokoro needs a web server)";
+          if (st) st.textContent = "System voice (warming Kokoro…)";
         }
-        return Promise.resolve(null);
       }
+      if (inFlight[text]) return Promise.resolve(null); // prefetch already warming
+      ensureWorker();
+      if (!worker) return Promise.resolve(null);
       var jobId = "job" + (++jobSeq);
       jobKey[jobId] = key;
       var p = new Promise(function (resolve, reject) {
@@ -329,7 +332,9 @@
           priority: priority,
         });
       }).then(function (m) {
-        if (priority === "now") playPcm(m.pcm, m.sampleRate || 24000);
+        // Background jobs never play — they only warm the cache. The only
+        // Kokoro playback is the synchronous cache-hit path above (and test).
+        if (isTest) playPcm(m.pcm, m.sampleRate || 24000);
         return m.pcm;
       });
       if (priority === "prefetch") inFlight[text] = p;
@@ -361,6 +366,17 @@
   }
   var unlockOnce = function () {
     unlockAudio();
+    // Prime speechSynthesis inside the gesture: Chromium silently drops
+    // speak() calls made outside a user gesture (our async speakEvent path),
+    // so unlock it here with a silent utterance.
+    if ("speechSynthesis" in window) {
+      try {
+        var u = new SpeechSynthesisUtterance(" ");
+        u.volume = 0;
+        speechSynthesis.speak(u);
+        speechSynthesis.cancel();
+      } catch (e) { /* non-fatal */ }
+    }
     document.removeEventListener("pointerdown", unlockOnce);
     document.removeEventListener("keydown", unlockOnce);
   };
@@ -459,13 +475,30 @@
     if (!("speechSynthesis" in window)) return;
     try {
       speechSynthesis.cancel();
-      var u = new SpeechSynthesisUtterance(stripYears(text));
-      u.lang = "en-US";
-      u.rate = 1.0;
+      var clean = stripYears(text);
+      // Chrome cancels utterances longer than ~300 chars — chunk by sentence
+      // and chain them so long card text still reads fully.
+      var chunks = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [clean];
       var v = pickSystemVoice();
-      if (v) u.voice = v;
-      speechSynthesis.speak(u);
+      var i = 0;
+      function next() {
+        if (i >= chunks.length) return;
+        var u = new SpeechSynthesisUtterance(chunks[i].trim());
+        u.lang = "en-US";
+        u.rate = 1.0;
+        if (v) u.voice = v;
+        u.onend = next;
+        u.onerror = function (e) { if (e.error !== "canceled") next(); };
+        speechSynthesis.speak(u);
+        i++;
+      }
+      next();
     } catch (e) { /* non-fatal */ }
+  }
+
+  // Kokoro is only used once the pipeline is warm enough to stay aligned.
+  function kokoroWarm() {
+    return jobsCompleted >= JOBS_WARM_THRESHOLD;
   }
 
   // Strip year-like tokens from SPOKEN text only (the card display keeps them).
@@ -509,12 +542,23 @@
       if (!state.enabled || !ev || !ev.title) return Promise.resolve(null);
       var text = ev.title;
       if (ev.fact) text += ". " + stripYears(ev.fact);
+      // Clean start: stop any system TTS still speaking the previous card.
+      if ("speechSynthesis" in window) { try { speechSynthesis.cancel(); } catch (e) {} }
       // file:// (or any context where the module worker is blocked): fall back
       // to the system voice so narration still works.
       if (workerBroken) {
         speakSystem(text);
         return Promise.resolve(null);
       }
+      // Cold pipeline (model still loading / first syntheses): Kokoro is too
+      // slow to stay aligned with the screen — speak instantly with the system
+      // voice. The prefetch queue warms the cache in the background.
+      if (!kokoroWarm()) {
+        speakSystem(text);
+        return Promise.resolve(null);
+      }
+      // Warm: cache hit plays Kokoro instantly; a miss speaks the system voice
+      // immediately (aligned) and warms the cache for next time.
       return synth(text, "now").catch(function () {});
     },
 
@@ -586,7 +630,7 @@
         speakSystem("Narration is ready. Stories last for thousands of years.");
         return;
       }
-      synth("Narration is ready. Stories last for thousands of years.", "now")
+      synth("Narration is ready. Stories last for thousands of years.", "test")
         .catch(function () { micro("Narration is ready."); });
     },
   };

@@ -279,7 +279,10 @@ function pump() {
 self.addEventListener("message", (ev) => {
   const m = ev.data;
   if (!m || m.type !== "generate") return;
-  const priority = m.priority === "now" ? "now" : "prefetch";
+  // "now" = screen-aligned speech (preempts prefetch); "test" = deliberate
+  // sample (jumps the queue but doesn't kill the running prefetch);
+  // anything else = prefetch (cache warming).
+  const priority = m.priority === "now" ? "now" : m.priority === "test" ? "test" : "prefetch";
   const text = String(m.text || "");
   if (priority === "now") {
     // Abandon the currently-running prefetch at its next chunk check, but do
@@ -294,7 +297,7 @@ self.addEventListener("message", (ev) => {
       runningJob.priority = "now";
       dropping = null; // it IS the now job now
     }
-  } else if (queuedTexts.has(text)) {
+  } else if (priority === "prefetch" && queuedTexts.has(text)) {
     // Duplicate prefetch (re-prefetch after each placement) — skip it so the
     // worker never synthesizes the same card twice.
     post({ type: "dropped", id: m.id || `job${++jobSerial}` });
@@ -309,7 +312,10 @@ self.addEventListener("message", (ev) => {
     priority,
     drop: false,
   });
-  // now-jobs run first; among equals, FIFO.
-  queue.sort((a, b) => (a.priority === "now" && b.priority !== "now" ? -1 : b.priority === "now" && a.priority !== "now" ? 1 : 0));
+  // now-jobs run first; among equals, FIFO. test-jobs jump ahead of prefetch.
+  queue.sort((a, b) => {
+    const rank = (p) => (p === "now" ? 0 : p === "test" ? 1 : 2);
+    return rank(a.priority) - rank(b.priority);
+  });
   pump();
 });
