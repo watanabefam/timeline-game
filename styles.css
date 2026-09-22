@@ -120,6 +120,18 @@ html, body {
 .screen { animation: fade 0.25s ease; }
 .hidden { display: none !important; }
 
+/* Keep scrollIntoView targets clear of the sticky game header; the height is
+   published by JS (--game-header-h) because it changes responsively. */
+html { scroll-padding-top: var(--game-header-h, 0px); }
+
+/* Visually hidden but announced (persistent live regions). */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
+
 @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 /* ---------- HOME ---------- */
@@ -297,6 +309,66 @@ html, body {
   border-radius: 12px; padding: 12px 16px;
   position: relative;
   transform-origin: center center;
+}
+/* ---- Scroll-linked focus scale — CSS scroll-driven (compositor thread) ----
+   The old implementation wrote a transform string and a `--fs` custom property
+   for every card on every scroll frame — custom properties always recalc style
+   on the main thread, so it competed with the WebGL globe and vis-timeline and
+   stalled under scroll. Here the browser interpolates from the scroll position
+   itself, off the main thread. `.tl-event` owns a NAMED view timeline (`--ev`)
+   so the card and its connector stub share one progress value; `--fs` is a
+   registered custom property so the stub's width interpolates with it too.
+   Browsers without `animation-timeline` keep the JS fallback (FX.focusScale). */
+@property --fs { syntax: "<number>"; inherits: true; initial-value: 1; }
+
+/* Matches FX.focusScale's "sphere" profile: peak 1.05 at the viewport centre,
+   edge 0.95 at the thresholds (sampled every 12.5% to keep the dome smooth).
+   The opacity fade uses the COSINE falloff (not the sphere curve) and floors at
+   0.65, matching the JS fallback's minOpacity — it reads as a fade at the ends.
+   A 0.9 floor (the previous value) was imperceptible, especially since the
+   thresholds sit under the app bar / at the very screen edge. */
+@keyframes tl-focus-scale {
+  0%    { transform: scale(0.95);    opacity: 0.65; }
+  12.5% { transform: scale(0.99375); opacity: 0.701; }
+  25%   { transform: scale(1.025);   opacity: 0.825; }
+  37.5% { transform: scale(1.04375); opacity: 0.949; }
+  50%   { transform: scale(1.05);    opacity: 1; }
+  62.5% { transform: scale(1.04375); opacity: 0.949; }
+  75%   { transform: scale(1.025);   opacity: 0.825; }
+  87.5% { transform: scale(0.99375); opacity: 0.701; }
+  100%  { transform: scale(0.95);    opacity: 0.65; }
+}
+@keyframes tl-focus-stub {
+  0%, 100% { --fs: 0.95; }
+  25%, 75% { --fs: 1.025; }
+  50%      { --fs: 1.05; }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* One named timeline per event, shared by the card and its stub. */
+    .tl-event { view-timeline-name: --ev; view-timeline-axis: block; }
+    .tl-event > .tl-card {
+      animation: tl-focus-scale auto linear both;
+      animation-timeline: --ev;
+    }
+    .tl-event::before {
+      animation: tl-focus-stub auto linear both;
+      animation-timeline: --ev;
+    }
+    .gap {
+      animation: tl-focus-scale auto linear both;
+      animation-timeline: view();
+    }
+  }
+}
+
+/* Reduced motion is a hard floor: no scroll-linked scaling at all. */
+@media (prefers-reduced-motion: reduce) {
+  .tl-event > .tl-card,
+  .gap { animation: none !important; transform: none !important; opacity: 1 !important; }
+  .tl-event::before { animation: none !important; }
+  .tl-event { --fs: 1; }
 }
 .tl-event--entering {
   transform-origin: top center;
@@ -586,7 +658,41 @@ html, body {
          background: transparent; }
 }
 
-.feedback { text-align: center; min-height: 22px; margin: 12px 0; font-size: 0.95rem; font-weight: 600; }
+/* ---- Transient placement feedback (fixed HUD line) --------------------- */
+/* A fixed bottom-center status line, not page flow, so it never scrolls out of
+   view. Bottom-center is the conventional notifications/subtitle zone; it sits
+   ABOVE the globe dock (never in front of it). It carries its own contrast —
+   scrim + shadow — because the background is a variable collage, and it never
+   rests on colour alone (the message text carries the meaning). */
+.feedback {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 45;                     /* above dock (40), below modals (50) */
+  max-width: min(92vw, 560px);
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;   /* fade out slowly */
+}
+body.dock-active .feedback { bottom: calc(104px + env(safe-area-inset-bottom, 0px)); }
+.feedback--on {
+  opacity: 1;
+  transition: opacity 0.12s ease;  /* fade in fast */
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(10, 14, 26, 0.74);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
 .feedback.good { color: var(--good); }
 .feedback.bad { color: var(--bad); }
 
@@ -884,6 +990,62 @@ html, body {
   outline: none;
 }
 .gap.gap--win { border-style: solid; }
+
+/* ---- Rescue: the correct gap, revealed after repeated misses ---- */
+/* Drop-target affordance: the border goes solid + accent, the label changes,
+   and a ring pulses. Redundant cues (shape + text + motion) so the meaning
+   never rests on colour alone. */
+.gap--rescue,
+.gap--rescue:hover,
+.gap--rescue:focus-visible {
+  border-style: solid;
+  border-color: var(--accent);
+  color: #fff;
+  background: rgba(110, 168, 254, 0.18);
+  outline: none;
+  animation: gap-rescue-pulse 1.6s ease-in-out infinite;
+}
+@keyframes gap-rescue-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(110, 168, 254, 0); }
+  50%      { box-shadow: 0 0 0 6px rgba(110, 168, 254, 0.18); }
+}
+/* Non-target gaps during a rescue: a single obvious target, no re-floundering.
+   `!important` because FX.focusScale writes an inline opacity on in-view gaps;
+   the filter dims regardless of that scroll-linked value. */
+.gap--locked {
+  opacity: 0.35 !important;
+  filter: grayscale(0.7);
+  pointer-events: none;
+}
+
+/* Anchored explanation, co-located with the target (next to it, never on top).
+   Persists until the card is placed — no timer, no dismiss control. */
+.gap-callout {
+  position: relative;
+  margin: 6px 0 12px;
+  padding: 12px 14px;
+  background: var(--card-2);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  text-align: left;
+}
+.gap-callout__arrow {
+  position: absolute; top: -6px; left: 22px;
+  width: 10px; height: 10px;
+  background: var(--card-2);
+  border-left: 1px solid var(--accent);
+  border-top: 1px solid var(--accent);
+  transform: rotate(45deg);
+}
+.gap-callout__order { margin: 0; font-size: 0.95rem; font-weight: 600; }
+.gap-callout__why { margin: 6px 0 0; font-size: 0.85rem; color: var(--muted); }
+/* Reduced motion: no pulse — a static ring carries the same meaning. */
+@media (prefers-reduced-motion: reduce) {
+  .gap--rescue, .gap--rescue:hover, .gap--rescue:focus-visible {
+    animation: none !important;
+    box-shadow: 0 0 0 2px rgba(110, 168, 254, 0.45);
+  }
+}
 
 /* ---- Fact-sheet tooltip: same glass as the cards it opens from ---- */
 .fact-sheet {

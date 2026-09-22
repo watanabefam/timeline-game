@@ -8,9 +8,16 @@ gamification-layer spec lives in `doc/GAMIFICATION_BRIEF.md`.
 
 A no-backend timeline-ordering game (place historical events in chronological
 order) built as **plain HTML/CSS/JS with no build step**. Decks are pluggable
-data files. Deployed as a static site served over **HTTPS** (the historical
-`file://` requirement was dropped 2026-09 — the final product is hosted, so
-secure-context-only APIs — service workers, notifications — are available).
+data files. Deployed as a static site served over **HTTPS** — the final product
+is hosted, so secure-context-only APIs (service workers, notifications) are
+available. **`file://` is a best-effort convenience for local testing only, and
+is never a shipping target.** Prefer designs that keep working there when it is
+cheap — e.g. decks load through generated `<script>` mirrors rather than
+`fetch`, because `fetch` is blocked under `file://` (origin `null`) — but a
+feature that *cannot* work under `file://` (anything needing `fetch`, ES
+modules, service workers, or reliable storage) is **not blocked** by it. Never
+contort a design for `file://` parity, and never treat a `file://` pass as
+proof the hosted build works: the two load paths genuinely differ.
 
 **Product direction (2026-09):** this is an **educational** game — primary
 audience homeschooling families, but accessible to everyone. Treat learning
@@ -29,8 +36,10 @@ A1–A6, age-band gating, derived-state rule).
 ## Hard rules
 
 1. **No build step, no framework, no npm runtime dependencies.** The game is
-   served over HTTPS; it does **not** need to work from `file://` (dropped
-   2026-09). Everything first-party is a classic (non-module) script loaded by
+   served over HTTPS; `file://` is a best-effort dev convenience, **not a
+   requirement** (see above) — a feature that needs `fetch`, ES modules,
+   service workers, or reliable storage may work only over HTTP(S). Everything
+   first-party is a classic (non-module) script loaded by
    `index.html`. Vendored third-party libs may ship an **ESM build** loaded via
    `<script type="module">` (allowed since the hosting change) — but never a
    bundler-required npm package.

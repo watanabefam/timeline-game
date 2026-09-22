@@ -1,0 +1,53 @@
+{
+  "formatVersion": 1,
+  "decks": [
+    {
+      "id": "cc-timeline",
+      "layout": "folder",
+      "dir": "cc-timeline",
+      "entry": "deck.json",
+      "script": "deck.js",
+      "revision": "f8a59aeace17",
+      "bytes": 85130,
+      "version": "1.0.0",
+      "attribution": [],
+      "grandfathered": true
+    },
+    {
+      "id": "inventions-discoveries",
+      "layout": "folder",
+      "dir": "inventions-discoveries",
+      "entry": "deck.json",
+      "script": "deck.js",
+      "revision": "051c296fc4e7",
+      "bytes": 43776,
+      "version": "1.0.0",
+      "license": "CC-BY-SA-4.0",
+      "attribution": []
+    },
+    {
+      "id": "world-history-first-timeline",
+      "layout": "folder",
+      "dir": "world-history-first-timeline",
+      "entry": "deck.json",
+      "script": "deck.js",
+      "revision": "478fa596132a",
+      "bytes": 781197,
+      "version": "1.0.0",
+      "license": "CC-BY-SA-4.0",
+      "attribution": []
+    },
+    {
+      "id": "world-literature",
+      "layout": "folder",
+      "dir": "world-literature",
+      "entry": "deck.json",
+      "script": "deck.js",
+      "revision": "1819388aa75c",
+      "bytes": 49899,
+      "version": "1.0.0",
+      "attribution": [],
+      "grandfathered": true
+    }
+  ]
+}

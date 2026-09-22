@@ -72,21 +72,33 @@
     }
   }
 
+  // ---- serialisation ------------------------------------------------
+  // A live deck carries real `get` functions on its filters/group strategies
+  // (see events-data.js resolveGet). Those cannot be JSON.stringify'd, so we
+  // write the declarative spec they were built from back in their place.
+  function serializeDeck(deck) {
+    const out = Object.assign({}, deck);
+    const mapList = (list) =>
+      list.map((raw) => {
+        const o = Object.assign({}, raw);
+        const spec = raw.getSpec && typeof raw.getSpec === "object" ? raw.getSpec : null;
+        delete o.getSpec;
+        if (spec) o.get = spec;
+        else delete o.get;
+        return o;
+      });
+    if (Array.isArray(deck.filters)) out.filters = mapList(deck.filters);
+    if (Array.isArray(deck.groupStrategies)) out.groupStrategies = mapList(deck.groupStrategies);
+    return out;
+  }
+
   window.exportDeck = function (deckId) {
     const deck = window.DECKS.find(function (d) { return d.id === deckId; });
     if (!deck) {
       alert("Deck not found: " + deckId);
       return;
     }
-    const payload = {
-      id: deck.id,
-      name: deck.name,
-      blurb: deck.blurb,
-      emoji: deck.emoji,
-      tier: deck.tier,
-      filters: deck.filters || [],
-      events: deck.events,
-    };
+    const payload = serializeDeck(deck);
     downloadJson(deck.id + "-deck.json", JSON.stringify(payload, null, 2));
   };
 
@@ -95,17 +107,7 @@
       alert("No decks to export.");
       return;
     }
-    const payload = window.DECKS.map(function (d) {
-      return {
-        id: d.id,
-        name: d.name,
-        blurb: d.blurb,
-        emoji: d.emoji,
-        tier: d.tier,
-        filters: d.filters || [],
-        events: d.events,
-      };
-    });
+    const payload = window.DECKS.map(serializeDeck);
     downloadJson("all-decks.json", JSON.stringify(payload, null, 2));
   };
 
@@ -117,8 +119,9 @@
       return false;
     }
 
-    // Clean unknown top-level fields; keep only the schema we use.
-    const deck = {
+    // Preserve everything the deck carries (version/license/attribution/…)
+    // rather than whitelisting, so package metadata survives a round trip.
+    const deck = Object.assign({}, obj, {
       id: String(obj.id).trim(),
       name: typeof obj.name === "string" ? obj.name : obj.id,
       blurb: typeof obj.blurb === "string" ? obj.blurb : "Imported deck",
@@ -126,7 +129,7 @@
       tier: typeof obj.tier === "string" ? obj.tier : "free",
       filters: Array.isArray(obj.filters) ? obj.filters : [],
       events: obj.events,
-    };
+    });
 
     const existing = window.DECKS.find(function (d) { return d.id === deck.id; });
     if (existing) {
@@ -147,15 +150,7 @@
     // Persist to localStorage so it survives reloads on file://.
     try {
       const stored = JSON.parse(localStorage.getItem("timeline.importedDecks") || "[]");
-      stored.push({
-        id: deck.id,
-        name: deck.name,
-        events: deck.events,
-        filters: deck.filters,
-        emoji: deck.emoji,
-        blurb: deck.blurb,
-        tier: deck.tier,
-      });
+      stored.push(serializeDeck(deck));
       localStorage.setItem("timeline.importedDecks", JSON.stringify(stored));
     } catch (_) {
       // localStorage may be disabled; ignore silently.

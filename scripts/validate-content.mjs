@@ -28,55 +28,220 @@
  * Existing decks are grandfathered: this is reported as a warning for
  * them so the gate stays green while content is cleaned up over time.
  *
+ *   DISCOVERY — decks/index.json (folder packages) with graceful fallback
+ *
+ * Decks are migrating from flat `decks/<name>.js` files to folder packages:
+ *   decks/<id>/manifest.json  — { formatVersion, id, name, version, entry,
+ *                                 license, description, attribution[],
+ *                                 assets[], grandfathered? }
+ *   decks/<id>/deck.json      — the deck data
+ *
+ * `decks/index.json` is the generated deck list ({ formatVersion, decks: [...] })
+ * whose entries carry `layout: "folder" | "file"`. We read it first, then fall
+ * back to `decks/manifest.json`, then to scanning `decks/*.js`, so the gate
+ * keeps working throughout the migration window and never hard-fails.
+ *
+ * Folder packages additionally get filesystem assertions (manifest + entry
+ * present, required manifest fields, id matches directory, assets[] exist and
+ * are safe paths) and an orphan-file warning for anything the manifest does
+ * not reference.
+ *
  * Run:  node scripts/validate-content.mjs
  * Exit code 1 on any failure (wire into CI / pre-commit).
  */
 
 import { readFileSync, readdirSync, existsSync } from "node:fs";
-import vm from "node:vm";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, basename, relative, sep } from "node:path";
+import { loadDeck } from "../tools/content-pipeline/lib/load.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const srcPath = join(here, "..", "events-data.js");
-const src = readFileSync(srcPath, "utf8");
+const REPO_ROOT = join(here, "..");
+const decksDir = join(REPO_ROOT, "decks");
 
-// events-data.js assigns window.DECKS — give it a fake window.
-const sandbox = { window: {}, console };
-vm.createContext(sandbox);
-vm.runInContext(src, sandbox);
+// Paths are always compared / printed with POSIX separators.
+const posix = (p) => String(p).split(sep).join("/");
 
-// Load deck files from decks/manifest.json
-const decksDir = join(here, "..", "decks");
-const manifestFiles = new Set();
-const deckFile = new Map(); // deck id -> manifest file it was loaded from
-try {
-  const manifestPath = join(decksDir, "manifest.json");
-  if (existsSync(manifestPath)) {
-    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-    const deckFiles = (
-      Array.isArray(manifest) ? manifest : manifest.decks || []
-    ).map((d) => (typeof d === "string" ? d : d.file));
-    for (const file of deckFiles) {
-      manifestFiles.add(file);
-      const deckSrc = readFileSync(join(decksDir, file), "utf8");
-      const before = (sandbox.window.DECKS || []).length;
-      vm.runInContext(deckSrc, sandbox);
-      const after = sandbox.window.DECKS || [];
-      if (after.length > before) deckFile.set(after[after.length - 1].id, file);
+// ------------------------------------------------------------------
+// Discovery: decks/index.json -> decks/manifest.json -> decks/*.js
+// ------------------------------------------------------------------
+
+function discoverEntries() {
+  const indexPath = join(decksDir, "index.json");
+  if (existsSync(indexPath)) {
+    try {
+      const idx = JSON.parse(readFileSync(indexPath, "utf8"));
+      const list = Array.isArray(idx) ? idx : idx.decks || [];
+      if (list.length) return list.map(normaliseEntry);
+      console.warn("Warning: decks/index.json has no deck entries — falling back.");
+    } catch (e) {
+      console.warn(
+        `Warning: could not read decks/index.json (${e.message}) — falling back.`
+      );
     }
   }
-} catch (e) {
-  console.warn("Warning: could not load deck files:", e.message);
+
+  const manifestPath = join(decksDir, "manifest.json");
+  if (existsSync(manifestPath)) {
+    try {
+      const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+      const list = Array.isArray(manifest) ? manifest : manifest.decks || [];
+      if (list.length) return list.map(normaliseEntry);
+    } catch (e) {
+      console.warn(
+        `Warning: could not read decks/manifest.json (${e.message}) — falling back.`
+      );
+    }
+  }
+
+  console.warn("Warning: no decks/index.json or decks/manifest.json — scanning decks/*.js.");
+  return readdirSync(decksDir)
+    .filter((f) => f.endsWith(".js") && f !== "manifest.js" && f !== "index.js")
+    .sort()
+    .map((file) => ({ layout: "file", file }));
 }
 
-const decks = sandbox.window.DECKS || [];
+function normaliseEntry(e) {
+  if (typeof e === "string") return { layout: "file", file: e };
+  const layout = e.layout || (e.file ? "file" : "folder");
+  return { ...e, layout };
+}
+
+// ------------------------------------------------------------------
+// Record building — read folder manifests once, up front.
+// ------------------------------------------------------------------
+
+function buildRecord(e) {
+  if (e.layout === "folder") {
+    const dirName = posix(e.dir || e.id || "");
+    const deckDir = join(decksDir, dirName);
+    const manifestPath = join(deckDir, "manifest.json");
+
+    let manifest = null;
+    let manifestErr = null;
+    if (existsSync(manifestPath)) {
+      try {
+        manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+      } catch (err) {
+        manifestErr = err;
+      }
+    } else {
+      manifestErr = new Error("manifest.json is missing");
+    }
+
+    const entryName = posix(
+      (manifest && manifest.entry) || e.entry || "deck.json"
+    );
+
+    return {
+      layout: "folder",
+      id: e.id || basename(dirName),
+      label: dirName,
+      dir: dirName,
+      deckDir,
+      manifest,
+      manifestErr,
+      entryName,
+      loadPath: join(deckDir, entryName),
+    };
+  }
+
+  const file = posix(e.file);
+  return {
+    layout: "file",
+    id: e.id || file,
+    label: file,
+    loadPath: join(decksDir, file),
+  };
+}
+
+// ------------------------------------------------------------------
+// Folder-package filesystem assertions.
+// ------------------------------------------------------------------
+
+function walkFiles(dir) {
+  const out = [];
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, ent.name);
+    if (ent.isDirectory()) out.push(...walkFiles(full));
+    else out.push(full);
+  }
+  return out;
+}
+
+function validateFolderFilesystem(rec, id) {
+  const { deckDir, entryName, manifest } = rec;
+
+  if (rec.manifestErr) {
+    deckErr(id, "(manifest)", rec.manifestErr.message);
+  }
+
+  if (manifest) {
+    for (const field of ["formatVersion", "id", "entry"]) {
+      if (manifest[field] == null || manifest[field] === "") {
+        deckErr(id, "(manifest)", `missing required field "${field}"`);
+      }
+    }
+    if (manifest.id != null && posix(manifest.id) !== rec.dir) {
+      deckErr(
+        id,
+        "(manifest)",
+        `id "${manifest.id}" does not match directory "${rec.dir}"`
+      );
+    }
+  }
+
+  if (!existsSync(rec.loadPath)) {
+    deckErr(id, "(fs)", `entry file "${entryName}" is missing`);
+  }
+
+  const allowedAssets = new Set();
+  const assets =
+    manifest && Array.isArray(manifest.assets) ? manifest.assets : [];
+  for (const raw of assets) {
+    const p = posix(raw == null ? "" : raw);
+    if (!p || p.startsWith("/") || p.split("/").includes("..")) {
+      deckErr(
+        id,
+        "(manifest)",
+        `asset path "${p || String(raw)}" is unsafe (absolute or contains "..")`
+      );
+      continue;
+    }
+    allowedAssets.add(p);
+    if (!existsSync(join(deckDir, p))) {
+      deckErr(id, "(fs)", `asset "${p}" listed in manifest.json does not exist`);
+    }
+  }
+
+  const allowed = new Set(["manifest.json", entryName, ...allowedAssets]);
+  // The generated browser mirror (see scripts/gen-deck-index.mjs) is expected.
+  allowed.add(entryName.replace(/\.json$/, ".js"));
+  const docNames = new Set(["LICENSE", "LICENSE.txt", "README.md", "README.txt"]);
+  if (!existsSync(deckDir)) return; // already reported above
+  let files;
+  try {
+    files = walkFiles(deckDir);
+  } catch (e) {
+    warn(id, "(fs)", `could not scan deck folder (${e.message})`);
+    return;
+  }
+  for (const full of files) {
+    const rel = posix(relative(deckDir, full));
+    if (allowed.has(rel) || docNames.has(rel) || docNames.has(basename(rel))) {
+      continue;
+    }
+    warn(id, "(fs)", `orphan file not referenced by manifest.json: ${rel}`);
+  }
+}
+
+// ------------------------------------------------------------------
+// Content rule helpers.
+// ------------------------------------------------------------------
 
 // Decks that predate the "years live only in the year field" rule are
 // grandfathered so the gate stays green while their content is cleaned up.
-// NEW decks are deliberately NOT listed here and must pass — listing a deck in
-// the manifest used to grandfather it automatically, which made the rule
-// impossible to fail.
+// NEW decks are deliberately NOT listed here and must pass.
 const LEGACY_DECKS = new Set(["cc-timeline", "world-literature"]);
 
 const STOP = new Set(
@@ -110,10 +275,15 @@ function jaccard(a, b) {
   return uni ? inter / uni : 0;
 }
 
-let errors = 0;
+let errors = 0; // event-rule failures (fact quality / year leak)
+let deckErrors = 0; // deck/package problems (load, manifest, filesystem)
 let warns = 0;
 const err = (deck, id, msg) => {
   errors++;
+  console.log(`  ✗ [${deck}] ${id}: ${msg}`);
+};
+const deckErr = (deck, id, msg) => {
+  deckErrors++;
   console.log(`  ✗ [${deck}] ${id}: ${msg}`);
 };
 const warn = (deck, id, msg) => {
@@ -121,13 +291,43 @@ const warn = (deck, id, msg) => {
   console.log(`  ⚠ [${deck}] ${id}: ${msg}`);
 };
 
-console.log(`Validating ${decks.length} deck(s)…\n`);
+// ------------------------------------------------------------------
 
-for (const deck of decks) {
+const records = discoverEntries().map(buildRecord);
+
+console.log(`Validating ${records.length} deck(s)…\n`);
+
+for (const rec of records) {
+  let deck = null;
+  let loadErr = null;
+  try {
+    deck = loadDeck(rec.loadPath);
+    if (!deck) throw new Error("no deck registered (missing id/events)");
+  } catch (e) {
+    loadErr = e;
+  }
+
+  const id = (deck && deck.id) || rec.id;
+  const count =
+    deck && Array.isArray(deck.events) ? deck.events.length : null;
+  console.log(
+    `[${rec.layout}] ${rec.label} — ${
+      count == null ? "load failed" : `${count} event(s)`
+    }`
+  );
+
+  if (rec.layout === "folder") validateFolderFilesystem(rec, id);
+
+  if (loadErr) {
+    deckErr(id, "(deck)", `could not load (${loadErr.message})`);
+    continue;
+  }
+
   if (!deck.events || !deck.events.length) {
     warn(deck.id, "(deck)", "no events");
     continue;
   }
+
   for (const ev of deck.events) {
     const id = ev.id || "(no id)";
     const title = ev.title || "";
@@ -193,11 +393,16 @@ for (const deck of decks) {
 }
 
 console.log("");
-if (errors) {
-  console.error(
-    `✗ ${errors} event(s) failed the "fact adds value beyond the title" rule` +
-      (warns ? ` (${warns} warning(s)).` : ".")
-  );
+if (errors || deckErrors) {
+  if (errors) {
+    console.error(
+      `✗ ${errors} event(s) failed the "fact adds value beyond the title" rule` +
+        (warns ? ` (${warns} warning(s)).` : ".")
+    );
+  }
+  if (deckErrors) {
+    console.error(`✗ ${deckErrors} deck/package problem(s).`);
+  }
   process.exit(1);
 }
 console.log(

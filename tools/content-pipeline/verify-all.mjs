@@ -7,7 +7,7 @@
 //
 // Exit: 0 pass · 1 findings >= --fail-level · 2 fatal.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadDeck, loadSources } from "./lib/load.mjs";
@@ -18,7 +18,41 @@ import { summarize, exitCode, RULE_HINTS } from "./lib/findings.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(here, "..", "..");
-const MANIFEST = join(REPO_ROOT, "decks", "manifest.json");
+const INDEX = join(REPO_ROOT, "decks", "index.json");
+const LEGACY_MANIFEST = join(REPO_ROOT, "decks", "manifest.json");
+
+function resolveDeckPath(entry) {
+  return entry.layout === "folder"
+    ? join(REPO_ROOT, "decks", entry.dir, entry.entry || "deck.json")
+    : join(REPO_ROOT, "decks", entry.file);
+}
+
+function normaliseEntry(entry) {
+  if (typeof entry === "string") return { layout: "file", file: entry };
+  if (entry && entry.layout) return entry;
+  if (entry && entry.file) return { ...entry, layout: "file" };
+  if (entry && entry.dir) return { ...entry, layout: "folder" };
+  return entry || {};
+}
+
+// New generated decks/index.json, falling back to the old decks/manifest.json
+// and finally to scanning decks/*.js — so this never hard-fails mid-migration.
+function loadDeckIndex() {
+  for (const path of [INDEX, LEGACY_MANIFEST]) {
+    if (!existsSync(path)) continue;
+    try {
+      const parsed = JSON.parse(readFileSync(path, "utf8"));
+      const decks = Array.isArray(parsed) ? parsed : parsed.decks || [];
+      return decks.map(normaliseEntry);
+    } catch {
+      /* try the next source */
+    }
+  }
+  return readdirSync(join(REPO_ROOT, "decks"))
+    .filter((f) => f.endsWith(".js") && f !== "manifest.js")
+    .sort()
+    .map((file) => ({ layout: "file", file }));
+}
 
 function die(msg) {
   console.error(`verify-all: ${msg}`);
@@ -42,26 +76,19 @@ if (!["error", "warning", "info"].includes(args.failLevel)) die(`bad --fail-leve
 
 const registry = loadRegistry();
 const sources = loadSources(join(REPO_ROOT, "content", "sources"));
-let manifest;
-try {
-  manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
-} catch (err) {
-  die(`cannot read manifest: ${err.message}`);
-}
-const decks = (Array.isArray(manifest) ? manifest : manifest.decks || []).map((d) =>
-  typeof d === "string" ? { file: d } : d,
-);
+const decks = loadDeckIndex();
 
 const byDeck = [];
 let all = [];
 
 for (const d of decks) {
-  const path = join(REPO_ROOT, "decks", d.file);
+  const path = resolveDeckPath(d);
+  const label = d.file || d.id || d.dir || "(deck)";
   let deck;
   try {
     deck = loadDeck(path);
   } catch (err) {
-    die(`cannot load ${d.file}: ${err.message}`);
+    die(`cannot load ${label}: ${err.message}`);
   }
   let findings = verifyDeck(deck, { registry, sources });
   if (d.grandfathered) {
@@ -71,11 +98,11 @@ for (const d of decks) {
         : f,
     );
   }
-  const deckId = (deck && deck.id) || d.file;
+  const deckId = (deck && deck.id) || label;
   all = all.concat(findings);
   const depth = { deep: 0, shallow: 0, "fact-only": 0 };
   for (const e of deck.events || []) depth[eventDepth(e)] += 1;
-  byDeck.push({ file: d.file, id: deckId, events: (deck.events || []).length, findings, depth, grandfathered: !!d.grandfathered });
+  byDeck.push({ file: label, id: deckId, events: (deck.events || []).length, findings, depth, grandfathered: !!d.grandfathered });
 }
 
 const code = exitCode(all, args.failLevel);

@@ -508,6 +508,12 @@
   // rebuilt, destroy() to remove listeners and clear inline styles.
   function focusScale(list, opts = {}) {
     if (!list) return null;
+    // CSS scroll-driven animations (see styles.css) own this effect on the
+    // compositor thread where supported — running a main-thread scroll loop
+    // too would fight it and reintroduce the jank it fixes.
+    if (typeof CSS !== "undefined" && CSS.supports && CSS.supports("animation-timeline", "view()")) {
+      return { refresh() {}, destroy() {} };
+    }
     const peak = opts.peak != null ? opts.peak : 1.05;  // scale at the viewport centre
     const edge = opts.edge != null ? opts.edge : 1;     // scale at the top/bottom threshold
     const sharp = opts.sharp != null ? opts.sharp : 1;  // falloff exponent: >1 = peakier
@@ -543,7 +549,7 @@
 
     function clearAll() {
       for (const el of items) {
-        el.style.transform = ""; el.style.zIndex = ""; el.style.transformOrigin = "";
+        el.style.transform = ""; el.style.scale = ""; el.style.zIndex = ""; el.style.transformOrigin = "";
         el.style.opacity = "";
         if (scaleVar && el.parentElement && el.parentElement !== list) {
           el.parentElement.style.removeProperty(scaleVar);
@@ -557,7 +563,7 @@
       // Batch-write: drop any live scale BEFORE reading rects (a transform
       // would otherwise be measured), then batch-read in one reflow.
       for (const el of items) {
-        el.style.transform = "";
+        el.style.transform = ""; el.style.scale = "";
         if (!el.style.transformOrigin) el.style.transformOrigin = origin;
       }
       const sy = window.scrollY || window.pageYOffset || 0;
@@ -585,18 +591,28 @@
           : 0.5 * (1 + Math.cos(Math.PI * d));        // raised cosine
         const ws = sharp === 1 ? w : Math.pow(w, sharp); // sharpened → peakier centre
         const s = edge + (peak - edge) * ws;         // peak at centre, edge at the threshold
-        const next = Math.abs(s - 1) > 0.0005 ? "scale(" + s.toFixed(4) + ")" : "";
-        if (items[i].style.transform !== next) items[i].style.transform = next;
+        // Fallback only: the `scale` individual property avoids re-parsing a
+        // transform string, and values are quantised so a slow drift doesn't
+        // rewrite inline styles on every frame (each write invalidates style).
+        const sv = Math.abs(s - 1) > 0.0005 ? s.toFixed(3) : "";
+        if (items[i].style.scale !== sv) items[i].style.scale = sv;
         if (minOpacity < 1) {
-          // Fade tracks the un-smoothed falloff so the edge dims without the
-          // steeper drop of the sharpened scale — coordinated, not identical.
-          const o = minOpacity + (1 - minOpacity) * w;
+          // Opacity deliberately uses the COSINE falloff, not the scale curve:
+          // it holds ~1 across the middle and drops only in the outer band, so
+          // it reads as a fade at the ends. The sphere (parabolic) curve would
+          // spread the dimming evenly over the whole list — a vignette, not an
+          // end fade — and the useful part is off-screen behind the app bar.
+          const wf = 0.5 * (1 + Math.cos(Math.PI * d));
+          const o = minOpacity + (1 - minOpacity) * wf;
           const ov = o < 0.9995 ? o.toFixed(3) : "";
           if (items[i].style.opacity !== ov) items[i].style.opacity = ov;
         }
         if (scaleVar) {
           const host = items[i].parentElement;
-          if (host && host !== list) host.style.setProperty(scaleVar, s.toFixed(4));
+          if (host && host !== list) {
+            const fsv = s.toFixed(3);
+            if (host.style.getPropertyValue(scaleVar) !== fsv) host.style.setProperty(scaleVar, fsv);
+          }
         }
         if (w > bestW) { bestW = w; best = i; }
       }

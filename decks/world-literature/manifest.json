@@ -1,0 +1,10 @@
+{
+  "formatVersion": 1,
+  "id": "world-literature",
+  "name": "World Literature",
+  "version": "1.0.0",
+  "entry": "deck.json",
+  "description": "Famous literary works ordered by when their stories take place.",
+  "attribution": [],
+  "grandfathered": true
+}

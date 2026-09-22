@@ -1,0 +1,22 @@
+{
+  "formatVersion": 1,
+  "id": "world-history-first-timeline",
+  "name": "World History: A First Timeline",
+  "version": "1.0.0",
+  "entry": "deck.json",
+  "description": "The human story in forty moments, from the first Australians to Mandela.",
+  "attribution": [],
+  "license": "CC-BY-SA-4.0",
+  "assets": [
+    "narration/alexander-dies.mp3",
+    "narration/athenian-democracy.mp3",
+    "narration/augustus-principate.mp3",
+    "narration/birth-of-jesus.mp3",
+    "narration/buddha-monastic-order.mp3",
+    "narration/confucius.mp3",
+    "narration/egypt-unifies.mp3",
+    "narration/great-pyramid.mp3",
+    "narration/plato-academy.mp3",
+    "narration/qin-unifies-china.mp3"
+  ]
+}

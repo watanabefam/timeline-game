@@ -33,11 +33,52 @@
     "tier": {
       "type": "string"
     },
+    "license": {
+      "type": "string"
+    },
+    "attribution": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/attribution"
+      }
+    },
     "filters": {
       "type": "array"
     },
     "groupStrategies": {
       "type": "array"
+    },
+    "narration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files"],
+      "properties": {
+        "engine": { "type": "string" },
+        "model": { "type": "string" },
+        "dtype": { "type": "string" },
+        "voice": { "type": "string" },
+        "sampleRate": { "type": "integer" },
+        "format": { "type": "string" },
+        "bitrateKbps": { "type": "integer" },
+        "textRule": { "type": "string" },
+        "loudnessLufs": { "type": "number" },
+        "generated": { "type": "string" },
+        "files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "bytes": { "type": "integer" },
+              "sha256": { "type": "string" },
+              "textHash": { "type": "string" },
+              "durationMs": { "type": "integer" }
+            }
+          }
+        }
+      }
     },
     "events": {
       "type": "array",
@@ -358,6 +399,32 @@
         },
         "note": {
           "type": "string"
+        }
+      }
+    },
+    "attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset"
+      ],
+      "properties": {
+        "asset": {
+          "type": "string",
+          "minLength": 1
+        },
+        "author": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "licenseUrl": {
+          "type": "string",
+          "format": "uri"
         }
       }
     },

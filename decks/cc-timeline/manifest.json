@@ -1,0 +1,10 @@
+{
+  "formatVersion": 1,
+  "id": "cc-timeline",
+  "name": "Classical Conversations",
+  "version": "1.0.0",
+  "entry": "deck.json",
+  "description": "The 161-event CC timeline, filterable by age, week, or continent.",
+  "attribution": [],
+  "grandfathered": true
+}

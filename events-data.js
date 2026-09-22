@@ -64,6 +64,57 @@ window.CC_WEEK_OPTIONS = Array.from({ length: 23 }, (_, i) => ({
 // via window.registerDeck(). Shared helpers above are available on window.
 // ====================================================================
 
+// ---- filter & group-strategy resolution ---------------------------
+// Decks authored as JSON cannot carry functions, so a filter or group
+// strategy declares HOW to bucket an event and the engine resolves it here:
+//
+//   { field: "continent" }            -> ev.continent
+//   { strategy: "ageBucket" }         -> window.ageBucket(ev)
+//   { strategy: "eraBucket" }         -> prehistory-aware era bucket
+//   { strategy: "continentGeneral" }  -> continent, world/area-less -> "general"
+//   { strategy: "none" }              -> no grouping
+//
+// Classic-script decks may still hand in a real function; both forms work.
+const GET_STRATEGIES = {
+  none: () => null,
+  ageBucket: (ev) => window.ageBucket(ev),
+  eraBucket: (ev) => (ev.era === "prehistory" ? "prehistory" : window.ageBucket(ev)),
+  continentGeneral: (ev) => (!ev.continent || ev.area === "world" ? "general" : ev.continent),
+};
+
+function resolveGet(spec) {
+  if (typeof spec === "function") return spec;
+  if (!spec || typeof spec !== "object") return () => null;
+  if (spec.field) return (ev) => ev[spec.field];
+  if (spec.strategy && GET_STRATEGIES[spec.strategy]) return GET_STRATEGIES[spec.strategy];
+  console.warn("resolveGet: unknown filter spec", spec);
+  return () => null;
+}
+
+window.resolveDeckGet = resolveGet;
+
+// Turn any declarative specs on a deck into real `get` functions so the engine
+// only ever sees functions, whichever transport delivered the deck.
+function normaliseDeck(deck) {
+  if (Array.isArray(deck.filters)) {
+    deck.filters.forEach((f) => {
+      if (!f) return;
+      // Keep the declared spec so export can write it back (a function cannot
+      // be JSON.stringify'd).
+      if (f.get && typeof f.get !== "function") f.getSpec = f.get;
+      f.get = resolveGet(f.get);
+    });
+  }
+  if (Array.isArray(deck.groupStrategies)) {
+    deck.groupStrategies.forEach((g) => {
+      if (!g) return;
+      if (g.get && typeof g.get !== "function") g.getSpec = g.get;
+      g.get = resolveGet(g.get);
+    });
+  }
+  return deck;
+}
+
 // ---- registry -----------------------------------------------------
 window.DECKS = [];
 // Backward-compat shim: old code referenced window.EVENTS.
@@ -81,6 +132,7 @@ window.registerDeck = function (deck, options) {
     console.warn("registerDeck: invalid deck — need id + events[]", deck?.id);
     return;
   }
+  normaliseDeck(deck);
   const existing = window.DECKS.find((d) => d.id === deck.id);
   if (existing) {
     if (priority > (deckPriority.get(deck.id) || 0)) {
@@ -96,7 +148,7 @@ window.registerDeck = function (deck, options) {
 };
 
 // ---- deck source registry -----------------------------------------
-// Decks arrive from several places: bundled files (decks/manifest.json), user
+// Decks arrive from several places: bundled packages (decks/index.json), user
 // imports (localStorage), and later downloaded packages and cloud
 // entitlements. Each registers a provider:
 //

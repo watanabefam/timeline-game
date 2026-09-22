@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Timeline Game — place history in order</title>
-  <link rel="stylesheet" href="styles.css?v=112" />
+  <link rel="stylesheet" href="styles.css?v=119" />
   <link rel="stylesheet" href="assets/leaflet/leaflet.css" />
   <link rel="stylesheet" href="assets/vendor/vis-timeline-graph2d.min.css" />
 </head>
@@ -131,7 +131,10 @@
         <ol class="timeline" id="timeline"></ol>
       </div>
 
-      <div class="feedback" id="feedback"></div>
+      <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+      <!-- Persistent polite live region for the rescue reveal (announced once,
+           without moving focus). Empty at load so screen readers register it. -->
+      <p id="rescue-status" class="sr-only" role="status" aria-live="polite"></p>
     </section>
 
     <!-- RESULTS -->
@@ -265,35 +268,12 @@
         <button class="modal-x" id="settings-x">&times;</button>
         <h2>Settings</h2>
         <div class="settings-tablist" role="tablist" aria-label="Settings categories">
-          <button class="settings-tab active" role="tab" aria-selected="true" aria-controls="panel-decks" id="tab-decks" tabindex="0">Decks</button>
-          <button class="settings-tab" role="tab" aria-selected="false" aria-controls="panel-audio" id="tab-audio" tabindex="-1">Audio</button>
+          <button class="settings-tab active" role="tab" aria-selected="true" aria-controls="panel-audio" id="tab-audio" tabindex="0">Audio</button>
           <button class="settings-tab" role="tab" aria-selected="false" aria-controls="panel-visual" id="tab-visual" tabindex="-1">Visual</button>
+          <button class="settings-tab" role="tab" aria-selected="false" aria-controls="panel-decks" id="tab-decks" tabindex="-1">Decks</button>
         </div>
         <div class="settings-tab-panels">
-          <div class="settings-tab-panel active" id="panel-decks" role="tabpanel" aria-labelledby="tab-decks">
-            <div class="settings-body">
-              <div class="settings-group">
-                <h3 class="settings-group-title">Export</h3>
-                <p class="settings-group-note">Download the current deck or every loaded deck as JSON.</p>
-                <div class="settings-actions">
-                  <button class="btn btn--primary" id="export-current-btn">Export current deck</button>
-                </div>
-                <div class="settings-actions">
-                  <button class="btn btn--ghost" id="export-all-btn">Export all decks</button>
-                </div>
-              </div>
-              <div class="settings-group">
-                <h3 class="settings-group-title">Import</h3>
-                <p class="settings-group-note">Import a deck JSON file exported from this app, or a single-deck JSON object. Duplicate ids replace the existing deck.</p>
-                <input type="file" id="import-file-input" accept="application/json,.json" style="display:block;width:100%;margin:10px 0;color:var(--muted);" />
-                <div class="settings-actions">
-                  <button class="btn btn--primary" id="import-file-btn">Import from file</button>
-                </div>
-                <p id="decks-status" class="settings-group-note" style="margin-top:10px;"></p>
-              </div>
-            </div>
-          </div>
-          <div class="settings-tab-panel" id="panel-audio" role="tabpanel" aria-labelledby="tab-audio" hidden>
+          <div class="settings-tab-panel active" id="panel-audio" role="tabpanel" aria-labelledby="tab-audio">
             <div class="settings-body">
               <div class="settings-group">
                 <h3 class="settings-group-title">Audio</h3>
@@ -317,26 +297,10 @@
               </div>
               <div class="settings-group">
                 <h3 class="settings-group-title">Narration</h3>
-                <p class="settings-group-note">Reads each event title aloud while you play, so a reader and a player can listen together. Never reads the answer — only what's already on the card. Standard quality works offline; High and Best download a larger voice model once.</p>
+                <p class="settings-group-note">Reads each event title aloud while you play.</p>
                 <div class="settings-row">
                   <span class="settings-row-label">Voice narration</span>
                   <button class="mode-btn" id="narration-btn" type="button" aria-pressed="false">🔇 Off</button>
-                </div>
-                <div class="settings-row">
-                  <span class="settings-row-label">Voice</span>
-                  <span class="settings-row-controls">
-                    <select class="count-select" id="narration-voice" aria-label="Narration voice"></select>
-                  </span>
-                </div>
-                <div class="settings-row">
-                  <span class="settings-row-label">Quality</span>
-                  <span class="settings-row-controls">
-                    <select class="count-select" id="narration-quality" aria-label="Narration quality">
-                      <option value="standard">Standard (offline)</option>
-                      <option value="high">High (~160 MB first use)</option>
-                      <option value="best">Best (~320 MB first use)</option>
-                    </select>
-                  </span>
                 </div>
                 <div class="settings-row">
                   <span class="settings-row-label">Test</span>
@@ -370,6 +334,29 @@
                   <button class="mode-btn" id="cursor-btn" type="button" aria-pressed="true">🖱️ On</button>
                 </div>
                 <p class="settings-group-note">Ornate pointer art for mouse and trackpad (arrow, hand, grab, hourglass). Touch devices are unaffected.</p>
+              </div>
+            </div>
+          </div>
+          <div class="settings-tab-panel" id="panel-decks" role="tabpanel" aria-labelledby="tab-decks" hidden>
+            <div class="settings-body">
+              <div class="settings-group">
+                <h3 class="settings-group-title">Export</h3>
+                <p class="settings-group-note">Download the current deck or every loaded deck as JSON.</p>
+                <div class="settings-actions">
+                  <button class="btn btn--primary" id="export-current-btn">Export current deck</button>
+                </div>
+                <div class="settings-actions">
+                  <button class="btn btn--ghost" id="export-all-btn">Export all decks</button>
+                </div>
+              </div>
+              <div class="settings-group">
+                <h3 class="settings-group-title">Import</h3>
+                <p class="settings-group-note">Import a deck JSON file exported from this app, or a single-deck JSON object. Duplicate ids replace the existing deck.</p>
+                <input type="file" id="import-file-input" accept="application/json,.json" style="display:block;width:100%;margin:10px 0;color:var(--muted);" />
+                <div class="settings-actions">
+                  <button class="btn btn--primary" id="import-file-btn">Import from file</button>
+                </div>
+                <p id="decks-status" class="settings-group-note" style="margin-top:10px;"></p>
               </div>
             </div>
           </div>
@@ -426,17 +413,17 @@
     </button>
   </dialog>
 
-  <script src="events-data.js?v=2"></script>
-  <script src="decks-io.js?v=2"></script>
+  <script src="events-data.js?v=3"></script>
+  <script src="decks-io.js?v=3"></script>
   <script src="assets/leaflet/leaflet.js"></script>
   <script src="assets/world-land.js"></script>
   <script src="assets/vendor/liquid-glass.js"></script>
   <script src="assets/vendor/vis-timeline-graph2d.min.js"></script>
   <script src="assets/vendor/anime.umd.min.js"></script>
   <script src="assets/vendor/canvas-confetti-1.9.3.min.js"></script>
-<script src="fx.js?v=22"></script>
+<script src="fx.js?v=23"></script>
 <script src="globe.js?v=10"></script>
-<script src="narration.js?v=16"></script>
-<script src="timeline.js?v=142"></script>
+<script src="narration.js?v=20"></script>
+<script src="timeline.js?v=151"></script>
 </body>
 </html>

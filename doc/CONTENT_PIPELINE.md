@@ -33,6 +33,8 @@
   primary content.
 - **Wikipedia is a source to verify against, not the product.** Use it as a
   research input; present your own vetted prose.
+- **Prefer sources better than Wikipedia.** Institutions and reference works
+  first; mine Wikipedia's references rather than citing Wikipedia itself (§2).
 - **AI may draft; a human verifies.** The pipeline enforces grounding so the
   draft cannot drift from its source.
 - Everything here is **author-time tooling** (`scripts/`), so it does not touch
@@ -60,6 +62,36 @@ uncensored, grade-9+ article that can change tomorrow.
 
 > "Simple English" Wikipedia does **not** solve this: research shows it is still
 > above its target reading level (and declining), and it remains uncensored.
+
+### Source hierarchy (prefer better than Wikipedia)
+
+Wikipedia's own policy is that it is **not a reliable source for any purpose** and
+that citing it elsewhere is **circular sourcing**. The evidence is narrower than
+"Wikipedia is inaccurate": the *Nature* 2005 study found it roughly comparable to
+Britannica on science, but Rector (2008) measured history articles at **80%** vs
+**95–96%** for Britannica and specialist references, and the dominant failure is
+**omission**. Its real weaknesses are **niche topics, contested topics, and bias** —
+exactly the corners a world-history deck reaches into.
+
+| Tier | Sources | Use for |
+|---|---|---|
+| **1** | Museum, archive, university, government, peer-reviewed | Prefer first |
+| **2** | **Britannica, Oxford Reference, subject encyclopedias** | **Default tier** |
+| **3** | Quality journalism, reputable magazines | Cross-check before use |
+| **4** | **Wikipedia** | Finding aid only; pin `?oldid=` if linked |
+
+- **Cite what Wikipedia cites.** The reliable move is to follow its references to
+  the underlying Tier-1/2 source — that is the "trace to the original" habit
+  (SIFT) every university library teaches.
+- **Tier 2 is the honest default** for this audience. Britannica runs named
+  experts, fact-checkers, subject editors — and children's editors who rewrite for
+  reading level.
+- **Never let Wikipedia be the sole source** for a niche or contested fact. If only
+  Wikipedia asserts it, **soften or drop the claim** — that is the citogenesis
+  failure mode (a Wikipedia claim repeated by a "reliable" outlet and cited back).
+- **Authoritative ≠ infallible.** Even Tier 1/2 carries ~3–5% error, so the
+  **two-source rule** (§5) still applies to anything surprising, contested, or
+  numeric.
 
 ---
 
@@ -92,6 +124,15 @@ Rules:
 - **Imported decks degrade gracefully** — see §7.
 - **`story` (optional, deep layer):** a short *narrative nonfiction* retelling —
   the real events told as a story, Story-of-the-World style. Rules:
+  - **Default device: a real passage.** Quote a surviving text verbatim where one
+    exists; otherwise *adapt* it (modernise spelling, shorten, gloss) and disclose
+    the adaptation. Start from the evidence — a diary, a chronicle, a letter, a
+    treaty — not from a reconstruction.
+  - **`invented` is a last resort, not a device.** Use it only when no usable
+    record exists *and* the event still needs telling, and frame it as such.
+    Invented stories underperform quoted/adapted ones and carry a disclosure burden
+    the real passage never needs — so prefer a real passage wherever the record
+    allows one.
   - **No invented events or facts.** Dates, names, and numbers must match the
     frozen source (same checks as `summary`).
   - **Disclosure rule:** any imagined detail (reconstructed dialogue, interior
@@ -195,9 +236,12 @@ standards rather than invented:
   retelling for a younger audience, i.e. LRM's "adaptation for children". Prefer it
   over `adapted`; never write "adapted **and rewritten**" (an adaptation *is* a
   rewrite).
-- **`invented` has no equivalent in any standard** — schema.org, FRBR and CC all
-  assume a *source*, not the disclosure of *fiction*. For a children's product that
-  disclosure is ours to make, so it stays.
+- **`quoted` is the strongest relationship** — use it whenever a passage can be
+  reproduced as-is. It needs no adaptation disclosure and is the easiest to defend.
+- **`invented` is a last resort** — it has no equivalent in any standard (schema.org,
+  FRBR and CC all assume a *source*, not the disclosure of *fiction*), and it is the
+  only value that reads as a warning. Keep it for events with no usable record; never
+  make it the default. If a source exists, quote or adapt it instead.
 
 ### Disclosure rules
 
@@ -290,6 +334,48 @@ SOURCES                              ← neutral: these are the panel's sources
 - **No access date.** Retrieval dates are academic overhead for this product; the
   pinned revision already fixes the point in time.
 
+### Rights: can I use this passage?
+
+**"It's old, so it's free" is false often enough to be dangerous.** Two traps: the
+**age of the event is not the age of the text** (a 1950 history book about ancient
+Rome is in copyright), and **a translation is its own work** (a modern translation
+of an ancient chronicle is protected even though the original is not). Unpublished
+material — letters, diaries, sermons — gets the **longest** terms, so it is the
+hardest category, not the easiest.
+
+Work top-to-bottom; stop at the first yes:
+
+1. **Is it a fact or an idea?** → Write it in your own words. Free.
+2. **US federal government work** (9/11 Commission Report, NASA transcripts,
+   statutes)? → Public domain in the US. *(Federal only — state/local and contractor
+   works are not.)*
+3. **Which edition are you copying — the original text or a translation?** Date the
+   **translation**, not the author.
+4. **First published in the US in 1930 or earlier?** → Public domain in the US.
+5. **Was it ever published?** Letters / diaries / manuscripts → assume protected.
+6. **A short, attributed quotation carrying your own point?** → Fair use / quotation
+   exception — but *not* automatic. A commercial app, an unpublished work, or
+   quoting the "heart" of the source all cut against you.
+7. **Adapting / abridging / translating it?** → Needs permission unless the source is
+   public domain.
+8. **In doubt?** → Substitute a public-domain edition, write from the facts, or get a
+   licence. Never ship on a guess.
+
+**Not safe, despite being "primary":** MLK's speeches, Mandela's *Long Walk to
+Freedom*, Churchill's writings, Anne Frank's diary, Billy Graham's sermons, missionary
+journals and letters, and most 20th-century photographs. Estates and publishers
+control these, and some enforce actively.
+
+**Safely reusable:** US federal works; US publications from **1930 or earlier**;
+**CC0** open-access material (the Met, the Smithsonian); and **public-domain
+translations** of ancient and medieval texts — **LacusCurtius** and **Fordham's
+curated PD-Loeb list** are the right starting points. **Perseus prohibits commercial
+use**, and the Loeb Classical Library is largely modern and licensed. The app is
+hosted worldwide, so design to the **stricter** standard (the UK/EU quotation
+exception), not only US fair use.
+
+> Not legal advice — clear anything commercially significant with counsel.
+
 ### Writing the story: match the device to the evidence
 
 The form (`story_type`) is a **loose label, never a template** — a diary is not one
@@ -301,20 +387,25 @@ throughout the Modern one. The reconstruction framing disappears exactly when it
 stops being needed.
 
 **The rule:** *match the device to the evidence, not to the genre.* Quote where a
-record exists; narrate where the event is documented; reconstruct — **and frame it**
-— only where the record is thin.
+record exists; adapt where it needs simplifying; narrate where the event is
+documented; reconstruct — **and frame it** — only where the record is thin. The
+first three are the target; the last is the fallback.
 
-**The palette** (mix freely; none is required):
+Real voices are worth using for **authenticity and defensibility**, not for a
+measured memory boost — the evidence on that is thin and mixed (the app's own
+review log can test it).
+
+**The palette** (mix freely; none is required — best-evidenced first):
 
 | Device | Use when | Basis |
 |---|---|---|
-| Documentary narration | the event is well recorded | documented |
 | Primary-source quotation | a diary / letter / report survives | documented |
 | Adapted document | a real text needs simplifying | documented |
+| Documentary narration | the event is well recorded | documented |
 | Expository bridge | moving between scenes | either |
-| Second-person immersion | the reader should *be* there | reconstructed |
-| Reconstruction vignette | no personal record exists | reconstructed |
 | Dialogue | it carries voice — quote it, or mark it imagined | either |
+| Second-person immersion | the reader should *be* there | reconstructed |
+| Reconstruction vignette | **no** usable record exists (last resort) | reconstructed |
 
 **`pov`** — the immersive axis, **orthogonal to form**: `third` (a character),
 `first` (a diary/letter voice), `second` ("you"). A diary and a vignette share a POV
@@ -343,9 +434,10 @@ disclosure; the opening line carries the reader in.
 > overseers. She has lived her whole life in the workers' camp below the pyramid,
 > and has never seen the horizon without it.
 
-Both use the **same sources**; only the **device** differs. A is what we ship today;
-B is the device that makes it read as a story — disclosed, grounded, and framed in
-our own words.
+Both use the **same sources**; only the **device** differs. **A is the target** — a
+real diary, quoted and narrated, with nothing invented to disclose. B is the fallback
+for events whose record is genuinely thin; it must be framed and labelled, and it
+costs the reader a fact/fiction explanation that A never needs.
 
 ### The spine (goal-directed episode)
 
@@ -795,6 +887,133 @@ the declared groups.
 > Known bug: `loadExternalDecks()` currently injects deck scripts **without**
 > `?v=`, so returning players can receive stale decks (observed 2026-09). Fix
 > when adding the `revision` field.
+
+---
+
+## Deck package format
+
+> One format, **two transports**: a **folder** (bundled with the game / served
+> by the static host) and a **zip** (later, for distribution and cloud
+> delivery). The folder is the **source**; the zip is an **artifact built from
+> it** — never a second source of truth.
+
+Decks ship today as a script-tag global in `decks/*.js`. The package format is
+the shape they move to: a deck is a **folder**, loaded identically whether it
+arrived bundled or unpacked. The precedent is everywhere — Minecraft resource
+packs, VS Code extensions, npm packages, Obsidian plugins and Chrome extensions
+all ship **one folder and one packed artifact built from one source**.
+
+| Transport | Role | Built from |
+|---|---|---|
+| `decks/<id>/` folder | the **source**; bundled and served by the static host | authored |
+| `<id>.timedeck` zip | the **artifact**; distribution / cloud delivery (deferred) | the folder |
+
+### Layout
+
+```
+decks/<id>/
+  manifest.json   # package manifest (authored)
+  deck.json       # deck data (authored)
+  LICENSE         # optional
+  assets/         # optional; images/, audio/ … (media lives here when a deck has it)
+```
+
+Only `manifest.json` and `deck.json` are required; `LICENSE` and `assets/`
+appear only when the deck needs them.
+
+### Naming rule
+
+| File | Authored? | Job |
+|---|---|---|
+| `decks/index.json` | **generated** | the index of bundled decks the game discovers |
+| `decks/<id>/manifest.json` | **authored** | the package manifest for one deck |
+
+Two similarly-named files with two different jobs. The index is written by the
+tooling and never hand-edited; the manifest is the author's declaration for one
+deck. **Never confuse the two.**
+
+### Package manifest fields
+
+| Field | Type | Required? | Purpose |
+|---|---|---|---|
+| `formatVersion` | integer | **yes** | the format **epoch** — incremented when this spec changes |
+| `id` | string | **yes** | the deck id; **must equal the directory name** |
+| `name` | string | **yes** | user-visible deck name |
+| `version` | string | **yes** | the **user-visible content version** of the deck |
+| `entry` | string | **yes** (default `deck.json`) | the deck-data file the package loads |
+| `license` | string | **yes** for decks bundling third-party media | SPDX expression for the package |
+| `description` | string | optional | short package blurb |
+| `attribution[]` | array | optional | per-asset credit (see below) |
+| `assets[]` | array | optional | the asset paths the deck uses |
+| `grandfathered` | boolean | optional | **legacy-only**, pipeline use: marks a deck not yet migrated to the package format |
+
+> **`formatVersion` is not `schemaVersion`.** `formatVersion` versions the
+> **package** (folder layout + this manifest); the deck's `schemaVersion`
+> versions the **deck-data shape** inside `deck.json`. A package can be
+> reformatted without the content schema changing, and vice versa. They move
+> independently and must never be conflated.
+
+### `attribution[]` entry shape
+
+One entry per **third-party asset**, so a redistributed deck carries its credits
+with it:
+
+```json
+{ "asset": "assets/theme.mp3", "author": "…", "source": "…",
+  "license": "CC-BY-4.0", "licenseUrl": "https://…" }
+```
+
+`asset` (document-relative) is required; `author`, `source`, `license` and
+`licenseUrl` carry TASL-shaped credit so the licence is checkable.
+
+### Versioning: three concepts, never conflated
+
+| Concept | Field | Owner | Job |
+|---|---|---|---|
+| Package format epoch | `formatVersion` | manifest | **parse gate** — the loader refuses a package it does not understand |
+| User-visible release | `version` | manifest | the release a person sees |
+| Content hash | `revision` | **generated index** | change detection / cache-busting; used as `?v=<revision>` |
+
+`revision` is **computed from the content** by the generated index — authored by
+neither the manifest nor the deck. Three distinct questions: *can this runtime
+read it?* (`formatVersion`) · *what release is this?* (`version`) · *have the
+bytes changed?* (`revision`).
+
+### Paths
+
+Every asset reference is **document-relative** (`assets/theme.mp3`), resolved
+against the file that names it.
+
+- **Never root-relative** (`/decks/…`). A leading slash breaks under a GitHub
+  Pages **sub-path** and inside a **zip**, where the folder is not the site root.
+- **Never use `<base>`.** It rewrites every relative URL in the document —
+  including ones the game core does not own — and behaves differently from a
+  sub-path to an unpacked archive.
+
+### Declarative filters
+
+JSON cannot hold a `get` function, so a packaged deck cannot ship the inline
+closures a classic script deck passed. Filters and group strategies therefore
+**declare** how to bucket an event and the runtime **resolves** it. The
+vocabulary is closed:
+
+| Declaration | Means |
+|---|---|
+| `{ "field": "<eventField>" }` | bucket by a stored event field (e.g. `category`, `continent`) |
+| `{ "strategy": "ageBucket" }` | bucket by derived age, from `sortYear` |
+| `{ "strategy": "eraBucket" }` | bucket by derived era |
+| `{ "strategy": "continentGeneral" }` | bucket by continent, with the general bucket |
+| `{ "strategy": "none" }` | no filtering group |
+
+A classic-script deck may still pass a **real function** — that path is not
+removed. The **resolver** lives in `events-data.js` (`resolveGet` /
+`normaliseDeck`), so both shapes normalise to one runtime form.
+
+### Deferred (not implemented)
+
+- **Packaging** — the `.timedeck` zip and its build step.
+- **Media handling** — copying, optimising or validating assets beyond the path rules above.
+- **Signatures** — cryptographic signing of packages.
 
 ---
 
@@ -1379,6 +1598,24 @@ human review first; expand on results.
 
 ## Version history
 
+- **1.48** (2026-09-20) — **Sources better than Wikipedia; real passages over
+  invention.** Three additions from research. (1) §2 gained a **source hierarchy**
+  (institutions and reference works first; Wikipedia as a finding aid — *"cite what
+  Wikipedia cites"*), with the evidence: Wikipedia's own policy calls it uncitable,
+  Rector 2008 measured history articles at **80%** vs **95–96%** for specialist
+  references, and the dominant failure is **omission** — worst on niche and contested
+  topics. (2) `invented` is **demoted to a last resort** across the story rules, the
+  `storySource` table and the device palette. The default is now a **real passage**:
+  quoted where one survives, else adapted with disclosure. The worked example's
+  framing flipped so the documented narration is the target, not the reconstruction.
+  Real voices are justified on **authenticity and defensibility**, *not* a measured
+  memory boost — the evidence for that is thin and mixed. (3) Added a
+  **"Can I use this passage?"** rights checklist: the age of the event is not the age
+  of the text, a **translation is its own work**, unpublished material carries the
+  **longest** term, and "primary = free" is false for MLK, Mandela, Churchill, Anne
+  Frank and Billy Graham. Safe lanes: US federal works, US publications from 1930 or
+  earlier, CC0 open access, and **public-domain translations** (LacusCurtius,
+  Fordham's PD-Loeb list; Perseus prohibits commercial use). No schema or code change.
 - **1.47** (2026-09-14) — **Disclosure moved out of the prose into a rendered box.** v1.45's
   "mark the time gap" rule made every draft open *and* close with "this scene is imagined" —
   repetition was the predictable result of asking prose to voice one statement twice. Research

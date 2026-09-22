@@ -26,6 +26,13 @@
   const MIN_PLACEMENTS = 3;       // smallest playable puzzle
   const ANCHOR_COUNT = 2;         // pre-placed events (WHEN? = 2)
   const ENDLESS_LIVES = 2;        // WHEN? = 2
+  // After this many misses on one card the game reveals the answer: it scrolls
+  // to the correct gap, highlights it, explains *why*, and lets the player place
+  // it themselves (guided completion, not auto-place). Productive-failure
+  // research (GAMIFICATION_BRIEF A6/§9) requires the canonical answer to follow
+  // sustained floundering; keeping the final tap with the learner preserves
+  // agency and the worked-example benefit. A further stray tap auto-places.
+  const RESCUE_AFTER = 3;
   // MIN_SUBSET removed: placements adapt to the selected scope, so a single
   // week (7 cards) or small continent can be played. The "Play count" selector
   // sets how many events YOU place; total cards = count + 2 pre-placed
@@ -796,6 +803,13 @@
     tl.on("rangechange", hideTlHoverCard);
   }
   document.addEventListener("pointermove", (e) => { lastPointer = { x: e.clientX, y: e.clientY }; }, { passive: true });
+  // A window resize can change what "fits": re-anchor any fact-sheet tooltip
+  // that is currently visible so it never spills past the new edges.
+  window.addEventListener("resize", () => {
+    document.querySelectorAll(".tl-event .fact-sheet").forEach((s) => {
+      if (getComputedStyle(s).display !== "none") positionFactSheet(s.closest(".tl-event"));
+    });
+  });
   function destroyTimeline(t) { if (t) { try { t.destroy(); } catch (_) {} } return null; }
   // Restrict panning to (slightly past) the first and last dates in the data.
   // Label space is handled precisely by fitTextSpace() after the first render.
@@ -1591,6 +1605,9 @@
       anchorIds: new Set(anchors.map((e) => e.id)),
       cardSlips: {},
       status: "playing",
+      // Active rescue (after RESCUE_AFTER misses): { lo, hi, id } — the correct
+      // gap range and the card being revealed. Null when no rescue is showing.
+      rescue: null,
       revealedFacts,
     };
 
@@ -1708,7 +1725,7 @@
         peak: 1.05,              // scale at the viewport centre
         edge: 0.95,              // scale at the top/bottom threshold
         curve: "sphere",         // constant-curvature dome: a broad arc, not a highlight
-        minOpacity: 0.9,         // light fade at the thresholds (no vignette/spotlight)
+        minOpacity: 0.65,        // edges dim to 65% — a fade you can actually see
         origin: "center center", // grow symmetrically
         scaleVar: "--fs",        // publishes the scale so the rail stub tracks the card
         disabledWhen: () => screens.game.classList.contains("hidden"),
@@ -1730,9 +1747,14 @@
       $("prompt-emoji").textContent = ev.emoji || "❓";
       $("prompt-title").textContent = ev.title;
       if (window.Narrator) {
-        window.Narrator.speakEvent(ev);
-        // Keep the cache warm: prefetch the remaining queue so the next card
-        // load plays instantly from IndexedDB (low priority, no playback).
+        // Narration audio ships with the deck — tell the player which deck is
+        // active so it can resolve each card's clip.
+        window.Narrator.setDeck(ui.deck);
+        // On the very first deal the voice would otherwise start over the
+        // curtain; hold it until the game screen has transitioned in (~1s).
+        const firstOfGame = game.roundIndex === 0 && game.status === "playing";
+        window.Narrator.speakEvent(ev, { delay: firstOfGame ? 1000 : 0 });
+        // Pre-warm the next few clips so their playback is instant.
         const upcoming = game.queue
           .slice(game.roundIndex + 1)
           .map((id) => eventById(ui.deck, id));
@@ -2235,6 +2257,51 @@
     return slips === 0 ? "placed-clean" : "placed-slipped slip-" + Math.min(slips || 1, 3);
   }
 
+  // Keep the fact-sheet tooltip inside the window. CSS anchors it to the right
+  // of the event card (left: calc(100% + 12px)); a card near an edge would push
+  // the tooltip off-screen, so measure it and clamp/flip both axes. Fixed
+  // positioning makes left/top viewport-relative (no transformed ancestor sits
+  // between the sheet and the viewport — only the inner .tl-card is scaled).
+  function positionFactSheet(li) {
+    const sheet = li && li.querySelector(".fact-sheet");
+    if (!sheet) return;
+    const pad = 8;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // The sheet may not be painted yet on the first frame it opens — force
+    // layout (hidden) so offsetWidth/Height are real, then restore.
+    const wasHidden = getComputedStyle(sheet).display === "none";
+    if (wasHidden) { sheet.style.display = "block"; sheet.style.visibility = "hidden"; }
+    const w = sheet.offsetWidth;
+    const h = sheet.offsetHeight;
+    const card = li.querySelector(".tl-card") || li;
+    const cr = card.getBoundingClientRect();
+    // Horizontal: prefer the right of the card, flip left when it would
+    // overflow, and fall back to a clamped right edge when neither fits.
+    let left = cr.right + 12;
+    if (left + w > vw - pad) {
+      const flipped = cr.left - 12 - w;
+      left = flipped >= pad ? flipped : Math.max(pad, vw - pad - w);
+    }
+    // Vertical: align near the card top, then clamp so the whole sheet stays
+    // in view; if it is taller than the window, pin to the top and scroll it.
+    let top = cr.top + 8;
+    if (top + h > vh - pad) top = vh - pad - h;
+    if (top < pad) top = pad;
+    if (h > vh - 2 * pad) {
+      top = pad;
+      sheet.style.maxHeight = (vh - 2 * pad) + "px";
+      sheet.style.overflowY = "auto";
+    } else {
+      sheet.style.maxHeight = "";
+      sheet.style.overflowY = "";
+    }
+    sheet.style.position = "fixed";
+    sheet.style.left = left + "px";
+    sheet.style.top = top + "px";
+    if (wasHidden) { sheet.style.visibility = ""; sheet.style.display = ""; }
+  }
+
   function eventEl(e, idx) {
     const li = document.createElement("li");
     li.className = "tl-event " + placedClassFor(e);
@@ -2273,6 +2340,7 @@
         const open = li.classList.toggle("open");
         btn.setAttribute("aria-expanded", open ? "true" : "false");
         if (open) {
+          positionFactSheet(li); // keep it inside the window once visible
           ensureFactMap(li); // build the mini-map lazily on first open
           if (window.GlobeDock) window.GlobeDock.focus(e); // aim globe at this card
         }
@@ -2280,11 +2348,14 @@
     }
     // Mouse users reveal the sheet on hover — init the map then too.
     li.addEventListener("mouseenter", () => {
+      positionFactSheet(li); // anchor inside the window before the first paint
       ensureFactMap(li);
       if (hoverDebounceTimer) { clearTimeout(hoverDebounceTimer); hoverDebounceTimer = null; }
       setCardHovered(true);
       if (window.GlobeDock) window.GlobeDock.focus(e); // shift globe to this card
     });
+    // Keyboard users open it via :focus-within — same window-aware placement.
+    li.addEventListener("focusin", () => positionFactSheet(li));
     li.addEventListener("mouseleave", () => {
       // Debounce: a fast move to another card cancels this (the new card's
       // mouseenter clears the timer), so the globe never jerks back to the
@@ -2319,6 +2390,55 @@
     return g;
   }
 
+  // A correct placement is committed here so both the normal path and the
+  // rescue safety-net (a stray tap while the answer is showing) share one body.
+  function commitPlacement(index, ev) {
+    game.rescue = null;
+    const live = $("rescue-status");
+    if (live) live.textContent = "";
+
+    game.timeline.splice(index, 0, ev.id);
+    game.revealedFacts[ev.id] = ev.fact;
+    game.outcomes.push("correct");
+    // Remember how many slips this card needed (0 = clean first try) so the
+    // timeline can differentiate it visually.
+    game.cardSlips[ev.id] = game.wrongOnCurrent;
+    // Flat scoring: a card is worth POINTS_PER_CARD; each slip on it costs 1
+    // (floor 0) so the final score reflects how cleanly the run was played.
+    const value = Math.max(0, POINTS_PER_CARD - game.wrongOnCurrent);
+    game.score += value;
+    game.roundIndex += 1;
+    game.wrongOnCurrent = 0;
+    flashFeedback(value > 0 ? `✓ +${value}` : "✓ placed +0", true);
+    game.streak += 1;
+    playSfx("correct", { streak: game.streak });
+
+    if (game.roundIndex >= game.queue.length) { finishGame(true); return; }
+    renderGame();
+    // Animate only the newly inserted event
+    const newGap = document.querySelector(`.gap[data-index="${index}"]`);
+    const newEventEl = newGap && newGap.nextElementSibling;
+    if (newEventEl && newEventEl.classList.contains("tl-event")) {
+      newEventEl.classList.add("tl-event--entering");
+      newEventEl.addEventListener("animationend", () => {
+        newEventEl.classList.remove("tl-event--entering");
+      }, { once: true });
+      // Juice: lock-in burst + floating score + green vignette, tiered
+      // by streak (heavy at 3+ consecutive corrects).
+      juicePlace(newEventEl, value, game.streak);
+    }
+    // Rail pulse: the timeline line flashes as the card locks in.
+    const tl = $("timeline");
+    tl.classList.add("timeline--pulse");
+    setTimeout(() => tl.classList.remove("timeline--pulse"), 500);
+    // Rail glow: energy travels outward from the new node along the line
+    // (up and down to the rail ends), fading as it goes. Slight delay so
+    // it reads after the card's expand-in starts.
+    if (newEventEl && window.FX && window.FX.railGlow) {
+      FX.railGlow(tl, newEventEl, { delay: 60 });
+    }
+  }
+
   function attemptPlace(index) {
     if (game.status !== "playing") return;
     // Re-arm WebAudio inside this click gesture: browsers suspend the context
@@ -2332,82 +2452,171 @@
     const [lo, hi] = correctIndexRange(ev, timelineEvents);
     const correct = index >= lo && index <= hi;
 
-    if (correct) {
-      game.timeline.splice(index, 0, ev.id);
-      game.revealedFacts[ev.id] = ev.fact;
-      game.outcomes.push("correct");
-      // Remember how many slips this card needed (0 = clean first try) so the
-      // timeline can differentiate it visually.
-      game.cardSlips[ev.id] = game.wrongOnCurrent;
-      // Flat scoring: a card is worth POINTS_PER_CARD; each slip on it costs 1
-      // (floor 0) so the final score reflects how cleanly the run was played.
-      const value = Math.max(0, POINTS_PER_CARD - game.wrongOnCurrent);
-      game.score += value;
-      game.roundIndex += 1;
-      game.wrongOnCurrent = 0;
-      flashFeedback(value > 0 ? `✓ +${value}` : "✓ placed +0", true);
-      game.streak += 1;
-      playSfx("correct", { streak: game.streak });
+    if (correct) { commitPlacement(index, ev); return; }
 
-      if (game.roundIndex >= game.queue.length) finishGame(true);
-      else {
-        renderGame();
-        // Animate only the newly inserted event
-        const newGap = document.querySelector(`.gap[data-index="${index}"]`);
-        const newEventEl = newGap && newGap.nextElementSibling;
-        if (newEventEl && newEventEl.classList.contains("tl-event")) {
-          newEventEl.classList.add("tl-event--entering");
-          newEventEl.addEventListener("animationend", () => {
-            newEventEl.classList.remove("tl-event--entering");
-          }, { once: true });
-          // Juice: lock-in burst + floating score + green vignette, tiered
-          // by streak (heavy at 3+ consecutive corrects).
-          juicePlace(newEventEl, value, game.streak);
-        }
-        // Rail pulse: the timeline line flashes as the card locks in.
-        const tl = $("timeline");
-        tl.classList.add("timeline--pulse");
-        setTimeout(() => tl.classList.remove("timeline--pulse"), 500);
-        // Rail glow: energy travels outward from the new node along the line
-        // (up and down to the rail ends), fading as it goes. Slight delay so
-        // it reads after the card's expand-in starts.
-        if (newEventEl && window.FX && window.FX.railGlow) {
-          FX.railGlow(tl, newEventEl, { delay: 60 });
-        }
-      }
-    } else {
-      game.outcomes.push("wrong");
-      game.wrongOnCurrent += 1;
-      // Immediate corrective feedback + retry: wrong placements bounce back and
-      // never end the run (research-backed for learning; slips cost points).
-      flashFeedback("✗ try again", false);
-      game.streak = 0;
+    game.outcomes.push("wrong");
+    game.wrongOnCurrent += 1;
+    game.streak = 0;
+
+    // Rescued already: the answer is on screen, so a stray tap just finishes
+    // the placement instead of looping. While a rescue shows, only the correct
+    // gap is a live target, so this is a safety net rather than the main path.
+    if (game.rescue) { commitPlacement(game.rescue.lo, ev); return; }
+
+    if (game.wrongOnCurrent >= RESCUE_AFTER) {
+      // Third miss: stop testing and reveal. A soft "that was wrong" cue only —
+      // no shake or juice, so the reveal reads as help, not rebuke.
       playSfx("wrong");
-      juiceWrong();
-      // Dock globe ring follows the good/bad scheme.
       if (window.GlobeDock) window.GlobeDock.markCurrent("bad");
-      // Screen shake: same-frame punctuation alongside beep + gap flash.
-      // Short/decaying/positional (4px, 200ms) — FX handles reduced motion.
-      if (window.FX) FX.shake(screens.game, 4, 200);
-      // Flash the clicked gap instead of rebuilding the timeline.
-      const gapNode = document.querySelector(`.gap[data-index="${index}"]`);
-      if (gapNode) {
-        gapNode.classList.remove("gap--wrong");
-        void gapNode.offsetWidth;
-        gapNode.classList.add("gap--wrong");
-        gapNode.addEventListener("animationend",
-          () => gapNode.classList.remove("gap--wrong"), { once: true });
-      }
+      triggerRescue(lo, hi, ev);
+      return;
+    }
+
+    // Strike 2 names the direction; strike 1 stays unaided and wordless — the
+    // shake, gap flash and buzz already say "miss" (hints on demand; no
+    // redundant text).
+    if (game.wrongOnCurrent === RESCUE_AFTER - 1) {
+      flashFeedback(
+        index < lo ? "Too early — it comes later." : "Too late — it comes earlier.",
+        false
+      );
+    }
+    playSfx("wrong");
+    juiceWrong();
+    // Dock globe ring follows the good/bad scheme.
+    if (window.GlobeDock) window.GlobeDock.markCurrent("bad");
+    // Screen shake: same-frame punctuation alongside beep + gap flash.
+    // Short/decaying/positional (4px, 200ms) — FX handles reduced motion.
+    if (window.FX) FX.shake(screens.game, 4, 200);
+    // Flash the clicked gap instead of rebuilding the timeline.
+    const gapNode = document.querySelector(`.gap[data-index="${index}"]`);
+    if (gapNode) {
+      gapNode.classList.remove("gap--wrong");
+      void gapNode.offsetWidth;
+      gapNode.classList.add("gap--wrong");
+      gapNode.addEventListener("animationend",
+        () => gapNode.classList.remove("gap--wrong"), { once: true });
     }
   }
 
+  // ---- rescue: reveal the answer after repeated misses --------------------
+  // Scrolls to the correct gap, makes it the single obvious target, and anchors
+  // an explanation beside it (co-located, never a detached toast). The player
+  // still performs the placement; the callout persists until they do.
+  function rescueOrderingText(lo, hi, ev) {
+    const evs = game.timeline.map((id) => eventById(ui.deck, id));
+    const before = lo > 0 ? evs[lo - 1] : null;
+    const after = hi < evs.length ? evs[hi] : null;
+    const plain = (e) => `${e.title} (${fmtYears(e)})`;
+    const rich = (e) => `<b>${escapeHtml(e.title)}</b> (${escapeHtml(fmtYears(e))})`;
+    let text, html;
+    if (before && after) {
+      text = `It goes between ${plain(before)} and ${plain(after)}.`;
+      html = `It goes between ${rich(before)} and ${rich(after)}.`;
+    } else if (after) {
+      text = `It goes before ${plain(after)}.`;
+      html = `It goes before ${rich(after)}.`;
+    } else if (before) {
+      text = `It goes after ${plain(before)}.`;
+      html = `It goes after ${rich(before)}.`;
+    } else {
+      text = html = "It goes at the start of the timeline.";
+    }
+    if (lo < hi) {
+      const same = " It shares its year with a neighbour — either side works.";
+      text += same;
+      html += same;
+    }
+    return { text, html };
+  }
+
+  function buildRescueCallout(lo, hi, ev) {
+    const order = rescueOrderingText(lo, hi, ev);
+    // Prefer the authored significance line; `fact` is the fallback so the
+    // moment is never empty even on decks without structured fields (§9).
+    const why = ev.why || ev.fact || "";
+    const li = document.createElement("li");
+    li.className = "gap-callout";
+    li.innerHTML =
+      `<span class="gap-callout__arrow" aria-hidden="true"></span>` +
+      `<p class="gap-callout__order">${order.html}</p>` +
+      (why ? `<p class="gap-callout__why">${escapeHtml(why)}</p>` : "");
+    li.dataset.announce = order.text + (why ? " " + why : "");
+    return li;
+  }
+
+  function scrollToRescueGap(target) {
+    // Reserve the sticky game header so the target never lands beneath it.
+    // Measured here (not hardcoded) because the header height is responsive.
+    const header = document.querySelector(".game-header");
+    const h = header ? Math.round(header.getBoundingClientRect().height) : 0;
+    document.documentElement.style.setProperty("--game-header-h", h + "px");
+    const rect = target.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    if (rect.top >= h && rect.bottom <= vh) return; // already visible — don't jump
+    target.scrollIntoView({
+      block: "center",
+      inline: "nearest",
+      behavior: prefersReduced() ? "instant" : "smooth",
+    });
+  }
+
+  function triggerRescue(lo, hi, ev) {
+    if (game.status !== "playing" || game.rescue) return;
+    game.rescue = { lo, hi, id: ev.id };
+
+    const tl = $("timeline");
+    if (!tl) return;
+    const gapNodes = Array.from(tl.querySelectorAll(".gap"));
+
+    // One unambiguous target: emphasise the correct gap(s), make every other
+    // gap inert. Cues are redundant (solid border + label + ring), never colour
+    // alone, and the larger target helps touch users.
+    gapNodes.forEach((g) => {
+      const i = Number(g.dataset.index);
+      if (i >= lo && i <= hi) {
+        g.classList.add("gap--rescue");
+        g.textContent = "IT GOES HERE";
+        g.setAttribute("aria-label", "Correct spot — place here");
+      } else {
+        g.classList.add("gap--locked");
+        g.setAttribute("aria-disabled", "true");
+        g.setAttribute("tabindex", "-1");
+      }
+    });
+
+    // Anchor the explanation just below the correct range (next to, never on
+    // top of, the target).
+    const anchorGap = tl.querySelector(`.gap[data-index="${hi}"]`) || gapNodes[0];
+    const callout = buildRescueCallout(lo, hi, ev);
+    if (anchorGap) anchorGap.insertAdjacentElement("afterend", callout);
+
+    // Announce once through the persistent polite live region.
+    const live = $("rescue-status");
+    if (live) live.textContent = callout.dataset.announce;
+
+    const target = tl.querySelector(`.gap[data-index="${lo}"]`);
+    if (!target) return;
+    scrollToRescueGap(target);
+    // Programmatic reveal must move focus to the revealed content (WCAG).
+    // preventScroll keeps focus from fighting the (possibly smooth) scroll.
+    try { target.focus({ preventScroll: true }); } catch (_) {}
+  }
+
   let feedbackTimer = null;
+  // Transient placement feedback in the fixed HUD line (never scrolls out of
+  // view). Fade in fast, fade out slowly; the empty string is a no-op so a
+  // wordless miss leaves no stale text.
   function flashFeedback(msg, good) {
     const f = $("feedback");
+    if (!msg) return;
     f.textContent = msg;
-    f.className = "feedback " + (good ? "good" : "bad");
+    f.className = "feedback " + (good ? "good" : "bad") + " feedback--on";
     clearTimeout(feedbackTimer);
-    feedbackTimer = setTimeout(() => { f.textContent = ""; f.className = "feedback"; }, 1600);
+    feedbackTimer = setTimeout(() => {
+      f.classList.remove("feedback--on");
+      feedbackTimer = setTimeout(() => { f.textContent = ""; f.className = "feedback"; }, 500);
+    }, 2000);
   }
 
   // ---- juice (tiered feedback profiles) ---------------------------
@@ -3077,20 +3286,20 @@
   }
 
   // ---- deck sources -------------------------------------------------
-  // Bundled decks are listed in decks/manifest.js / .json, both GENERATED by
-  // scripts/gen-deck-manifest.mjs and never hand-edited. The .js form (a
-  // classic script exposing window.DECK_MANIFEST) is what the browser reads,
-  // because fetch()-ing the .json is blocked by CORS under file:// (origin
-  // "null") — which silently dropped every deck. User imports come from
-  // decks-io.js; downloaded packages and cloud entitlements will each register
-  // their own source later. Sources are isolated — one failure never blocks the
-  // rest — and there is no stale hardcoded fallback list.
+  // Bundled decks are listed in decks/index.json / index.js, both GENERATED by
+  // scripts/gen-deck-index.mjs and never hand-edited. The .js form (a classic
+  // script exposing window.DECK_INDEX) is what the browser reads, because it
+  // needs no fetch(); the .json is for the Node tooling. Each entry is either a
+  // folder package (its JSON entry is fetched) or a legacy flat script. Sources
+  // are isolated — one failure never blocks the rest — and there is no stale
+  // hardcoded fallback list.
   function registerBundledDeckSource() {
-    const loadDeckScript = (entry) =>
+    const bust = (entry) => (entry.revision ? "?v=" + entry.revision : "");
+
+    const loadFlatDeck = (entry) =>
       new Promise((resolve) => {
         const script = document.createElement("script");
-        // Content-hash revision from the manifest reaches returning players.
-        script.src = "decks/" + entry.file + (entry.revision ? "?v=" + entry.revision : "");
+        script.src = "decks/" + entry.file + bust(entry);
         script.onload = resolve;
         script.onerror = () => {
           console.warn("deck script failed to load: " + entry.file);
@@ -3099,25 +3308,52 @@
         document.head.appendChild(script);
       });
 
-    // Prefer the script-loadable manifest (works on file:// and http); fall
-    // back to fetch() only when the script is missing — e.g. an older checkout
-    // that predates manifest.js generation.
-    const loadManifest = () => {
-      if (window.DECK_MANIFEST) return Promise.resolve(window.DECK_MANIFEST);
+    const fetchJson = (url) =>
+      fetch(url, { cache: "no-cache" }).then((r) => {
+        if (!r.ok) throw new Error(url + " HTTP " + r.status);
+        return r.json();
+      });
+
+    // Folder decks load via their GENERATED classic-script mirror, so they work
+    // under file:// where fetch() is blocked (origin "null") — the same reason
+    // the index has a .js form. The mirror self-registers and already carries
+    // the package metadata. If no mirror exists, fall back to fetching the JSON.
+    const loadFolderDeck = (entry) => {
+      const dir = entry.dir;
+      const jsonFile = entry.entry || "deck.json";
+      const scriptName = entry.script || jsonFile.replace(/\.json$/, ".js");
       return new Promise((resolve) => {
         const script = document.createElement("script");
-        script.src = "decks/manifest.js";
-        script.onload = () => resolve(window.DECK_MANIFEST || null);
+        script.src = "decks/" + dir + "/" + scriptName + bust(entry);
+        script.onload = resolve;
+        script.onerror = () =>
+          fetchJson("decks/" + dir + "/" + jsonFile + bust(entry)).then(
+            (deck) => {
+              if (entry.version != null) deck.version = entry.version;
+              if (entry.license != null) deck.license = entry.license;
+              if (entry.attribution != null) deck.attribution = entry.attribution;
+              resolve(deck);
+            },
+            () => {
+              console.warn("deck failed to load: " + dir);
+              resolve(null);
+            }
+          );
+        document.head.appendChild(script);
+      });
+    };
+
+    // Prefer the script-loadable index (no fetch needed); fall back to fetch()
+    // only when the script is missing — e.g. an older checkout.
+    const loadIndex = () => {
+      if (window.DECK_INDEX) return Promise.resolve(window.DECK_INDEX);
+      return new Promise((resolve) => {
+        const script = document.createElement("script");
+        script.src = "decks/index.js";
+        script.onload = () => resolve(window.DECK_INDEX || null);
         script.onerror = () => resolve(null);
         document.head.appendChild(script);
-      }).then(
-        (manifest) =>
-          manifest ||
-          fetch("decks/manifest.json", { cache: "no-cache" }).then((r) => {
-            if (!r.ok) throw new Error("manifest HTTP " + r.status);
-            return r.json();
-          })
-      );
+      }).then((index) => index || fetchJson("decks/index.json"));
     };
 
     window.registerDeckSource({
@@ -3125,16 +3361,18 @@
       priority: 0,
       timeoutMs: 8000,
       load: () =>
-        loadManifest().then((manifest) => {
-          // Accept both shapes: a flat array of filenames, or
-          // { schemaVersion, decks: [{ file, revision }] }.
-          const list = Array.isArray(manifest) ? manifest : (manifest && manifest.decks) || [];
-          const files = list
-            .map((d) => (typeof d === "string" ? { file: d } : d))
-            .filter((d) => d && d.file);
-          // The scripts self-register via window.registerDeck, so this source
-          // returns no deck objects of its own — only ensures they all ran.
-          return Promise.all(files.map(loadDeckScript)).then(() => []);
+        loadIndex().then((index) => {
+          const list = Array.isArray(index) ? index : (index && index.decks) || [];
+          const entries = list
+            .map((d) => (typeof d === "string" ? { layout: "file", file: d } : d))
+            .filter((d) => d && (d.layout === "folder" ? d.dir : d.file));
+          // Both layouts self-register via window.registerDeck while their
+          // script loads, so this source only ensures they all ran.
+          const folders = entries.filter((e) => e.layout === "folder");
+          const flats = entries.filter((e) => e.layout !== "folder");
+          return Promise.all(flats.map(loadFlatDeck))
+            .then(() => Promise.all(folders.map(loadFolderDeck)))
+            .then(() => []);
         }),
     });
   }
@@ -3154,7 +3392,7 @@
       window.loadImportedDecks();
     }
     if (!window.DECKS.length) {
-      console.warn("No decks loaded — check decks/manifest.json.");
+      console.warn("No decks loaded — check decks/index.json.");
     }
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", init);

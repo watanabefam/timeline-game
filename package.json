@@ -6,9 +6,9 @@
   "description": "No-backend timeline-ordering game with pluggable decks.",
   "scripts": {
     "test": "npm --prefix tools/content-pipeline run test",
-    "validate": "npm run validate:manifest && npm run validate:content && npm run validate:pipeline",
-    "validate:manifest": "node scripts/gen-deck-manifest.mjs --check",
-    "gen:manifest": "node scripts/gen-deck-manifest.mjs",
+    "validate": "npm run validate:index && npm run validate:content && npm run validate:pipeline",
+    "validate:index": "node scripts/gen-deck-index.mjs --check",
+    "gen:index": "node scripts/gen-deck-index.mjs",
     "validate:content": "node scripts/validate-content.mjs",
     "validate:pipeline": "node tools/content-pipeline/verify-all.mjs",
     "geo": "node scripts/geo-fill.mjs",

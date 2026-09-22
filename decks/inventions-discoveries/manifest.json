@@ -1,0 +1,10 @@
+{
+  "formatVersion": 1,
+  "id": "inventions-discoveries",
+  "name": "Inventions & Discoveries",
+  "version": "1.0.0",
+  "entry": "deck.json",
+  "description": "The breakthroughs that changed how people live — and who made them.",
+  "attribution": [],
+  "license": "CC-BY-SA-4.0"
+}

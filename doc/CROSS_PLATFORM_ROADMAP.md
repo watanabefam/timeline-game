@@ -4,8 +4,9 @@
 > subscription-based, cross-platform application (iOS, Android, macOS, Windows, Linux)
 > with AI-powered features, in-app purchases, and institutional licensing.
 >
-> **Last updated:** 2026-09-09 | **Version:** 2.1 (no-build correction —
-> Capacitor/Tauri wrapping requires no bundler; see Decision Log)
+> **Last updated:** 2026-09-20 | **Version:** 2.3 (adds §19.12 narration assets —
+> voice is pre-rendered and ships with the deck package; Kokoro only, never
+> synthesized at runtime)
 
 ---
 
@@ -29,6 +30,7 @@
 16. [Estimated Timeline & Costs](#16-estimated-timeline--costs)
 17. [Success Metrics](#17-success-metrics)
 18. [Legal & Compliance](#18-legal--compliance)
+19. [Deck Packages (Content Packs)](#19-deck-packages-content-packs)
 
 ---
 
@@ -2523,12 +2525,230 @@ The convergent design is well-established: **dotLottie** (ZIP + mandatory root `
 
 Phase 1 ships independently and proves the UX; Phase 2 is where real audio requires the container; Phase 3 reuses the exact same artifact.
 
+**Narration (§19.12) rides the same phases.** Pre-rendered voice files are ordinary deck assets: Phase 1 ships them as a `narration/` folder beside bundled decks (no ZIP needed); Phase 2 moves them inside `.timedeck` `assets/`; Phase 3 delivers the identical artifact behind entitlement.
+
 ### 19.11 Open questions
 
 1. Does a package's `revision` map to `decks/manifest.json` `revision`, or a separate content version?
 2. Ed25519 signature from day one, or deferred to Phase 3 (paid content) only?
 3. Per-user watermark: visible (email/ID) vs metadata tag — or skip at launch?
 4. Do bundled free decks stay as `decks/*.js`, or migrate to pre-built `.timedeck` at launch?
+
+---
+
+### 19.12 Narration assets (pre-rendered voice)
+
+**Status:** ratified 2026-09-20. Extends §19.1–§19.5; binds §19.8 (licensing).
+Changes no game-core hard rule.
+
+#### 19.12.1 Decision
+
+Deck narration is **pre-rendered at authoring time and shipped with the deck
+package**. It is **never synthesized at runtime**, and **Kokoro-82M is the sole
+sanctioned engine** (Apache-2.0, run offline by the authoring tool).
+
+Rationale:
+
+- The narrated corpus is **fixed and known** — 321 events across four decks,
+  ~39k characters, ~46.5 minutes of speech. Runtime synthesis therefore buys
+  nothing and costs reliability: it forced a **125 MB** vendor payload (Kokoro q8
+  + ORT WASM), a 10–20 s cold start, a module worker, an IndexedDB PCM cache, a
+  warm-up gate, and a system-voice fallback — all of which the player experiences
+  as narration that is late, missing, or mismatched to the screen.
+- Pre-rendering replaces all of that with **one compressed file per event**,
+  playable instantly, offline, and deterministically.
+- **Kokoro only** because its weights *and* code are Apache-2.0 (no copyleft, no
+  non-commercial clause) and it delivers the best quality-per-compute for
+  narration on CPU. Non-commercial-weight engines (XTTS v2 / CPML, F5-TTS /
+  CC-BY-NC, Meta MMS / CC-BY-NC) are excluded, and the content gate enforces it
+  (§19.12.7).
+- Net package effect: **+~16 MB audio, −125 MB vendor**.
+
+Consequences, stated explicitly:
+
+- The runtime Kokoro worker, ORT WASM, model bundle, PCM cache, warm-up gate, and
+  system-voice fallback are **retired** for narration. `narration-worker.js` and
+  `assets/vendor/kokoro/` leave the shipped package.
+- Narration audio is fixed at generation time. Changing voice, engine, or
+  normalisation is a **content regeneration + re-ship**, not a runtime toggle.
+  Accepted — the corpus changes rarely.
+
+#### 19.12.2 `deck.narration` schema
+
+```js
+{
+  id, name, blurb, emoji, tier, filters, events,
+  license: { name: "CC0-1.0", attribution: "…", source: "…" },   // §19.8
+  theme: { background, music, gameMusic, accent },
+  narration: {
+    engine: "kokoro",                 // sole sanctioned engine
+    engineVersion: "1.0",
+    model: "onnx-community/Kokoro-82M-v1.0-ONNX",
+    dtype: "fp16",                    // authoring uses the best available
+    voice: "af_heart",
+    sampleRate: 24000,
+    format: "mp3",
+    bitrateKbps: 48,
+    textRule: "strip-years-v1",       // normalisation recipe (§19.12.5)
+    loudnessLufs: -16,
+    generated: "2026-09-20",
+    files: {                          // event id → asset path
+      "first-peoples-australia": "assets/narration/first-peoples-australia.mp3"
+    }
+  }
+}
+```
+
+- Every field is optional; a deck with no `narration` block simply has no voice.
+- `files` is a **map keyed by event id** for O(1) lookup. Identical normalised
+  text may map several event ids to one shared file (§19.12.6).
+- Resolution is centralised in one `resolveNarrationSource(deck, eventId)`,
+  mirroring `resolveThemeSource()` (§19.2). In-tree decks resolve to a
+  same-origin path; packaged decks resolve to an object URL from
+  `ContentPackStore` (§19.5). The engine never assumes provenance.
+
+#### 19.12.3 Container layout & manifest
+
+Narration lives under `assets/`, exactly like other package media:
+
+```
+manifest.json
+assets/
+  background.jpg
+  theme.mp3
+  narration/
+    first-peoples-australia.mp3
+    …
+```
+
+`manifest.json` gains a `narration` block, and every narration file is also
+listed in `assets[]` with the standard integrity record (§19.3):
+
+```json
+"narration": {
+  "engine": "kokoro",
+  "model": "onnx-community/Kokoro-82M-v1.0-ONNX",
+  "dtype": "fp16",
+  "voice": "af_heart",
+  "sampleRate": 24000,
+  "format": "mp3",
+  "bitrateKbps": 48,
+  "textRule": "strip-years-v1",
+  "loudnessLufs": -16,
+  "generated": "2026-09-20",
+  "files": { "first-peoples-australia": "assets/narration/first-peoples-australia.mp3" }
+},
+"assets": [
+  { "path": "assets/narration/first-peoples-australia.mp3",
+    "mime": "audio/mpeg", "bytes": 18432, "sha256": "…" }
+]
+```
+
+Per-file narration records additionally carry `textHash` (sha256 of the
+normalised spoken text) and `durationMs`.
+
+**Bundled in-tree decks** (no ZIP; §19.1's two-layer rule) ship the same
+`narration/` folder as static files beside the deck, and
+`deck.narration.files` points at those paths. Identical runtime contract — no
+ZIP required for Phase 1.
+
+#### 19.12.4 Methods & integrity
+
+- Media entries use ZIP `store` (0) — MP3 is already compressed (§19.3).
+- Integrity reuses §19.3: per-file `sha256` + `bytes`, optional Ed25519 over the
+  canonical manifest for paid packs.
+- `textHash` pins each clip to the deck text, so editing a fact without
+  regenerating is caught by the gate (§19.12.7).
+
+#### 19.12.5 Spoken-text recipe (`strip-years-v1`)
+
+The spoken text is **`title` + `. ` + normalised(`fact`)**, built at generation
+time:
+
+- `fact` is spoken, but **answer years are stripped** from the spoken text
+  (e.g. `"c. 2348 BC"`, `"in 1826"`) so the audio never gives the answer away.
+  The card display keeps them.
+- The recipe is versioned (`textRule`) and recorded in the manifest. Changing it
+  invalidates every `textHash` and forces regeneration.
+- This moves year-stripping from a runtime backstop to the **authoring recipe** —
+  applied once and verifiable, rather than re-applied on every play.
+
+#### 19.12.6 Generation pipeline (`tools/generate-narration.mjs`)
+
+Authoring tool — exempt from the no-build rule (rule 1 scope note; `tools/`
+already holds the §19.10 Phase 2 authoring-script precedent).
+
+1. Load decks.
+2. Build normalised spoken text per event (`strip-years-v1`).
+3. **Content key** = `sha256(normalisedText + voice + model + dtype + format + bitrate)`.
+4. Skip events whose manifest entry already matches the key → **incremental
+   regeneration** (only changed cards re-synthesise).
+5. Synthesise with **Kokoro-82M, offline, fp16**.
+6. Post-process: trim to the speech envelope (~90 ms pad) and loudness-normalise
+   to the manifest's target LUFS.
+7. Encode mono, 24 kHz.
+8. Write `assets/narration/<event-id>.<ext>` — **deterministic naming mirroring
+   the deck's event ids** (the "naming convention is the pipeline killer" lesson
+   from shipped-voice games).
+9. Dedupe: identical normalised text shares one file.
+10. Refresh the manifest `narration` block + `assets[]` records.
+11. `--check` mode for CI: every event covered, hashes match, engine sanctioned.
+
+#### 19.12.7 Content-gate additions
+
+Extend the §5 / §19 gates:
+
+- Every event has a narration file, or the deck declares narration off.
+- Per-file `sha256`/`bytes` match; `textHash` matches the deck's *current*
+  normalised text (catches fact edits).
+- `engine` **must be `kokoro`**; any non-sanctioned or non-commercial engine is
+  rejected (§19.8).
+- `textRule` present and known.
+- Bundled-media `license` block present when required (§19.8). Kokoro output
+  needs no third-party media licence, but the engine/model/voice are recorded for
+  audit.
+
+#### 19.12.8 Runtime wiring
+
+- **Resolve** — `resolveNarrationSource(deck, eventId)` → URL.
+- **Prefetch** — at round start, fetch + `decodeAudioData` the round's clips into
+  an in-memory `Map<url, AudioBuffer>` (a 20-card round ≈ 300 KB; the "warm the
+  round" pattern from shipped-voice apps).
+- **Play** — one shared `AudioContext`; playback is attach-buffer + `start()`
+  (~1–2 ms, effectively instant). No element creation or decode in the tap path.
+- **Fallback chain** — decoded buffer → `new Audio(url)` → system voice →
+  silence. Sound arriving late beats no sound.
+- No worker, no model load, no warm-up gate, no IDB PCM cache.
+
+#### 19.12.9 Format & size
+
+| Format | Decode support | Corpus size (46.5 min, mono 24 kHz) |
+|---|---|---|
+| **MP3** ~48 kbps | universal (all browsers, incl. older iPad Safari) | **~16 MB** |
+| Opus (Ogg) 24–32 kbps | Safari 18.4+ (CAF before that) | ~8 MB |
+| AAC (m4a) ~48 kbps | near-universal | ~14 MB |
+
+**v1 recommendation: single-format MP3** — universal `decodeAudioData` support,
+simplest container, small enough for the whole corpus. Opus is the documented
+size optimisation to revisit once the Safari floor is acceptable (§19.12.11).
+
+#### 19.12.10 Phasing
+
+- **Phase 1 (bundled decks):** generator + `decks/<id>/narration/` files +
+  `deck.narration` + resolver/prefetch/play; retire the runtime worker/bundle.
+  No new dependencies.
+- **Phase 2:** narration moves inside `.timedeck` `assets/` (reuses `fflate` +
+  `ContentPackStore`, §19.4–19.5).
+- **Phase 3:** the identical artifact is delivered via Supabase Storage (§19.7).
+
+#### 19.12.11 Open questions
+
+1. Single voice (`af_heart`), or a small voice set (corpus size ×N)?
+2. MP3-only v1, or Opus-first with a fallback source list?
+3. Do bundled free decks adopt a `narration/` folder layout now (they now carry
+   media), or move to pre-built `.timedeck` at launch? (sharpens §19.11 Q4)
+4. Loudness: standardise on −16 LUFS, or per-voice tuning?
+5. Ship narration for **all** bundled decks at launch, or start with one?
 
 ---
 
@@ -2545,6 +2765,9 @@ Phase 1 ships independently and proves the UX; Phase 2 is where real audio requi
 - [RevenueCat Web Billing](https://www.revenuecat.com/docs/web)
 - [fflate (unzip/zip library)](https://github.com/101arrowz/fflate)
 - [zip.js (security-hardened fallback)](https://gildas-lormeau.github.io/zip.js/)
+- [Kokoro-82M model card (Apache-2.0)](https://huggingface.co/hexgrad/Kokoro-82M)
+- [MDN — Web audio codec guide](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Audio_codecs)
+- [web.dev — Fast playback with audio and video preload](https://web.dev/articles/fast-playback-with-preload)
 - [dotLottie format spec (ZIP + manifest precedent)](https://dotlottie.io/spec/2.0/)
 - [IndexedDB API — MDN](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)
 - [Storage quotas & eviction — MDN](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria)
@@ -2582,8 +2805,19 @@ Phase 1 ships independently and proves the UX; Phase 2 is where real audio requi
 | 2026-09-18 | Authenticated GET + Storage RLS primary; signed URLs short-TTL only | Live-revocable entitlement check; signed URLs are unrevocable bearer tokens and defeat CDN caching (unique token = unique cache key) for per-user content |
 | 2026-09-18 | Media entries `store` (level 0), manifest `deflate` | Deflate saves ~0–5% on MP3/JPEG; storing them cuts import CPU/battery |
 | 2026-09-18 | sha256 + optional Ed25519 detached signature for packages | ZIP CRC-32 is corruption detection only (forgeable); signature is the tamper layer for paid content |
+| 2026-09-20 | **Narration is pre-rendered and ships with the deck package** — Kokoro-82M only (Apache-2.0), never synthesized at runtime | The narrated corpus is fixed and known (321 events, ~46.5 min); runtime synthesis cost 125 MB of vendor payload, a 10–20 s cold start, a worker, a PCM cache and a warm-up gate for no benefit. Net package change: +~16 MB audio, −125 MB vendor. Kokoro only: weights *and* code are Apache-2.0 (no copyleft, no non-commercial clause) and it leads on quality-per-compute for CPU narration |
+| 2026-09-20 | Runtime Kokoro worker + ORT WASM + model bundle retired from the shipped package | Narration ships as files; the runtime keeps only `resolveNarrationSource` + a WebAudio player. Removes cold start, WASM, autoplay/warm-up-gate and system-voice-fallback complexity |
+| 2026-09-20 | Narration format v1: MP3, mono, 24 kHz, ~48 kbps | Universal `decodeAudioData` support including older iPad Safari; ~16 MB for the entire corpus. Opus (~8 MB) held as a size optimisation behind a Safari-18.4 floor |
+| 2026-09-20 | Narration text rule `strip-years-v1` applied at generation, not runtime | Years live only in the `year` field; stripping once at authoring is verifiable via `textHash`, replacing a runtime backstop |
+| 2026-09-20 | Narration assets use deterministic per-event filenames + per-file `textHash` | Matches shipped-voice-game practice: naming that mirrors entity ids, and a text hash so an edited fact without regeneration fails the content gate |
 
 ---
 
-*Last updated: 2026-09-18*
-*Version: 2.2 — Adds §19 Deck Packages (content packs): `deck.theme` fields, `.timedeck` ZIP container, `ContentPackStore` persistence, and cloud delivery design; research-backed*
+*Last updated: 2026-09-20*
+*Version: 2.3 — Adds §19.12 Narration assets: voice is pre-rendered at authoring
+time with Kokoro-82M (Apache-2.0, sole sanctioned engine) and shipped with the
+deck package; runtime synthesis, the ORT/model vendor payload, the PCM cache and
+the warm-up gate are retired. MP3 v1 format. Research-backed*
+*Version: 2.2 — Adds §19 Deck Packages (content packs): `deck.theme` fields,
+`.timedeck` ZIP container, `ContentPackStore` persistence, and cloud delivery
+design; research-backed*
