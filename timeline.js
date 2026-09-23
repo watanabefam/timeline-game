@@ -563,7 +563,10 @@
       syncGameMusic(); // game screen swaps to game music; elsewhere resumes main
       initGlassOnScreen(); // glass newly-visible controls
       // Rail bounds need a visible screen (offsetTop is 0 while hidden).
-      if (name === "game") { updateRail(); refreshFocusScale(); drawRail(); }
+      if (name === "game") { updateRail(); refreshFocusScale(); }
+      // Always: the rail lives on <body>, so it must be shown on the game screen
+      // and hidden on every other one (drawRail sets railEl.hidden itself).
+      drawRail();
       // Dock globe lives on setup/game/results only (its mode-setting calls
       // handle visibility); leaving those screens hides + pauses it.
       if (window.GlobeDock && name !== "setup" && name !== "game" && name !== "results") {
@@ -1725,7 +1728,7 @@
   // Bézier, which is exactly a parabola: its control point sits 2x the bow
   // depth off the chord.
   let railEl = null;
-  function ensureRailEl(tl) {
+  function ensureRailEl() {
     if (!railEl) {
       railEl = document.createElement("div");
       railEl.className = "tl-rail";
@@ -1737,7 +1740,11 @@
         '<stop offset="1" stop-color="#fff" stop-opacity="0.55"/>' +
         '</linearGradient></defs><path pathLength="1"/></svg>';
     }
-    if (railEl.parentNode !== tl) tl.insertBefore(railEl, tl.firstChild);
+    // Mounted on <body>, NOT inside #game: FX.shake() animates a transform on
+    // #game, which would make it the containing block for this fixed overlay and
+    // drag the rail to #game's box ("the line moves to the centre") for the
+    // shake's duration. Outside the screen, no ancestor transform can touch it.
+    if (railEl.parentNode !== document.body) document.body.prepend(railEl);
   }
 
   // Must mirror the focus-scale range (peak/edge in FX.focusScale + the CSS
@@ -1746,7 +1753,11 @@
   const RAIL_PEAK = 1.05, RAIL_EDGE = 0.95;
   function drawRail() {
     const tl = $("timeline");
-    if (!tl || !railEl || screens.game.classList.contains("hidden")) return;
+    if (!railEl) return;
+    // The rail lives on <body>, so it must be hidden by hand off the game screen.
+    const onGame = tl && !screens.game.classList.contains("hidden");
+    railEl.hidden = !onGame;
+    if (!onGame) return;
     const card = tl.querySelector(".tl-event > .tl-card");
     if (!card) return;
     // offsetWidth is the LAYOUT width (the card's rect is scaled by the focus
@@ -1839,7 +1850,7 @@
 
     const tl = $("timeline");
     tl.innerHTML = "";
-    ensureRailEl(tl); // fixed overlay must be re-inserted after the wipe
+    ensureRailEl(); // fixed overlay lives on <body>; just make sure it's mounted
     // First deal: stagger the cards in as the curtain reveals. CSS-driven —
     // the game screen becomes visible mid-curtain, which starts the animation.
     const firstDeal = game.roundIndex === 0 && game.status === "playing";

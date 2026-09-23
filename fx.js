@@ -456,33 +456,44 @@
     const railX = nr ? nr.left + nr.width / 2 : tlRect.left + 8;
     const railTopY = tlRect.top + (parseFloat(tl.style.getPropertyValue("--rail-top")) || 0);
     const railBottomY = tlRect.bottom - (parseFloat(tl.style.getPropertyValue("--rail-bottom")) || 0);
-    const upDist = railTopY - nodeY;
-    const downDist = railBottomY - nodeY;
-    if (Math.abs(upDist) < 2 && Math.abs(downDist) < 2) return; // nothing to travel
+    if (Math.abs(railTopY - nodeY) < 2 && Math.abs(railBottomY - nodeY) < 2) return; // nothing to travel
+
+    // Follow the rail's ARC. The streak used to travel straight up/down, so it
+    // drifted off the bowed line the further it went. Read the drawn parabola
+    // (M xEnd 0 Q xCtl vc xEnd vh) and sample it, so the streak stays on the line.
+    let xCentre = railX, bow = 0, vc = nodeY;
+    const pathEl = document.querySelector(".tl-rail path");
+    const pm = pathEl && (pathEl.getAttribute("d") || "").match(/M ([\d.-]+) 0 Q ([\d.-]+) ([\d.-]+)/);
+    if (pm) { const xEnd = +pm[1], xCtl = +pm[2]; vc = +pm[3]; xCentre = (xEnd + xCtl) / 2; bow = xEnd - xCentre; }
+    const railXAt = (y) => { const d = (y - vc) / vc; return xCentre + bow * d * d; };
+    const startX = railXAt(nodeY); // start ON the curve, not at the (possibly mid-animation) node
 
     const make = () => {
       const g = document.createElement("div");
       g.dataset.railGlow = "1";
       g.style.cssText =
-        `position:fixed;left:${railX - 3}px;top:${nodeY - 7}px;` +
+        `position:fixed;left:${startX - 3}px;top:${nodeY - 7}px;` +
         `width:6px;height:14px;border-radius:999px;pointer-events:none;z-index:9996;` +
         `background:radial-gradient(closest-side, rgba(255,255,255,0.95), rgba(${color},0.55) 55%, rgba(${color},0));` +
         `box-shadow:0 0 10px 3px rgba(${color},0.55);will-change:transform,opacity;`;
       document.body.appendChild(g);
       return g;
     };
-    const travel = (el, dist) => {
-      const anim = el.animate(
-        [
-          { transform: "translateY(0px)", opacity: 0.95 },
-          { transform: `translateY(${dist.toFixed(1)}px)`, opacity: 0 },
-        ],
-        { duration: RAIL_GLOW_MS, easing: "cubic-bezier(0.16, 1, 0.3, 1)", delay }
-      );
+    const travel = (el, toY) => {
+      const steps = 14, frames = [];
+      for (let i = 0; i <= steps; i++) {
+        const e = 1 - Math.pow(1 - i / steps, 3); // ease-out, matching the old feel
+        const y = nodeY + (toY - nodeY) * e;
+        frames.push({
+          transform: `translate(${(railXAt(y) - startX).toFixed(1)}px, ${(y - nodeY).toFixed(1)}px)`,
+          opacity: (0.95 * (1 - e)).toFixed(3),
+        });
+      }
+      const anim = el.animate(frames, { duration: RAIL_GLOW_MS, easing: "linear", delay });
       anim.finished.then(() => el.remove()).catch(() => el.remove());
     };
-    if (Math.abs(upDist) >= 2) travel(make(), upDist);
-    if (Math.abs(downDist) >= 2) travel(make(), downDist);
+    if (Math.abs(railTopY - nodeY) >= 2) travel(make(), railTopY);
+    if (Math.abs(railBottomY - nodeY) >= 2) travel(make(), railBottomY);
   }
 
   // ---- focus scale (scroll-linked scale falloff) --------------------
