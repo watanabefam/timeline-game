@@ -1400,6 +1400,44 @@
   // ==================================================================
   //  SETUP — multi-select filter screens for the chosen deck
   // ==================================================================
+
+  // Mastery split for a single filter option. Every deck event that belongs to
+  // `value` is one equal slice, banded by its own first-try accuracy; the
+  // slices are grouped into contiguous segments (best → worst). Returns
+  // { segs: [{ cls, pct }], practised, total } or null when none practised.
+  // Membership mirrors filterSubset (OR within a group).
+  const MASTERY_BANDS = [
+    { cls: "seg--max", min: 100 }, // mastered
+    { cls: "seg--hi",  min: 70  }, // strong
+    { cls: "seg--mid", min: 40  }, // developing
+    { cls: "seg--lo",  min: 0   }, // needs work
+  ];
+  function optionMastery(deck, filter, value) {
+    const u = activeUser();
+    if (!u) return null;
+    const d = readUser(u.id).decks[deck.id];
+    if (!d || !d.events) return null;
+    const members = deck.events.filter((ev) => {
+      const got = filter.get(ev);
+      return (Array.isArray(got) ? got : [got]).includes(value);
+    });
+    if (!members.length) return null;
+    const counts = MASTERY_BANDS.map(() => 0);
+    let practised = 0;
+    members.forEach((ev) => {
+      const s = d.events[ev.id];
+      if (!s || !s.placements) return;
+      practised += 1;
+      const pct = Math.round((s.firstTry / s.placements) * 100);
+      counts[MASTERY_BANDS.findIndex((b) => pct >= b.min)] += 1;
+    });
+    if (!practised) return null;
+    const segs = MASTERY_BANDS
+      .map((b, i) => ({ cls: b.cls, pct: (counts[i] / members.length) * 100 }))
+      .filter((s) => s.pct > 0);
+    return { segs, practised, total: members.length };
+  }
+
   function renderSetup() {
     const deck = ui.deck;
     const filters = deck.filters || [];
@@ -1427,7 +1465,17 @@
         const chip = document.createElement("button");
         chip.type = "button";
         chip.className = "filter-chip" + (picked.includes(opt.value) ? " sel" : "");
-        chip.textContent = opt.label;
+        // Stacked mastery bar: one equal slice per category event, grouped by
+        // colour band. No practised data → plain label, no bar.
+        const m = optionMastery(ui.deck, f, opt.value);
+        if (m) {
+          chip.innerHTML =
+            `<span class="chip-fill" aria-hidden="true">` +
+            m.segs.map((s) => `<span class="seg ${s.cls}" style="width:${s.pct}%"></span>`).join("") +
+            `</span><span class="chip-label">${escapeHtml(opt.label)}</span>`;
+        } else {
+          chip.textContent = opt.label;
+        }
         chip.addEventListener("click", () => {
           const arr = ui.selections[f.id] || [];
           const at = arr.indexOf(opt.value);

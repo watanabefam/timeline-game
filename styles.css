@@ -888,6 +888,22 @@ body.dock-active .feedback { bottom: calc(104px + env(safe-area-inset-bottom, 0p
 .filter-chip { background: var(--card-2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 999px; cursor: var(--cur-hand); font-size: 0.84rem; transition: all 0.12s ease; }
 .filter-chip:hover { border-color: var(--accent); }
 .filter-chip.sel { background: rgba(110, 168, 254, 0.18); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+/* Category mastery fill (setup filters): a STACKED bar. Every event in the
+   category is one equal slice, coloured by its mastery band and grouped into
+   contiguous segments; events not yet practised leave the track empty. So a
+   category reads as e.g. 40% green / 30% amber / 30% red, not one average.
+   Width AND colour encode the level, so it never relies on colour alone.
+   The z-index:-1 fill paints above the chip's own (glass) background but below
+   the label; isolation keeps it inside the chip. No text, just colour. */
+.filter-chip { position: relative; overflow: hidden; isolation: isolate; --seg-a: 0.22; }
+.filter-chip.sel { --seg-a: 0.34; }
+.filter-chip .chip-fill { position: absolute; inset: 0; display: flex; pointer-events: none; z-index: -1; }
+.filter-chip .seg { height: 100%; flex: 0 0 auto; }
+.filter-chip .seg--lo  { background: rgba(248, 81, 73, var(--seg-a)); }   /* < 40%   — --bad  */
+.filter-chip .seg--mid { background: rgba(210, 153, 34, var(--seg-a)); }  /* 40-69%  — --warn */
+.filter-chip .seg--hi  { background: rgba(63, 185, 80, var(--seg-a)); }   /* 70-99%  — --good */
+.filter-chip .seg--max { background: rgba(74, 222, 128, var(--seg-a)); }  /* 100%    — mastered */
+.filter-chip .chip-label { position: relative; z-index: 1; }
 .filter-clear { display: block; margin-top: 10px; background: none; border: none; color: var(--muted); font-size: 0.8rem; cursor: var(--cur-hand); text-decoration: underline; }
 .filter-clear:hover { color: var(--accent); }
 .setup-note { color: var(--muted); text-align: center; margin: 8px 0; }
