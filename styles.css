@@ -452,8 +452,16 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
     background: #0d1320; border: 1px solid var(--border);
     box-shadow: 0 8px 24px rgba(0,0,0,0.45);
   }
- .tl-event:hover .fact-sheet,
- .tl-event:focus-within .fact-sheet,
+ /* Reveal the sheet on hover only where hover is REAL: on touch screens the
+    last-tapped element keeps :hover, which left the popover stuck open.
+    Keyboard focus uses :focus-visible (not :focus-within) so a MOUSE click on
+    the ? — which focuses it — doesn't pin the sheet; `.open` covers tap-to-pin
+    and is cleared by an outside pointerdown or by leaving the card on a
+    hover-capable device (JS). */
+ @media (hover: hover) {
+   .tl-event:hover .fact-sheet { display: block; }
+ }
+ .tl-event:has(:focus-visible) .fact-sheet,
  .tl-event.open .fact-sheet { display: block; }
  /* Invisible hover bridge: the popover sits 12px right of the card
     (left: calc(100% + 12px)); that gap is a hover dead-zone that would

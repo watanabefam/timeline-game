@@ -2325,6 +2325,22 @@
     return slips === 0 ? "placed-clean" : "placed-slipped slip-" + Math.min(slips || 1, 3);
   }
 
+  // Dismiss a tap-pinned fact sheet when the pointer goes down anywhere outside
+  // it. Without this, `.open` (toggled by the ? button) was never cleared, so the
+  // popover stayed up for the rest of the round — the "tooltip stuck open" bug.
+  // Registered once, at load; a pointerdown inside the card (or its popover) is
+  // left alone so interacting with the mini-map doesn't dismiss it.
+  document.addEventListener("pointerdown", (ev) => {
+    const openCards = document.querySelectorAll(".tl-event.open");
+    if (!openCards.length) return;
+    openCards.forEach((li) => {
+      if (li.contains(ev.target)) return;
+      li.classList.remove("open");
+      const b = li.querySelector(".fact-toggle");
+      if (b) b.setAttribute("aria-expanded", "false");
+    });
+  });
+
   // Keep the fact-sheet tooltip inside the window. CSS anchors it to the right
   // of the event card (left: calc(100% + 12px)); a card near an edge would push
   // the tooltip off-screen, so measure it and clamp/flip both axes. Fixed
@@ -2425,6 +2441,14 @@
     // Keyboard users open it via :focus-within — same window-aware placement.
     li.addEventListener("focusin", () => positionFactSheet(li));
     li.addEventListener("mouseleave", () => {
+      // On a hover-capable device the sheet is already shown by :hover while the
+      // pointer is over the card AND its popover, so a click-pinned `.open` must
+      // not outlive the hover — otherwise it looks permanently stuck. Touch
+      // devices keep it (no hover) and it clears on an outside tap.
+      if (window.matchMedia("(hover: hover)").matches) {
+        li.classList.remove("open");
+        if (btn) btn.setAttribute("aria-expanded", "false");
+      }
       // Debounce: a fast move to another card cancels this (the new card's
       // mouseenter clears the timer), so the globe never jerks back to the
       // prompt event mid-transition. When it DOES fire (pointer has actually
