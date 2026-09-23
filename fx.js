@@ -448,7 +448,12 @@
     const r = cardEl.getBoundingClientRect();
     const nodeY = r.top + r.height / 2;
     const tlRect = tl.getBoundingClientRect();
-    const railX = tlRect.left + 8; // rail center: left:7px + 1px half-width
+    // The rail is BOWED, so fire the streak from the card's own node x (which
+    // sits ON the rail), not the old straight-rail x — otherwise it misses the
+    // line by up to ~half the bow at the screen edges.
+    const nodeEl = (cardEl.closest(".tl-event") || cardEl).querySelector(".tl-node");
+    const nr = nodeEl && nodeEl.getBoundingClientRect();
+    const railX = nr ? nr.left + nr.width / 2 : tlRect.left + 8;
     const railTopY = tlRect.top + (parseFloat(tl.style.getPropertyValue("--rail-top")) || 0);
     const railBottomY = tlRect.bottom - (parseFloat(tl.style.getPropertyValue("--rail-bottom")) || 0);
     const upDist = railTopY - nodeY;

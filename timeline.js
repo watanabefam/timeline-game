@@ -563,7 +563,7 @@
       syncGameMusic(); // game screen swaps to game music; elsewhere resumes main
       initGlassOnScreen(); // glass newly-visible controls
       // Rail bounds need a visible screen (offsetTop is 0 while hidden).
-      if (name === "game") { updateRail(); refreshFocusScale(); }
+      if (name === "game") { updateRail(); refreshFocusScale(); drawRail(); }
       // Dock globe lives on setup/game/results only (its mode-setting calls
       // handle visibility); leaving those screens hides + pauses it.
       if (window.GlobeDock && name !== "setup" && name !== "game" && name !== "results") {
@@ -809,6 +809,7 @@
     document.querySelectorAll(".tl-event .fact-sheet").forEach((s) => {
       if (getComputedStyle(s).display !== "none") positionFactSheet(s.closest(".tl-event"));
     });
+    drawRail(); // the fixed rail's viewport-space curve must re-fit on resize
   });
   function destroyTimeline(t) { if (t) { try { t.destroy(); } catch (_) {} } return null; }
   // Restrict panning to (slightly past) the first and last dates in the data.
@@ -1716,6 +1717,71 @@
   // every rebuild and whenever the game screen becomes visible (measurement
   // needs a laid-out, visible list).
   let focusScaleCtl = null;
+  // ---- bowed rail ---------------------------------------------------
+  // The rail is a FIXED, full-viewport overlay (built here, inserted as the
+  // list's first child). Its curve is drawn in VIEWPORT coordinates, so its
+  // SHAPE is constant as you scroll — it cannot wobble; only the CSS mask
+  // window over it slides (styles.css .tl-rail). The curve is a quadratic
+  // Bézier, which is exactly a parabola: its control point sits 2x the bow
+  // depth off the chord.
+  let railEl = null;
+  function ensureRailEl(tl) {
+    if (!railEl) {
+      railEl = document.createElement("div");
+      railEl.className = "tl-rail";
+      railEl.setAttribute("aria-hidden", "true");
+      railEl.innerHTML =
+        '<svg preserveAspectRatio="none"><defs>' +
+        '<linearGradient id="tl-rail-grad" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="#fff" stop-opacity="0.18"/>' +
+        '<stop offset="1" stop-color="#fff" stop-opacity="0.55"/>' +
+        '</linearGradient></defs><path pathLength="1"/></svg>';
+    }
+    if (railEl.parentNode !== tl) tl.insertBefore(railEl, tl.firstChild);
+  }
+
+  // Must mirror the focus-scale range (peak/edge in FX.focusScale + the CSS
+  // keyframes): the card's left edge swings +/-(peak-edge)/2 x width, so the
+  // rail's full bow (sagitta) is (peak - edge) x width = 0.05 x width.
+  const RAIL_PEAK = 1.05, RAIL_EDGE = 0.95;
+  function drawRail() {
+    const tl = $("timeline");
+    if (!tl || !railEl || screens.game.classList.contains("hidden")) return;
+    const card = tl.querySelector(".tl-event > .tl-card");
+    if (!card) return;
+    // offsetWidth is the LAYOUT width (the card's rect is scaled by the focus
+    // animation, so getBoundingClientRect would be wrong here).
+    const W = card.offsetWidth;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const vh = window.innerHeight, vc = vh / 2;
+    // Publish each card's height (for the height-independent view range) and
+    // --d = 0.025 x card width (the x-shift the node/stub need at the profile's
+    // extremes, consumed by the composited tl-node-shift animation).
+    const dPx = (0.025 * W).toFixed(2) + "px";
+    tl.querySelectorAll(".tl-event").forEach((el) => {
+      el.style.setProperty("--hc", el.offsetHeight + "px");
+      el.style.setProperty("--d", dPx);
+    });
+    // With the inset range the mapping is span = viewport height for EVERY card,
+    // so the rail's parabola is the plain sphere arc: sagitta = 0.05 x width,
+    // apex at the viewport centre. No reference-height factor.
+    const bow = reduce ? 0 : 0.05 * W;
+    // The node's containing block is the .tl-event box, so anchor the curve to
+    // the MEASURED .tl-event left (not an assumed padding offset, which goes
+    // stale when a scrollbar appears and shifts the layout).
+    const li = tl.querySelector(".tl-event");
+    const liLeft = li.getBoundingClientRect().left;
+    // Reduced motion disables the scale (--fs stays 1), so the rail must sit at
+    // the unscaled node position, not the peak-scale one.
+    const refPeak = reduce ? 1 : RAIL_PEAK;
+    const xCentre = liLeft + ((1 - refPeak) * W) / 2 - 20;
+    const xEnd = xCentre + bow;
+    const path = railEl.querySelector("path");
+    path.setAttribute("d",
+      "M " + xEnd.toFixed(1) + " 0 Q " + (xCentre - bow).toFixed(1) + " " +
+      vc.toFixed(1) + " " + xEnd.toFixed(1) + " " + vh.toFixed(1));
+  }
+
   function refreshFocusScale() {
     const tl = $("timeline");
     if (!tl || !window.FX || typeof window.FX.focusScale !== "function") return;
@@ -1773,6 +1839,7 @@
 
     const tl = $("timeline");
     tl.innerHTML = "";
+    ensureRailEl(tl); // fixed overlay must be re-inserted after the wipe
     // First deal: stagger the cards in as the curtain reveals. CSS-driven —
     // the game screen becomes visible mid-curtain, which starts the animation.
     const firstDeal = game.roundIndex === 0 && game.status === "playing";
@@ -1795,6 +1862,7 @@
     // (Re)fit the focus scale to the rebuilt list. No-op while the screen is
     // hidden (rects are 0); show() refreshes once it is laid out.
     refreshFocusScale();
+    drawRail();
 
     // Dock globe: placed markers coloured by outcome, current prompt on top.
     if (window.GlobeDock) {

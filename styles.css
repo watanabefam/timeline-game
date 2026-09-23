@@ -322,38 +322,73 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
 @property --fs { syntax: "<number>"; inherits: true; initial-value: 1; }
 
 /* Matches FX.focusScale's "sphere" profile: peak 1.05 at the viewport centre,
-   edge 0.95 at the thresholds (sampled every 12.5% to keep the dome smooth).
-   The opacity fade uses the COSINE falloff (not the sphere curve) and floors at
-   0.65, matching the JS fallback's minOpacity — it reads as a fade at the ends.
-   A 0.9 floor (the previous value) was imperceptible, especially since the
-   thresholds sit under the app bar / at the very screen edge. */
+   edge 0.95 at the thresholds. Sampled every 6.25% so the piecewise-LINEAR
+   interpolation stays within ~0.0004 of the true parabola — the rail is drawn
+   as the exact parabola, so a coarse sample here shows up as the node sitting
+   off the rail. `--fs` (tl-focus-stub) and the card scale (tl-focus-scale) MUST
+   share the same stops, or the node won't sit a constant 20px from the card's
+   visual edge. The opacity fade uses the COSINE falloff (not the sphere curve)
+   and floors at 0.65, matching the JS fallback's minOpacity. */
 @keyframes tl-focus-scale {
-  0%    { transform: scale(0.95);    opacity: 0.65; }
-  12.5% { transform: scale(0.99375); opacity: 0.701; }
-  25%   { transform: scale(1.025);   opacity: 0.825; }
-  37.5% { transform: scale(1.04375); opacity: 0.949; }
-  50%   { transform: scale(1.05);    opacity: 1; }
-  62.5% { transform: scale(1.04375); opacity: 0.949; }
-  75%   { transform: scale(1.025);   opacity: 0.825; }
-  87.5% { transform: scale(0.99375); opacity: 0.701; }
-  100%  { transform: scale(0.95);    opacity: 0.65; }
+  0%     { transform: scale(0.95);    opacity: 0.65; }
+  6.25%  { transform: scale(0.97344); }
+  12.5%  { transform: scale(0.99375); opacity: 0.701; }
+  18.75% { transform: scale(1.01094); }
+  25%    { transform: scale(1.025);   opacity: 0.825; }
+  31.25% { transform: scale(1.03594); }
+  37.5%  { transform: scale(1.04375); opacity: 0.949; }
+  43.75% { transform: scale(1.04844); }
+  50%    { transform: scale(1.05);    opacity: 1; }
+  56.25% { transform: scale(1.04844); }
+  62.5%  { transform: scale(1.04375); opacity: 0.949; }
+  68.75% { transform: scale(1.03594); }
+  75%    { transform: scale(1.025);   opacity: 0.825; }
+  81.25% { transform: scale(1.01094); }
+  87.5%  { transform: scale(0.99375); opacity: 0.701; }
+  93.75% { transform: scale(0.97344); }
+  100%   { transform: scale(0.95);    opacity: 0.65; }
 }
 @keyframes tl-focus-stub {
-  0%, 100% { --fs: 0.95; }
-  25%, 75% { --fs: 1.025; }
-  50%      { --fs: 1.05; }
+  0%     { --fs: 0.95; }
+  6.25%  { --fs: 0.97344; }
+  12.5%  { --fs: 0.99375; }
+  18.75% { --fs: 1.01094; }
+  25%    { --fs: 1.025; }
+  31.25% { --fs: 1.03594; }
+  37.5%  { --fs: 1.04375; }
+  43.75% { --fs: 1.04844; }
+  50%    { --fs: 1.05; }
+  56.25% { --fs: 1.04844; }
+  62.5%  { --fs: 1.04375; }
+  68.75% { --fs: 1.03594; }
+  75%    { --fs: 1.025; }
+  81.25% { --fs: 1.01094; }
+  87.5%  { --fs: 0.99375; }
+  93.75% { --fs: 0.97344; }
+  100%   { --fs: 0.95; }
 }
 
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    /* One named timeline per event, shared by the card and its stub. */
-    .tl-event { view-timeline-name: --ev; view-timeline-axis: block; }
-    .tl-event > .tl-card {
-      animation: tl-focus-scale auto linear both;
+    /* One named timeline per event. --fs lives on .tl-event (not ::before) so it
+       inherits to BOTH the connector stub and the node dot, which both track the
+       card's arc; the card's own scale runs on the same shared timeline. */
+    .tl-event {
+      view-timeline-name: --ev; view-timeline-axis: block;
+      /* Neutralise the element-height term in the range: a plain `cover` range
+         spans (viewportHeight + cardHeight), so progress — and therefore the
+         scale and the node's x — depends on EACH CARD'S OWN HEIGHT, and no
+         single static rail can pass through every node. Insetting the scrollport
+         by half the card height makes the range span exactly the viewport:
+         progress = (viewportHeight - centreY) / viewportHeight, independent of
+         card height, so the rail is exact by construction at any screen size.
+         --hc is set per card by drawRail(). */
+      view-timeline-inset: calc(var(--hc, 0px) / 2);
+      animation: tl-focus-stub auto linear both;
       animation-timeline: --ev;
     }
-    .tl-event::before {
-      animation: tl-focus-stub auto linear both;
+    .tl-event > .tl-card {
+      animation: tl-focus-scale auto linear both;
       animation-timeline: --ev;
     }
     .gap {
@@ -1439,25 +1474,29 @@ body.dock-active #results { padding-bottom: 116px; }
    (JS sets --rail-top/--rail-bottom) and extends with a transition when a
    card is placed above or below. Draws in on the first deal, pulses on
    placement. */
+/* Timeline rail: a BOWED line in the left gutter. The bow follows the same
+   "sphere" arc as the focus scale, but it is drawn in VIEWPORT coordinates as a
+   fixed overlay (.tl-rail, created by JS) whose SHAPE never changes — so it
+   cannot wobble as you scroll. It deliberately spans the WHOLE viewport (no
+   mask): the top is hidden behind the app bar and the bottom runs off the screen
+   edge, so the line always reaches the first and last node at any scroll. */
 .timeline { position: relative; }
-.timeline::before {
-  content: ""; position: absolute; left: 7px;
-  top: var(--rail-top, 10px); bottom: var(--rail-bottom, 10px);
-  width: 2px; border-radius: 2px; pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.55));
-  transform-origin: top center;
-  transition: top 0.35s ease, bottom 0.35s ease;
+.tl-rail {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: visible;
+}
+.tl-rail svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.tl-rail path {
+  fill: none; stroke: url(#tl-rail-grad); stroke-width: 2; stroke-linecap: round;
+  stroke-dasharray: 1;
 }
 /* Horizontal connector: from the rail's right edge to the card's left edge.
    Rail spans x=7..9 from the ol border; the card starts at x=28, so the stub
-   runs x=-19..0 relative to the card. The width tracks the card's scroll-linked
-   scale (--fs, published by FX.focusScale): a centre-origin scale moves the
-   card's visual left edge to (1 - --fs)/2 x width from its layout edge, so the
-   stub must shorten when the card enlarges and lengthen when it shrinks —
-   otherwise the enlarged centre swallows it and the shrunk edges detach. */
+   runs x=-19..0 relative to the card. Both the stub AND the node (below) shift
+   by the same (1 - --fs)/2 x width term so they track the card's visual left
+   edge — which, with the bowed rail, keeps the rail→card gap constant. */
 .tl-event::before {
-  content: ""; position: absolute; left: -19px; top: 50%;
-  width: calc(19px + (1 - var(--fs, 1)) * 50%);
+  content: ""; position: absolute; left: calc((1 - var(--fs, 1)) * 50% - 19px); top: 50%;
+  width: 19px;
   height: 2px;
   background: rgba(255, 255, 255, 0.45);
   transform: translateY(-50%);
@@ -1467,7 +1506,7 @@ body.dock-active #results { padding-bottom: 116px; }
    default; placed cards keep the state colour language (green = clean,
    amber = slipped, red = 3+). */
 .tl-node {
-  position: absolute; left: -20px; top: 50%;
+  position: absolute; left: calc((1 - var(--fs, 1)) * 50% - 20px); top: 50%;
   width: 8px; height: 8px; border-radius: 50%;
   background: #fff;
   box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
@@ -1479,16 +1518,47 @@ body.dock-active #results { padding-bottom: 116px; }
 .tl-event.slip-2 .tl-node { background: #f0883e; box-shadow: 0 0 6px rgba(240, 136, 62, 0.5); }
 .tl-event.slip-3 .tl-node { background: var(--bad); box-shadow: 0 0 6px rgba(248, 81, 73, 0.5); }
 .tl-event.anchor .tl-node { background: rgba(255, 255, 255, 0.6); box-shadow: none; }
-.timeline--dealing::before {
-  animation: rail-draw 0.5s ease-out both;
-  animation-delay: 100ms;
+/* Node + stub x-shift. --fs is a custom property, so animating it runs on the
+   MAIN thread — and because the node's `left` is a layout property, the dots
+   visibly LAG the (static, composited) rail during fast scroll. Inside @supports
+   we animate the composited `translate` property directly instead, from a STATIC
+   per-card --d (= 0.025 x card width, set by drawRail) with the same
+   6.25%-sampled sphere profile as the card scale — so the dots track the rail on
+   the compositor, in lock-step with the card. The --fs rules above remain as the
+   JS-fallback path for browsers without animation-timeline. */
+@keyframes tl-node-shift {
+  0%, 100%        { translate: var(--d, 0px) 0; }
+  6.25%, 93.75%   { translate: calc(0.5312 * var(--d, 0px)) 0; }
+  12.5%, 87.5%    { translate: calc(0.125 * var(--d, 0px)) 0; }
+  18.75%, 81.25%  { translate: calc(-0.2188 * var(--d, 0px)) 0; }
+  25%, 75%        { translate: calc(-0.5 * var(--d, 0px)) 0; }
+  31.25%, 68.75%  { translate: calc(-0.7188 * var(--d, 0px)) 0; }
+  37.5%, 62.5%    { translate: calc(-0.875 * var(--d, 0px)) 0; }
+  43.75%, 56.25%  { translate: calc(-0.9688 * var(--d, 0px)) 0; }
+  50%             { translate: calc(-1 * var(--d, 0px)) 0; }
 }
-@keyframes rail-draw { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-.timeline--pulse::before { animation: rail-pulse 0.45s ease-out; }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .tl-node {
+      left: -20px;
+      animation: tl-node-shift auto linear both; animation-timeline: --ev;
+    }
+    .tl-event::before {
+      left: -19px; width: 19px;
+      animation: tl-node-shift auto linear both; animation-timeline: --ev;
+    }
+  }
+}
+/* First-deal draw-in and placement pulse, retargeted to the bowed SVG path:
+   a stroke-dashoffset "draw" (instead of scaleY) and a drop-shadow (SVG has no
+   box-shadow). pathLength="1" is set on the path by JS so the dash is one unit. */
+.timeline--dealing .tl-rail path { animation: rail-draw 0.5s ease-out both; animation-delay: 100ms; }
+@keyframes rail-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.timeline--pulse .tl-rail path { animation: rail-pulse 0.45s ease-out; }
 @keyframes rail-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-  40%  { box-shadow: 0 0 14px 3px rgba(255, 255, 255, 0.55); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+  0%   { filter: none; }
+  40%  { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.6)); }
+  100% { filter: none; }
 }
 
 /* First-deal stagger: cards cascade in as the curtain reveals. The game
