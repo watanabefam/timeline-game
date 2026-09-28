@@ -964,7 +964,11 @@
     document.querySelectorAll(".tl-event .fact-sheet").forEach((s) => {
       if (getComputedStyle(s).display !== "none") positionFactSheet(s.closest(".tl-event"));
     });
-    drawRail(); // the fixed rail's viewport-space curve must re-fit on resize
+    // The fixed rail's viewport-space curve must re-fit on resize. drawRail
+    // needs a ctx (it reads ctx.root), so resolve the live one(s) like the
+    // screen-swap does — a bare drawRail() threw on ctx.root.
+    const ctxs = splitCtx && splitCtx.length ? splitCtx : (gameCtx() ? [gameCtx()] : []);
+    ctxs.forEach((ctx) => drawRail(ctx));
   });
   function destroyTimeline(t) { if (t) { try { t.destroy(); } catch (_) {} } return null; }
   // Restrict panning to (slightly past) the first and last dates in the data.

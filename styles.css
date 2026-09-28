@@ -113,6 +113,13 @@ html, body {
 /* Game screen: the timeline pane is the only scroller. Locking the body stops
    the whole-page scroll from cutting off the top/bottom of the timeline. */
 body.scroll-locked { overflow: hidden; height: 100vh; height: 100dvh; }
+/* #game is a flex column filling the viewport: the sticky header takes its own
+   height (flex: none) and the timeline grid fills exactly the space below it.
+   This removes the fragile JS-measured --game-header-h from the layout: the
+   grid can never be taller than the visible area (which cut off the bottom and
+   made the sticky prompt stick under the appbar). */
+#game { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+#game .game-header { flex: none; }
 
 #app {
   max-width: 640px;
@@ -306,18 +313,17 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
 /* ---------- TIMELINE ---------- */
 .timeline-wrap { margin: 4px 0; }
 /* Split-screen: two independent panes side by side, each its own scroll
-   container. The grid fills exactly the viewport below the sticky header
-   (--game-header-h = header top + height, measured by JS). grid-template-rows
-   forces the single row to fill the grid height, so both panes stretch top to
-   bottom. Each pane scrolls independently (overscroll-behavior stops scroll
-   chaining). */
+   container. The grid is a flex item (flex: 1) inside the #game column, so it
+   fills exactly the viewport below the sticky header — no JS measurement.
+   grid-template-rows forces the single row to fill the grid height, so both
+   panes stretch top to bottom. Each pane scrolls independently
+   (overscroll-behavior stops scroll chaining). */
 .split-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr;
   gap: 0;
-  height: calc(100vh - var(--game-header-h, 0px));
-  height: calc(100dvh - var(--game-header-h, 0px));
+  flex: 1;
   min-height: 0;
 }
 .split-pane {
