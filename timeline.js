@@ -133,6 +133,40 @@
     input.onPress("End", (e) => { jump(true); e.preventDefault(); });
   }
 
+  // ---- handicap system ----------------------------------------------
+  // Per-player difficulty levers, so mixed-age siblings can race fairly.
+  // Each mode declares which levers it supports (HANDICAP_LEVERS); the setup
+  // screen shows only those. Levers are additive offsets from the base rules.
+  const HANDICAP_LEVERS = {
+    race: {
+      inputDelayMs: { step: 100, max: 500, label: "Input delay", unit: "s" },
+    },
+    timeline: {
+      startDelayMs: { step: 1000, max: 5000, label: "Delayed start", unit: "s" },
+      toleranceYears: { step: 5, max: 25, label: "Extra tolerance", unit: "yr" },
+      extraSlips: { step: 1, max: 3, label: "Extra slips", unit: "" },
+    },
+  };
+  function createPlayer(name, handicap) {
+    return { id: name, name, score: 0, handicap: handicap || {} };
+  }
+  // Wrap a one-shot action in the player's input delay (0 = immediate).
+  function withInputDelay(player, fn) {
+    const ms = (player.handicap && player.handicap.inputDelayMs) || 0;
+    if (!ms) return fn;
+    return () => setTimeout(fn, ms);
+  }
+  // Read the setup-screen handicap sliders into a handicap object for a mode.
+  function readHandicap(mode, which) {
+    const levers = HANDICAP_LEVERS[mode] || {};
+    const out = {};
+    Object.keys(levers).forEach((lever) => {
+      const el = $("handicap-" + which);
+      if (el) out[lever] = parseInt(el.value, 10) || 0;
+    });
+    return out;
+  }
+
   // ---- deterministic RNG (mirrors WHEN?'s FNV-1a + mulberry32) ----
   function hashString(value) {
     let hash = 2166136261;
@@ -628,6 +662,7 @@
     home: $("home"),
     setup: $("setup"),
     game: $("game"),
+    race: $("race"),
     results: $("results"),
     browse: $("browse"),
     stats: $("stats"),
@@ -635,9 +670,9 @@
   // Screen flow order drives curtain direction (Motion PageCurtain pattern):
   // destination further along the flow = forward (sweep right, top leans
   // right); earlier = backward (sweep left, top leans left).
-  const SCREEN_ORDER = { home: 0, stats: 0, setup: 1, browse: 1, game: 2, results: 3 };
+  const SCREEN_ORDER = { home: 0, stats: 0, setup: 1, browse: 1, game: 2, race: 2, results: 3 };
   const SCREEN_TITLES = {
-    home: "DECKS", setup: "SETUP", game: "GAME START!",
+    home: "DECKS", setup: "SETUP", game: "GAME START!", race: "VERSUS!",
     results: "RESULTS", browse: "LIBRARY", stats: "PROGRESS",
   };
   let currentScreen = "home";
@@ -1601,6 +1636,24 @@
 
     updateSetupSummary();
 
+    // Versus toggle: reveal the handicap panel; sliders update their labels.
+    const versus = $("setup-versus");
+    const panel = $("handicap-panel");
+    if (versus && panel) {
+      const syncPanel = () => panel.classList.toggle("hidden", !versus.checked);
+      versus.addEventListener("change", syncPanel);
+      syncPanel();
+      ["p1", "p2"].forEach((which) => {
+        const slider = $("handicap-" + which);
+        const val = $("handicap-" + which + "-val");
+        if (slider && val) {
+          const sync = () => { val.textContent = (parseInt(slider.value, 10) / 1000).toFixed(1) + "s"; };
+          slider.addEventListener("input", sync);
+          sync();
+        }
+      });
+    }
+
     // Play count selector: reflect manual changes into ui.maxEvents
     const maxSel = $("setup-max");
     if (maxSel && !maxSel.dataset.wired) {
@@ -1775,6 +1828,111 @@
     ui.selections = selections || {};
     ui.maxEvents = maxEvents == null ? null : maxEvents;
     startGame();
+  }
+
+  // ---- same-question race (Versus) ------------------------------
+  // Two players race on ONE shared question: "Which came first?" — two events
+  // shown, each player picks the older one. First correct answer wins the
+  // point. Handicaps (input delay) level mixed-age play. No timeline needed:
+  // the shared game state stays untouched; only per-player score/handicap.
+  let race = null;
+
+  function startRace(deck, p1Handicap, p2Handicap, rounds) {
+    if (window.Narrator) window.Narrator.unlock();
+    const subset = filterSubset(deck, ui.selections);
+    ui.subset = subset;
+    const pool = subset;
+    const need = 2; // two events per round
+    if (pool.length < need) return;
+    const seed = (Date.now() >>> 0) ^ ((Math.random() * 1e9) >>> 0);
+    const rnd = mulberry32(seed);
+    const events = pool.slice();
+    // Shuffle once; rounds draw consecutive pairs so no event repeats.
+    for (let i = events.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      [events[i], events[j]] = [events[j], events[i]];
+    }
+    const n = Math.max(3, Math.min(rounds || 10, Math.floor(events.length / 2)));
+    race = {
+      deckId: deck.id,
+      players: [
+        createPlayer("Player 1", p1Handicap),
+        createPlayer("Player 2", p2Handicap),
+      ],
+      events,
+      round: 0,
+      rounds: n,
+      locked: false, // true while a round's result is showing
+    };
+    $("race-round").textContent = "Round 1 / " + n;
+    $("race-name-a").textContent = race.players[0].name;
+    $("race-name-b").textContent = race.players[1].name;
+    $("race-score-a").textContent = "0";
+    $("race-score-b").textContent = "0";
+    renderRaceRound();
+    show("race");
+  }
+
+  function renderRaceRound() {
+    const r = race;
+    if (!r) return;
+    const a = r.events[r.round * 2];
+    const b = r.events[r.round * 2 + 1];
+    $("race-emoji-a").textContent = a.emoji || "❓";
+    $("race-title-a").textContent = a.title;
+    $("race-emoji-b").textContent = b.emoji || "❓";
+    $("race-title-b").textContent = b.title;
+    $("race-round").textContent = "Round " + (r.round + 1) + " / " + r.rounds;
+    $("race-feedback").textContent = "";
+    $("race-feedback").className = "feedback";
+    r.locked = false;
+    // Store the pair for answer resolution.
+    r.pair = [a, b];
+  }
+
+  // side: 0 = left event, 1 = right event. First correct answer wins.
+  function raceAnswer(playerIdx, side) {
+    const r = race;
+    if (!r || r.locked) return;
+    const p = r.players[playerIdx];
+    const [a, b] = r.pair;
+    const older = sortYearOf(a) <= sortYearOf(b) ? 0 : 1;
+    const correct = side === older;
+    const fb = $("race-feedback");
+    if (correct) {
+      p.score += 1;
+      $("race-score-" + (playerIdx === 0 ? "a" : "b")).textContent = String(p.score);
+      fb.textContent = p.name + " got it!";
+      fb.className = "feedback good feedback--on";
+      r.locked = true;
+      setTimeout(() => {
+        r.round += 1;
+        if (r.round >= r.rounds) { finishRace(); return; }
+        renderRaceRound();
+      }, 900);
+    } else {
+      fb.textContent = p.name + " — wrong!";
+      fb.className = "feedback bad feedback--on";
+      // Wrong answer doesn't lock the round; the other player can still win it.
+    }
+  }
+
+  function finishRace() {
+    const r = race;
+    const [p1, p2] = r.players;
+    const winner = p1.score === p2.score ? null : (p1.score > p2.score ? p1 : p2);
+    $("result-tag").textContent = "VERSUS";
+    $("result-title").textContent = winner
+      ? winner.name + " wins!"
+      : "It's a tie!";
+    $("result-blurb").textContent = winner
+      ? winner.name + " placed " + winner.score + " correct."
+      : "Both placed " + p1.score + " correct.";
+    $("result-score-num").textContent = p1.score + " – " + p2.score;
+    $("result-score-max").textContent = r.rounds;
+    $("result-grid").innerHTML = "";
+    $("result-timeline").innerHTML = "";
+    show("results");
   }
 
   function startWeekPractice(deckId, week) {
@@ -3324,9 +3482,25 @@
   function init() {
     // Keyboard navigation for the timeline gaps (roving tabindex + arrows).
     initGapRoving();
+    // Race bindings: P1 = A/S (left/right event), P2 = arrows. Handicap input
+    // delay wraps the answer so a stronger player's press lands late.
+    input.onPress("KeyA", (e) => { e.preventDefault(); withInputDelay(race && race.players[0], () => raceAnswer(0, 0))(); });
+    input.onPress("KeyS", (e) => { e.preventDefault(); withInputDelay(race && race.players[0], () => raceAnswer(0, 1))(); });
+    input.onPress("ArrowLeft", (e) => { e.preventDefault(); withInputDelay(race && race.players[1], () => raceAnswer(1, 0))(); });
+    input.onPress("ArrowRight", (e) => { e.preventDefault(); withInputDelay(race && race.players[1], () => raceAnswer(1, 1))(); });
+    $("race-back").addEventListener("click", () => renderSetup());
     // setup screen
     $("setup-back").addEventListener("click", () => renderHub());
-    $("setup-start").addEventListener("click", () => startGame());
+    $("setup-start").addEventListener("click", () => {
+      const versus = $("setup-versus") && $("setup-versus").checked;
+      if (versus) {
+        const p1 = readHandicap("race", "p1");
+        const p2 = readHandicap("race", "p2");
+        startRace(ui.deck, p1, p2, 10);
+      } else {
+        startGame();
+      }
+    });
     $("setup-browse").addEventListener("click", () => renderBrowse());
     // game
     $("back-btn").addEventListener("click", () => openDeck(ui.deck));

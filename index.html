@@ -88,7 +88,30 @@
           <span class="count-note" id="setup-max-note"></span>
         </div>
         <div class="setup-actions">
+          <label class="versus-toggle" for="setup-versus">
+            <input type="checkbox" id="setup-versus" aria-label="Two-player versus mode">
+            <span class="versus-label">Versus (2 players)</span>
+          </label>
           <button class="btn btn--primary" id="setup-start">Start!</button>
+        </div>
+        <div class="handicap-panel hidden" id="handicap-panel">
+          <p class="handicap-title">Handicaps — level the race</p>
+          <div class="handicap-row">
+            <div class="handicap-player">
+              <span class="handicap-name">Player 1</span>
+              <label class="handicap-control">Input delay
+                <input type="range" id="handicap-p1" min="0" max="500" step="100" value="0">
+                <span class="handicap-val" id="handicap-p1-val">0s</span>
+              </label>
+            </div>
+            <div class="handicap-player">
+              <span class="handicap-name">Player 2</span>
+              <label class="handicap-control">Input delay
+                <input type="range" id="handicap-p2" min="0" max="500" step="100" value="0">
+                <span class="handicap-val" id="handicap-p2-val">0s</span>
+              </label>
+            </div>
+          </div>
         </div>
         <p class="setup-summary" id="setup-summary"></p>
         <p class="setup-count-note" id="setup-count-note"></p>
@@ -135,6 +158,52 @@
       <!-- Persistent polite live region for the rescue reveal (announced once,
            without moving focus). Empty at load so screen readers register it. -->
       <p id="rescue-status" class="sr-only" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- RACE (same-question duel) -->
+    <section id="race" class="screen hidden">
+      <header class="appbar">
+        <div class="appbar-left">
+          <button class="icon-btn" id="race-back" aria-label="Back to setup">&larr;</button>
+        </div>
+        <div class="appbar-center">
+          <span class="mode-tag">VERSUS</span>
+          <span class="score-tag" id="race-round">Round 1</span>
+        </div>
+        <div class="appbar-right">
+          <span class="lives" id="race-lives"></span>
+          <button class="icon-btn gear-btn" aria-label="Settings">
+            <svg class="ico"><use href="#icon-settings"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="race-prompt">
+        <div class="prompt-label">WHICH CAME FIRST?</div>
+        <p class="race-hint" id="race-hint">P1: <kbd>A</kbd>/<kbd>S</kbd> &middot; P2: <kbd>&larr;</kbd>/<kbd>&rarr;</kbd></p>
+      </div>
+
+      <div class="race-board">
+        <div class="race-zone" id="race-zone-a">
+          <div class="race-player" id="race-name-a">Player 1</div>
+          <div class="race-score" id="race-score-a">0</div>
+          <button class="race-card" id="race-card-a" aria-label="Left event">
+            <span class="prompt-emoji" id="race-emoji-a">❓</span>
+            <span class="prompt-title" id="race-title-a">Loading&hellip;</span>
+          </button>
+        </div>
+        <div class="race-vs">VS</div>
+        <div class="race-zone" id="race-zone-b">
+          <div class="race-player" id="race-name-b">Player 2</div>
+          <div class="race-score" id="race-score-b">0</div>
+          <button class="race-card" id="race-card-b" aria-label="Right event">
+            <span class="prompt-emoji" id="race-emoji-b">❓</span>
+            <span class="prompt-title" id="race-title-b">Loading&hellip;</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="feedback" id="race-feedback" role="status" aria-live="polite"></div>
     </section>
 
     <!-- RESULTS -->
@@ -424,6 +493,6 @@
 <script src="fx.js?v=26"></script>
 <script src="globe.js?v=10"></script>
 <script src="narration.js?v=20"></script>
-<script src="timeline.js?v=167"></script>
+<script src="timeline.js?v=168"></script>
 </body>
 </html>
