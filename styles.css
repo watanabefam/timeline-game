@@ -110,12 +110,18 @@ html, body {
   color: var(--text);
   min-height: 100vh;
 }
+/* Game screen: the timeline pane is the only scroller. Locking the body stops
+   the whole-page scroll from cutting off the top/bottom of the timeline. */
+body.scroll-locked { overflow: hidden; height: 100vh; height: 100dvh; }
 
 #app {
   max-width: 640px;
   margin: 0 auto;
   padding: 24px 18px 60px;
 }
+/* Game screen breaks out of #app's padding: the header sits at the very top
+   and the timeline grid fills the viewport exactly (no whole-page scroll). */
+body.scroll-locked #app { padding: 0; max-width: none; }
 
 .screen { animation: fade 0.25s ease; }
 .hidden { display: none !important; }
@@ -222,7 +228,7 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
   position: sticky;
   top: 0;
   z-index: 20;
-  margin: 0 -18px;
+  margin: 0;
 }
 .game-header .appbar {
   position: static;

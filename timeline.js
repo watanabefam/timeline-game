@@ -691,6 +691,10 @@
     const swap = () => {
       Object.values(screens).forEach((s) => s.classList.add("hidden"));
       screens[name].classList.remove("hidden");
+      // Lock the page scroll on the game screen: the timeline pane is the only
+      // scroller, so the body must not scroll under it (a whole-page scroll
+      // would cut off the top/bottom of the timeline). Restore elsewhere.
+      document.body.classList.toggle("scroll-locked", name === "game");
       syncGameMusic(); // game screen swaps to game music; elsewhere resumes main
       initGlassOnScreen(); // glass newly-visible controls
       // Rail bounds need a visible screen (offsetTop is 0 while hidden).
