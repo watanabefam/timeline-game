@@ -86,8 +86,7 @@
   // arrow keys (tabindex="-1"). Follows the settings-tabs pattern already in
   // this file. syncGapTabindex promotes the focused gap (or the first) after
   // every rebuild/insert; initGapRoving wires arrow/Home/End navigation.
-  function syncGapTabindex() {
-    const tl = $("timeline");
+  function syncGapTabindex(tl) {
     if (!tl) return;
     const gaps = Array.from(tl.querySelectorAll(".gap"));
     if (!gaps.length) return;
@@ -98,8 +97,8 @@
     gaps.forEach((g, i) => g.setAttribute("tabindex", i === target ? "0" : "-1"));
   }
 
-  function initGapRoving() {
-    const tl = $("timeline");
+  function initGapRoving(root) {
+    const tl = root ? root.querySelector(".timeline") : $("timeline");
     if (!tl) return;
     const move = (dir) => {
       const gaps = Array.from(tl.querySelectorAll(".gap"));
@@ -134,13 +133,10 @@
   }
 
   // ---- handicap system ----------------------------------------------
-  // Per-player difficulty levers, so mixed-age siblings can race fairly.
+  // Per-player difficulty levers, so mixed-age siblings can play fairly.
   // Each mode declares which levers it supports (HANDICAP_LEVERS); the setup
   // screen shows only those. Levers are additive offsets from the base rules.
   const HANDICAP_LEVERS = {
-    race: {
-      inputDelayMs: { step: 100, max: 500, label: "Input delay", unit: "s" },
-    },
     timeline: {
       startDelayMs: { step: 1000, max: 5000, label: "Delayed start", unit: "s" },
       toleranceYears: { step: 5, max: 25, label: "Extra tolerance", unit: "yr" },
@@ -246,9 +242,9 @@
     });
   }
 
-  function maxScore() {
+  function maxScore(state) {
     // Flat scoring: every placed card is worth POINTS_PER_CARD at its best.
-    const n = (game && game.placements) || TOTAL_PLACEMENTS;
+    const n = (state && state.placements) || TOTAL_PLACEMENTS;
     return POINTS_PER_CARD * n;
   }
 
@@ -662,7 +658,6 @@
     home: $("home"),
     setup: $("setup"),
     game: $("game"),
-    race: $("race"),
     results: $("results"),
     browse: $("browse"),
     stats: $("stats"),
@@ -670,9 +665,9 @@
   // Screen flow order drives curtain direction (Motion PageCurtain pattern):
   // destination further along the flow = forward (sweep right, top leans
   // right); earlier = backward (sweep left, top leans left).
-  const SCREEN_ORDER = { home: 0, stats: 0, setup: 1, browse: 1, game: 2, race: 2, results: 3 };
+  const SCREEN_ORDER = { home: 0, stats: 0, setup: 1, browse: 1, game: 2, results: 3 };
   const SCREEN_TITLES = {
-    home: "DECKS", setup: "SETUP", game: "GAME START!", race: "VERSUS!",
+    home: "DECKS", setup: "SETUP", game: "GAME START!",
     results: "RESULTS", browse: "LIBRARY", stats: "PROGRESS",
   };
   let currentScreen = "home";
@@ -693,10 +688,13 @@
       syncGameMusic(); // game screen swaps to game music; elsewhere resumes main
       initGlassOnScreen(); // glass newly-visible controls
       // Rail bounds need a visible screen (offsetTop is 0 while hidden).
-      if (name === "game") { updateRail(); refreshFocusScale(); }
+      if (name === "game") {
+        const ctx = gameCtx();
+        if (ctx) { updateRail(ctx); refreshFocusScale(ctx); drawRail(ctx); }
+      }
       // Always: the rail lives on <body>, so it must be shown on the game screen
       // and hidden on every other one (drawRail sets railEl.hidden itself).
-      drawRail();
+      if (name !== "game") drawRail(gameCtx() || { root: $("game") });
       // Dock globe lives on setup/game/results only (its mode-setting calls
       // handle visibility); leaving those screens hides + pauses it.
       if (window.GlobeDock && name !== "setup" && name !== "game" && name !== "results") {
@@ -1101,9 +1099,9 @@
   function sortYearOf(ev) {
     return typeof ev.sortYear === "number" ? ev.sortYear : (ev.year == null ? 0 : ev.year);
   }
-  function currentEvent() {
-    if (!game || game.roundIndex >= game.queue.length) return null;
-    return eventById(ui.deck, game.queue[game.roundIndex]);
+  function currentEvent(state) {
+    if (!state || state.roundIndex >= state.queue.length) return null;
+    return eventById(ui.deck, state.queue[state.roundIndex]);
   }
 
   // ---- hover state: placed cards ↔ globe + prompt-card flash ----------------
@@ -1117,7 +1115,7 @@
   function updateHoverUI() {
     const promptCard = $("prompt-card");
     if (!promptCard) return;
-    const hasCurrent = !!currentEvent();
+    const hasCurrent = !!currentEvent(game);
     if (isCardHovered) {
       promptCard.classList.remove("prompt-card--flash");
     } else {
@@ -1636,24 +1634,6 @@
 
     updateSetupSummary();
 
-    // Versus toggle: reveal the handicap panel; sliders update their labels.
-    const versus = $("setup-versus");
-    const panel = $("handicap-panel");
-    if (versus && panel) {
-      const syncPanel = () => panel.classList.toggle("hidden", !versus.checked);
-      versus.addEventListener("change", syncPanel);
-      syncPanel();
-      ["p1", "p2"].forEach((which) => {
-        const slider = $("handicap-" + which);
-        const val = $("handicap-" + which + "-val");
-        if (slider && val) {
-          const sync = () => { val.textContent = (parseInt(slider.value, 10) / 1000).toFixed(1) + "s"; };
-          slider.addEventListener("input", sync);
-          sync();
-        }
-      });
-    }
-
     // Play count selector: reflect manual changes into ui.maxEvents
     const maxSel = $("setup-max");
     if (maxSel && !maxSel.dataset.wired) {
@@ -1785,12 +1765,37 @@
     const revealedFacts = {};
     anchors.forEach((a) => { revealedFacts[a.id] = a.fact; });
 
-    game = {
+    game = createGameState({
       mode: "free",
       userId: (activeUser() || {}).id || null, // attribution: who STARTED the run
-      deckId: deck.id,
+      deck,
       dateKey,
       placements,
+      anchors,
+      queue,
+      revealedFacts,
+    });
+
+    $("mode-tag").textContent =
+      modeLabel(game);
+    $("score-max").textContent = maxScore(game);
+    $("result-score-max").textContent = maxScore(game);
+    renderGame(makeCtx(game, $("game")));
+    gameMusicRestart = true; // fresh game -> game music starts from the top
+    show("game");
+  }
+
+  // Build a fresh, independent game state. Split-screen calls this once per
+  // player (same seed => same puzzle); single-player calls it once.
+  function createGameState(opts) {
+    const anchors = opts.anchors;
+    const queue = opts.queue;
+    return {
+      mode: opts.mode || "free",
+      userId: opts.userId || null,
+      deckId: opts.deck.id,
+      dateKey: opts.dateKey,
+      placements: opts.placements,
       timeline: anchors.map((e) => e.id),
       queue: queue.map((e) => e.id),
       roundIndex: 0,
@@ -1808,17 +1813,25 @@
       // Active rescue (after RESCUE_AFTER misses): { lo, hi, id } — the correct
       // gap range and the card being revealed. Null when no rescue is showing.
       rescue: null,
-      revealedFacts,
+      revealedFacts: opts.revealedFacts || {},
     };
-
-    $("mode-tag").textContent =
-      modeLabel();
-    $("score-max").textContent = maxScore();
-    $("result-score-max").textContent = maxScore();
-    renderGame();
-    gameMusicRestart = true; // fresh game -> game music starts from the top
-    show("game");
   }
+
+  // Per-player rendering context: bundles a game state with the DOM root it
+  // renders into. Single-player uses the #game screen; split-screen uses one
+  // pane per player. All game functions take a ctx and read state/root from it.
+  function makeCtx(state, root) {
+    return { state, root };
+  }
+
+  // The active single-player ctx (or the first split pane). Used by global
+  // hooks (show(), share) that aren't player-scoped.
+  function gameCtx() {
+    if (game) return makeCtx(game, $("game"));
+    if (splitCtx && splitCtx.length) return splitCtx[0];
+    return null;
+  }
+  let splitCtx = null; // set by startSplit; null in single-player
 
   // ---- direct starts (home focus panel) --------------------------
   // One-click practice: no Setup detour. ui.deck/selections are set, then
@@ -1828,111 +1841,6 @@
     ui.selections = selections || {};
     ui.maxEvents = maxEvents == null ? null : maxEvents;
     startGame();
-  }
-
-  // ---- same-question race (Versus) ------------------------------
-  // Two players race on ONE shared question: "Which came first?" — two events
-  // shown, each player picks the older one. First correct answer wins the
-  // point. Handicaps (input delay) level mixed-age play. No timeline needed:
-  // the shared game state stays untouched; only per-player score/handicap.
-  let race = null;
-
-  function startRace(deck, p1Handicap, p2Handicap, rounds) {
-    if (window.Narrator) window.Narrator.unlock();
-    const subset = filterSubset(deck, ui.selections);
-    ui.subset = subset;
-    const pool = subset;
-    const need = 2; // two events per round
-    if (pool.length < need) return;
-    const seed = (Date.now() >>> 0) ^ ((Math.random() * 1e9) >>> 0);
-    const rnd = mulberry32(seed);
-    const events = pool.slice();
-    // Shuffle once; rounds draw consecutive pairs so no event repeats.
-    for (let i = events.length - 1; i > 0; i--) {
-      const j = Math.floor(rnd() * (i + 1));
-      [events[i], events[j]] = [events[j], events[i]];
-    }
-    const n = Math.max(3, Math.min(rounds || 10, Math.floor(events.length / 2)));
-    race = {
-      deckId: deck.id,
-      players: [
-        createPlayer("Player 1", p1Handicap),
-        createPlayer("Player 2", p2Handicap),
-      ],
-      events,
-      round: 0,
-      rounds: n,
-      locked: false, // true while a round's result is showing
-    };
-    $("race-round").textContent = "Round 1 / " + n;
-    $("race-name-a").textContent = race.players[0].name;
-    $("race-name-b").textContent = race.players[1].name;
-    $("race-score-a").textContent = "0";
-    $("race-score-b").textContent = "0";
-    renderRaceRound();
-    show("race");
-  }
-
-  function renderRaceRound() {
-    const r = race;
-    if (!r) return;
-    const a = r.events[r.round * 2];
-    const b = r.events[r.round * 2 + 1];
-    $("race-emoji-a").textContent = a.emoji || "❓";
-    $("race-title-a").textContent = a.title;
-    $("race-emoji-b").textContent = b.emoji || "❓";
-    $("race-title-b").textContent = b.title;
-    $("race-round").textContent = "Round " + (r.round + 1) + " / " + r.rounds;
-    $("race-feedback").textContent = "";
-    $("race-feedback").className = "feedback";
-    r.locked = false;
-    // Store the pair for answer resolution.
-    r.pair = [a, b];
-  }
-
-  // side: 0 = left event, 1 = right event. First correct answer wins.
-  function raceAnswer(playerIdx, side) {
-    const r = race;
-    if (!r || r.locked) return;
-    const p = r.players[playerIdx];
-    const [a, b] = r.pair;
-    const older = sortYearOf(a) <= sortYearOf(b) ? 0 : 1;
-    const correct = side === older;
-    const fb = $("race-feedback");
-    if (correct) {
-      p.score += 1;
-      $("race-score-" + (playerIdx === 0 ? "a" : "b")).textContent = String(p.score);
-      fb.textContent = p.name + " got it!";
-      fb.className = "feedback good feedback--on";
-      r.locked = true;
-      setTimeout(() => {
-        r.round += 1;
-        if (r.round >= r.rounds) { finishRace(); return; }
-        renderRaceRound();
-      }, 900);
-    } else {
-      fb.textContent = p.name + " — wrong!";
-      fb.className = "feedback bad feedback--on";
-      // Wrong answer doesn't lock the round; the other player can still win it.
-    }
-  }
-
-  function finishRace() {
-    const r = race;
-    const [p1, p2] = r.players;
-    const winner = p1.score === p2.score ? null : (p1.score > p2.score ? p1 : p2);
-    $("result-tag").textContent = "VERSUS";
-    $("result-title").textContent = winner
-      ? winner.name + " wins!"
-      : "It's a tie!";
-    $("result-blurb").textContent = winner
-      ? winner.name + " placed " + winner.score + " correct."
-      : "Both placed " + p1.score + " correct.";
-    $("result-score-num").textContent = p1.score + " – " + p2.score;
-    $("result-score-max").textContent = r.rounds;
-    $("result-grid").innerHTML = "";
-    $("result-timeline").innerHTML = "";
-    show("results");
   }
 
   function startWeekPractice(deckId, week) {
@@ -1989,8 +1897,8 @@
   // placed above or below the current span, the extension is animated by the
   // FX layer (anime.js); otherwise the bounds are set directly and the CSS
   // transition covers non-placement updates (screen entry, resize).
-  function updateRail(animate) {
-    const tl = $("timeline");
+  function updateRail(ctx, animate) {
+    const tl = ctx.root.querySelector(".timeline");
     if (!tl) return;
     const placed = tl.querySelectorAll(".tl-event");
     if (!placed.length) return;
@@ -2032,14 +1940,19 @@
   // Bézier, which is exactly a parabola: its control point sits 2x the bow
   // depth off the chord.
   let railEl = null;
-  function ensureRailEl() {
+  // Per-pane rail: each player's timeline gets its own fixed overlay scoped to
+  // their half of the viewport, with a UNIQUE gradient id (duplicate SVG ids
+  // resolve to the first instance — both rails would render with P1's gradient).
+  function ensureRailEl(ctx) {
+    const root = ctx.root;
+    const gradId = "tl-rail-grad-" + (root.dataset.pane || "single");
     if (!railEl) {
       railEl = document.createElement("div");
       railEl.className = "tl-rail";
       railEl.setAttribute("aria-hidden", "true");
       railEl.innerHTML =
         '<svg preserveAspectRatio="none"><defs>' +
-        '<linearGradient id="tl-rail-grad" x1="0" y1="0" x2="0" y2="1">' +
+        `<linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">` +
         '<stop offset="0" stop-color="#fff" stop-opacity="0.18"/>' +
         '<stop offset="1" stop-color="#fff" stop-opacity="0.55"/>' +
         '</linearGradient></defs><path pathLength="1"/></svg>';
@@ -2049,14 +1962,22 @@
     // drag the rail to #game's box ("the line moves to the centre") for the
     // shake's duration. Outside the screen, no ancestor transform can touch it.
     if (railEl.parentNode !== document.body) document.body.prepend(railEl);
+    // Scope the overlay to this player's pane (single-player = full width).
+    const pane = root.dataset.pane;
+    if (pane === "p1") { railEl.style.left = "0"; railEl.style.right = "50%"; }
+    else if (pane === "p2") { railEl.style.left = "50%"; railEl.style.right = "0"; }
+    else { railEl.style.left = "0"; railEl.style.right = "0"; }
+    // Point the path at this pane's gradient.
+    const path = railEl.querySelector("path");
+    path.style.stroke = `url(#${gradId})`;
   }
 
   // Must mirror the focus-scale range (peak/edge in FX.focusScale + the CSS
   // keyframes): the card's left edge swings +/-(peak-edge)/2 x width, so the
   // rail's full bow (sagitta) is (peak - edge) x width = 0.05 x width.
   const RAIL_PEAK = 1.05, RAIL_EDGE = 0.95;
-  function drawRail() {
-    const tl = $("timeline");
+  function drawRail(ctx) {
+    const tl = ctx.root.querySelector(".timeline");
     if (!railEl) return;
     // The rail lives on <body>, so it must be hidden by hand off the game screen.
     const onGame = tl && !screens.game.classList.contains("hidden");
@@ -2103,8 +2024,8 @@
       vc.toFixed(1) + " " + xEnd.toFixed(1) + " " + vh.toFixed(1));
   }
 
-  function refreshFocusScale() {
-    const tl = $("timeline");
+  function refreshFocusScale(ctx) {
+    const tl = ctx.root.querySelector(".timeline");
     if (!tl || !window.FX || typeof window.FX.focusScale !== "function") return;
     if (!focusScaleCtl) {
       focusScaleCtl = window.FX.focusScale(tl, {
@@ -2125,59 +2046,64 @@
   // HUD-only update: prompt card, score, lives, narrator. Shared by the full
   // rebuild (renderGame) and the incremental placement path (commitPlacement)
   // so the hot path never rebuilds the timeline list.
-  function updateGameHud() {
-    const ev = currentEvent();
+  function updateGameHud(ctx) {
+    const state = ctx.state;
+    const root = ctx.root;
+    const ev = currentEvent(state);
     if (ev) {
-      $("prompt-emoji").textContent = ev.emoji || "❓";
-      $("prompt-title").textContent = ev.title;
+      root.querySelector(".prompt-emoji").textContent = ev.emoji || "❓";
+      root.querySelector(".prompt-title").textContent = ev.title;
       if (window.Narrator) {
         // Narration audio ships with the deck — tell the player which deck is
         // active so it can resolve each card's clip.
         window.Narrator.setDeck(ui.deck);
         // On the very first deal the voice would otherwise start over the
         // curtain; hold it until the game screen has transitioned in (~1s).
-        const firstOfGame = game.roundIndex === 0 && game.status === "playing";
+        const firstOfGame = state.roundIndex === 0 && state.status === "playing";
         window.Narrator.speakEvent(ev, { delay: firstOfGame ? 1000 : 0 });
         // Pre-warm the next few clips so their playback is instant.
-        const upcoming = game.queue
-          .slice(game.roundIndex + 1)
+        const upcoming = state.queue
+          .slice(state.roundIndex + 1)
           .map((id) => eventById(ui.deck, id));
         window.Narrator.prefetch(upcoming);
       }
     } else {
-      $("prompt-emoji").textContent = "✅";
-      $("prompt-title").textContent = "Timeline complete!";
+      root.querySelector(".prompt-emoji").textContent = "✅";
+      root.querySelector(".prompt-title").textContent = "Timeline complete!";
     }
 
     // Count-up from the displayed value (0 on first render — no-op there).
-    if (window.FX) FX.scoreCount($("score-num"), game.score);
-    else $("score-num").textContent = game.score;
+    const scoreEl = root.querySelector(".score-num");
+    if (window.FX) FX.scoreCount(scoreEl, state.score);
+    else scoreEl.textContent = state.score;
     // Single mode: no lives — wrong placements bounce back (slips cost points).
-    $("lives").textContent = "";
+    root.querySelector(".lives").textContent = "";
   }
 
-  function renderGame() {
+  function renderGame(ctx) {
+    const state = ctx.state;
+    const root = ctx.root;
     // Cards are being rebuilt — clear any stale hover state.
     if (hoverDebounceTimer) clearTimeout(hoverDebounceTimer);
     setCardHovered(false);
 
-    updateGameHud();
+    updateGameHud(ctx);
 
-    const timelineEvents = game.timeline.map((id) => eventById(ui.deck, id));
+    const timelineEvents = state.timeline.map((id) => eventById(ui.deck, id));
 
-    const tl = $("timeline");
+    const tl = root.querySelector(".timeline");
     tl.innerHTML = "";
-    ensureRailEl(); // fixed overlay lives on <body>; just make sure it's mounted
+    ensureRailEl(ctx); // fixed overlay lives on <body>; just make sure it's mounted
     // First deal: stagger the cards in as the curtain reveals. CSS-driven —
     // the game screen becomes visible mid-curtain, which starts the animation.
-    const firstDeal = game.roundIndex === 0 && game.status === "playing";
+    const firstDeal = state.roundIndex === 0 && state.status === "playing";
     timelineEvents.forEach((e, idx) => {
-      const li = eventEl(e, idx);
+      const li = eventEl(state, e, idx);
       if (firstDeal) li.style.setProperty("--i", String(idx));
-      tl.appendChild(gapEl(idx));
+      tl.appendChild(gapEl(ctx, idx));
       tl.appendChild(li);
     });
-    tl.appendChild(gapEl(timelineEvents.length));
+    tl.appendChild(gapEl(ctx, timelineEvents.length));
     if (firstDeal) {
       tl.classList.add("timeline--dealing");
       setTimeout(() => tl.classList.remove("timeline--dealing"), 1600);
@@ -2186,27 +2112,27 @@
     // render runs while hidden, so show()'s swap recomputes on reveal.
     // Animate the extension only when a card was just placed (roundIndex
     // advanced); the first deal draws in via the CSS rail-draw animation.
-    if (!screens.game.classList.contains("hidden")) updateRail(game.roundIndex > 0);
+    if (!screens.game.classList.contains("hidden")) updateRail(ctx, state.roundIndex > 0);
     // (Re)fit the focus scale to the rebuilt list. No-op while the screen is
     // hidden (rects are 0); show() refreshes once it is laid out.
-    refreshFocusScale();
-    drawRail();
+    refreshFocusScale(ctx);
+    drawRail(ctx);
     // Roving tabindex: promote the first gap into the tab order.
-    syncGapTabindex();
+    syncGapTabindex(tl);
 
     // Dock globe: placed markers coloured by outcome, current prompt on top.
     if (window.GlobeDock) {
       window.GlobeDock.syncGame(
-        timelineEvents.map((e) => ({ ev: e, kind: placedKindFor(e) })),
-        currentEvent()
+        timelineEvents.map((e) => ({ ev: e, kind: placedKindFor(state, e) })),
+        currentEvent(state)
       );
     }
   }
 
   // Dock-globe marker colour for a placed card — mirrors placedClassFor().
-  function placedKindFor(e) {
-    if (game.anchorIds && game.anchorIds.has(e.id)) return "anchor";
-    const slips = game.cardSlips ? game.cardSlips[e.id] : null;
+  function placedKindFor(state, e) {
+    if (state.anchorIds && state.anchorIds.has(e.id)) return "anchor";
+    const slips = state.cardSlips ? state.cardSlips[e.id] : null;
     return slips === 0 ? "good" : "bad";
   }
 
@@ -2649,9 +2575,9 @@
 
   // Placed-card state class, shared by the game timeline and the results page:
   // anchor | placed-clean (first try) | placed-slipped slip-N (escalating toward red).
-  function placedClassFor(e) {
-    if (game.anchorIds && game.anchorIds.has(e.id)) return "anchor";
-    const slips = game.cardSlips ? game.cardSlips[e.id] : null;
+  function placedClassFor(state, e) {
+    if (state.anchorIds && state.anchorIds.has(e.id)) return "anchor";
+    const slips = state.cardSlips ? state.cardSlips[e.id] : null;
     return slips === 0 ? "placed-clean" : "placed-slipped slip-" + Math.min(slips || 1, 3);
   }
 
@@ -2716,11 +2642,11 @@
     if (wasHidden) { sheet.style.visibility = ""; sheet.style.display = ""; }
   }
 
-  function eventEl(e, idx) {
+  function eventEl(state, e, idx) {
     const li = document.createElement("li");
-    li.className = "tl-event " + placedClassFor(e);
-    const revealed = game.revealedFacts[e.id];
-    const sameYearNeighbor = game.timeline.some(
+    li.className = "tl-event " + placedClassFor(state, e);
+    const revealed = state.revealedFacts[e.id];
+    const sameYearNeighbor = state.timeline.some(
       (id, i) => id !== e.id && sortYearOf(eventById(ui.deck, id)) === sortYearOf(e)
     );
     const sheet = factSheetHtml(e);
@@ -2789,13 +2715,14 @@
       hoverDebounceTimer = setTimeout(() => {
         hoverDebounceTimer = null;
         setCardHovered(false);
-        if (window.GlobeDock) window.GlobeDock.focus(currentEvent());
+        if (window.GlobeDock) window.GlobeDock.focus(currentEvent(state));
       }, 200);
     });
     return li;
   }
 
-  function gapEl(index) {
+  function gapEl(ctx, index) {
+    const state = ctx.state;
     const g = document.createElement("li");
     g.className = "gap";
     g.dataset.index = String(index);
@@ -2806,15 +2733,15 @@
     g.setAttribute("tabindex", "-1");
     g.textContent =
       index === 0 ? "＋ BEFORE" :
-      index === game.timeline.length ? "＋ AFTER" :
+      index === state.timeline.length ? "＋ AFTER" :
       "＋ PLACE HERE";
     // Read the CURRENT data-index at interaction time, not the creation-time
     // closure value: insertPlacedEvent bumps data-index on subsequent gaps,
     // so a captured index would go stale and target the wrong position.
     const gapIndex = () => parseInt(g.dataset.index, 10);
-    g.addEventListener("click", () => attemptPlace(gapIndex()));
+    g.addEventListener("click", () => attemptPlace(ctx, gapIndex()));
     g.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); attemptPlace(gapIndex()); }
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); attemptPlace(ctx, gapIndex()); }
     });
     return g;
   }
@@ -2824,15 +2751,16 @@
   // their data-index bumped (attribute writes only — no layout cost), keeping
   // attemptPlace / rescue / keyboard targeting correct. Returns the new event
   // element so the caller can animate it.
-  function insertPlacedEvent(index, ev) {
-    const tl = $("timeline");
+  function insertPlacedEvent(ctx, index, ev) {
+    const state = ctx.state;
+    const tl = ctx.root.querySelector(".timeline");
     const oldGap = tl.querySelector(`.gap[data-index="${index}"]`);
     if (!oldGap) return null;
     // Snapshot the pre-existing gaps BEFORE the swap: the new gap created
     // below already carries index+1 and must NOT be bumped by the loop.
     const existingGaps = Array.from(tl.querySelectorAll(".gap[data-index]"));
-    const newEvent = eventEl(ev, index);
-    const newGap = gapEl(index + 1);
+    const newEvent = eventEl(state, ev, index);
+    const newGap = gapEl(ctx, index + 1);
     // The old gap is KEPT — it becomes the slot before the new event — and
     // the event + a fresh gap are inserted after it. (Replacing the gap would
     // consume it and leave the timeline one slot short.)
@@ -2842,7 +2770,7 @@
     // owns that now); re-label it from its position.
     oldGap.textContent =
       index === 0 ? "＋ BEFORE" :
-      index === game.timeline.length ? "＋ AFTER" :
+      index === state.timeline.length ? "＋ AFTER" :
       "＋ PLACE HERE";
     // Bump data-index on all subsequent pre-existing gaps (attribute writes —
     // no layout), keeping attemptPlace / rescue / keyboard targeting correct.
@@ -2856,8 +2784,9 @@
   // The full rebuild used to wipe rescue UI (callout + locked gaps) for free;
   // the incremental path must clear it explicitly. Restores each gap's label,
   // tabindex and aria state from its (already bumped) data-index.
-  function clearRescueUI() {
-    const tl = $("timeline");
+  function clearRescueUI(ctx) {
+    const state = ctx.state;
+    const tl = ctx.root.querySelector(".timeline");
     if (!tl) return;
     tl.querySelectorAll(".gap-callout").forEach((c) => c.remove());
     tl.querySelectorAll(".gap").forEach((g) => {
@@ -2866,61 +2795,63 @@
       g.removeAttribute("aria-disabled");
       g.textContent =
         i === 0 ? "＋ BEFORE" :
-        i === game.timeline.length ? "＋ AFTER" :
+        i === state.timeline.length ? "＋ AFTER" :
         "＋ PLACE HERE";
     });
     // Restore the roving tab order (one gap in the tab sequence).
-    syncGapTabindex();
+    syncGapTabindex(tl);
   }
 
   // A correct placement is committed here so both the normal path and the
   // rescue safety-net (a stray tap while the answer is showing) share one body.
-  function commitPlacement(index, ev) {
+  function commitPlacement(ctx, index, ev) {
+    const state = ctx.state;
+    const root = ctx.root;
     // Capture BEFORE clearing: the incremental path must wipe the rescue
     // callout/locked gaps itself (the old full rebuild did it for free).
     // Clear BEFORE the splice: clearRescueUI re-labels gaps from their
-    // data-index against game.timeline.length, so both must still be in the
+    // data-index against state.timeline.length, so both must still be in the
     // pre-insert state (insertPlacedEvent bumps the indices afterwards).
-    const hadRescue = !!game.rescue;
-    game.rescue = null;
-    const live = $("rescue-status");
+    const hadRescue = !!state.rescue;
+    state.rescue = null;
+    const live = root.querySelector(".rescue-status");
     if (live) live.textContent = "";
-    if (hadRescue) clearRescueUI();
+    if (hadRescue) clearRescueUI(ctx);
 
-    game.timeline.splice(index, 0, ev.id);
-    game.revealedFacts[ev.id] = ev.fact;
-    game.outcomes.push("correct");
+    state.timeline.splice(index, 0, ev.id);
+    state.revealedFacts[ev.id] = ev.fact;
+    state.outcomes.push("correct");
     // Remember how many slips this card needed (0 = clean first try) so the
     // timeline can differentiate it visually.
-    game.cardSlips[ev.id] = game.wrongOnCurrent;
+    state.cardSlips[ev.id] = state.wrongOnCurrent;
     // Flat scoring: a card is worth POINTS_PER_CARD; each slip on it costs 1
     // (floor 0) so the final score reflects how cleanly the run was played.
-    const value = Math.max(0, POINTS_PER_CARD - game.wrongOnCurrent);
-    game.score += value;
-    game.roundIndex += 1;
-    game.wrongOnCurrent = 0;
-    flashFeedback(value > 0 ? `✓ +${value}` : "✓ placed +0", true);
-    game.streak += 1;
-    playSfx("correct", { streak: game.streak });
+    const value = Math.max(0, POINTS_PER_CARD - state.wrongOnCurrent);
+    state.score += value;
+    state.roundIndex += 1;
+    state.wrongOnCurrent = 0;
+    flashFeedback(value > 0 ? `✓ +${value}` : "✓ placed +0", true, root);
+    state.streak += 1;
+    playSfx("correct", { streak: state.streak });
 
-    if (game.roundIndex >= game.queue.length) { finishGame(true); return; }
+    if (state.roundIndex >= state.queue.length) { finishGame(ctx, true); return; }
     // Hot path: update the HUD (next prompt/score) and insert just the one
     // card — no full timeline rebuild. The rescue callout/locked gaps are
     // wiped by the rebuild today, so clear them explicitly here.
-    updateGameHud();
-    const newEventEl = insertPlacedEvent(index, ev);
+    updateGameHud(ctx);
+    const newEventEl = insertPlacedEvent(ctx, index, ev);
     // Roving tabindex: keep the focused gap promoted (it may have shifted).
-    syncGapTabindex();
-    if (!screens.game.classList.contains("hidden")) updateRail(true);
-    refreshFocusScale();
-    drawRail();
+    syncGapTabindex(root.querySelector(".timeline"));
+    if (!screens.game.classList.contains("hidden")) updateRail(ctx, true);
+    refreshFocusScale(ctx);
+    drawRail(ctx);
     if (window.GlobeDock) {
       window.GlobeDock.syncGame(
-        game.timeline.map((id) => {
+        state.timeline.map((id) => {
           const e = eventById(ui.deck, id);
-          return { ev: e, kind: placedKindFor(e) };
+          return { ev: e, kind: placedKindFor(state, e) };
         }),
-        currentEvent()
+        currentEvent(state)
       );
     }
     // Animate only the newly inserted event
@@ -2931,10 +2862,10 @@
       }, { once: true });
       // Juice: lock-in burst + floating score + green vignette, tiered
       // by streak (heavy at 3+ consecutive corrects).
-      juicePlace(newEventEl, value, game.streak);
+      juicePlace(newEventEl, value, state.streak);
     }
     // Rail pulse: the timeline line flashes as the card locks in.
-    const tl = $("timeline");
+    const tl = root.querySelector(".timeline");
     tl.classList.add("timeline--pulse");
     setTimeout(() => tl.classList.remove("timeline--pulse"), 500);
     // Rail glow: energy travels outward from the new node along the line
@@ -2945,46 +2876,49 @@
     }
   }
 
-  function attemptPlace(index) {
-    if (game.status !== "playing") return;
+  function attemptPlace(ctx, index) {
+    const state = ctx.state;
+    const root = ctx.root;
+    if (state.status !== "playing") return;
     // Re-arm WebAudio inside this click gesture: browsers suspend the context
     // after tab switches, and resume() outside a gesture is rejected — which
     // made narration silently skip cards.
     if (window.Narrator) window.Narrator.unlock();
-    const ev = currentEvent();
+    const ev = currentEvent(state);
     if (!ev) return;
 
-    const timelineEvents = game.timeline.map((id) => eventById(ui.deck, id));
+    const timelineEvents = state.timeline.map((id) => eventById(ui.deck, id));
     const [lo, hi] = correctIndexRange(ev, timelineEvents);
     const correct = index >= lo && index <= hi;
 
-    if (correct) { commitPlacement(index, ev); return; }
+    if (correct) { commitPlacement(ctx, index, ev); return; }
 
-    game.outcomes.push("wrong");
-    game.wrongOnCurrent += 1;
-    game.streak = 0;
+    state.outcomes.push("wrong");
+    state.wrongOnCurrent += 1;
+    state.streak = 0;
 
     // Rescued already: the answer is on screen, so a stray tap just finishes
     // the placement instead of looping. While a rescue shows, only the correct
     // gap is a live target, so this is a safety net rather than the main path.
-    if (game.rescue) { commitPlacement(game.rescue.lo, ev); return; }
+    if (state.rescue) { commitPlacement(ctx, state.rescue.lo, ev); return; }
 
-    if (game.wrongOnCurrent >= RESCUE_AFTER) {
+    if (state.wrongOnCurrent >= RESCUE_AFTER) {
       // Third miss: stop testing and reveal. A soft "that was wrong" cue only —
       // no shake or juice, so the reveal reads as help, not rebuke.
       playSfx("wrong");
       if (window.GlobeDock) window.GlobeDock.markCurrent("bad");
-      triggerRescue(lo, hi, ev);
+      triggerRescue(ctx, lo, hi, ev);
       return;
     }
 
     // Strike 2 names the direction; strike 1 stays unaided and wordless — the
     // shake, gap flash and buzz already say "miss" (hints on demand; no
     // redundant text).
-    if (game.wrongOnCurrent === RESCUE_AFTER - 1) {
+    if (state.wrongOnCurrent === RESCUE_AFTER - 1) {
       flashFeedback(
         index < lo ? "Too early — it comes later." : "Too late — it comes earlier.",
-        false
+        false,
+        root
       );
     }
     playSfx("wrong");
@@ -2995,7 +2929,7 @@
     // Short/decaying/positional (4px, 200ms) — FX handles reduced motion.
     if (window.FX) FX.shake(screens.game, 4, 200);
     // Flash the clicked gap instead of rebuilding the timeline.
-    const gapNode = document.querySelector(`.gap[data-index="${index}"]`);
+    const gapNode = root.querySelector(`.gap[data-index="${index}"]`);
     if (gapNode) {
       gapNode.classList.remove("gap--wrong");
       void gapNode.offsetWidth;
@@ -3009,8 +2943,8 @@
   // Scrolls to the correct gap, makes it the single obvious target, and anchors
   // an explanation beside it (co-located, never a detached toast). The player
   // still performs the placement; the callout persists until they do.
-  function rescueOrderingText(lo, hi, ev) {
-    const evs = game.timeline.map((id) => eventById(ui.deck, id));
+  function rescueOrderingText(state, lo, hi, ev) {
+    const evs = state.timeline.map((id) => eventById(ui.deck, id));
     const before = lo > 0 ? evs[lo - 1] : null;
     const after = hi < evs.length ? evs[hi] : null;
     const plain = (e) => `${e.title} (${fmtYears(e)})`;
@@ -3036,8 +2970,8 @@
     return { text, html };
   }
 
-  function buildRescueCallout(lo, hi, ev) {
-    const order = rescueOrderingText(lo, hi, ev);
+  function buildRescueCallout(state, lo, hi, ev) {
+    const order = rescueOrderingText(state, lo, hi, ev);
     // Prefer the authored significance line; `fact` is the fallback so the
     // moment is never empty even on decks without structured fields (§9).
     const why = ev.why || ev.fact || "";
@@ -3067,11 +3001,13 @@
     });
   }
 
-  function triggerRescue(lo, hi, ev) {
-    if (game.status !== "playing" || game.rescue) return;
-    game.rescue = { lo, hi, id: ev.id };
+  function triggerRescue(ctx, lo, hi, ev) {
+    const state = ctx.state;
+    const root = ctx.root;
+    if (state.status !== "playing" || state.rescue) return;
+    state.rescue = { lo, hi, id: ev.id };
 
-    const tl = $("timeline");
+    const tl = root.querySelector(".timeline");
     if (!tl) return;
     const gapNodes = Array.from(tl.querySelectorAll(".gap"));
 
@@ -3094,11 +3030,11 @@
     // Anchor the explanation just below the correct range (next to, never on
     // top of, the target).
     const anchorGap = tl.querySelector(`.gap[data-index="${hi}"]`) || gapNodes[0];
-    const callout = buildRescueCallout(lo, hi, ev);
+    const callout = buildRescueCallout(state, lo, hi, ev);
     if (anchorGap) anchorGap.insertAdjacentElement("afterend", callout);
 
     // Announce once through the persistent polite live region.
-    const live = $("rescue-status");
+    const live = root.querySelector(".rescue-status");
     if (live) live.textContent = callout.dataset.announce;
 
     const target = tl.querySelector(`.gap[data-index="${lo}"]`);
@@ -3112,10 +3048,11 @@
   let feedbackTimer = null;
   // Transient placement feedback in the fixed HUD line (never scrolls out of
   // view). Fade in fast, fade out slowly; the empty string is a no-op so a
-  // wordless miss leaves no stale text.
-  function flashFeedback(msg, good) {
-    const f = $("feedback");
-    if (!msg) return;
+  // wordless miss leaves no stale text. `root` scopes the feedback element to
+  // a player's pane in split-screen; defaults to the shared #feedback line.
+  function flashFeedback(msg, good, root) {
+    const f = root ? root.querySelector(".feedback") : $("feedback");
+    if (!f || !msg) return;
     f.textContent = msg;
     f.className = "feedback " + (good ? "good" : "bad") + " feedback--on";
     clearTimeout(feedbackTimer);
@@ -3149,78 +3086,81 @@
   }
 
   // ---- finish ----------------------------------------------------
-  // Write the finished run to the STARTING user's profile: per-event
+  // Write the finished run to the player's OWN profile (state.userId — in
+  // split-screen each player's outcomes go to their own mastery log): per-event
   // aggregates (placements / slips / first-try) power the Focus panel and
   // stats; the run log powers Recent runs.
-  function recordRun() {
-    const u = activeUser();
-    if (!u || !ui.deck || !game) return;
+  function recordRun(state) {
+    const u = state.userId ? { id: state.userId } : activeUser();
+    if (!u || !ui.deck || !state) return;
     const p = readUser(u.id);
     const d = p.decks[ui.deck.id] || (p.decks[ui.deck.id] = {
       totals: { runs: 0, totalScore: 0, totalMax: 0, perfectRuns: 0, totalPlacements: 0, totalSlips: 0 },
       runs: [], events: {},
     });
-    game.timeline.forEach((id) => {
-      if (game.anchorIds.has(id)) return; // anchors are given, not practiced
-      const slips = game.cardSlips[id] || 0;
+    state.timeline.forEach((id) => {
+      if (state.anchorIds.has(id)) return; // anchors are given, not practiced
+      const slips = state.cardSlips[id] || 0;
       const e = d.events[id] || (d.events[id] = { placements: 0, slips: 0, firstTry: 0 });
       e.placements += 1;
       e.slips += slips;
       if (slips === 0) e.firstTry += 1;
     });
-    const wrongs = game.outcomes.filter((o) => o === "wrong").length;
+    const wrongs = state.outcomes.filter((o) => o === "wrong").length;
     d.runs.unshift({
       date: Date.now(),
       deck: ui.deck.name,
       filters: summarizeSelections(ui.deck, ui.selections),
-      placements: game.placements,
-      score: game.score,
-      max: maxScore(),
+      placements: state.placements,
+      score: state.score,
+      max: maxScore(state),
       perfect: wrongs === 0,
       wrongs,
     });
     if (d.runs.length > 50) d.runs.length = 50;
     d.totals.runs += 1;
-    d.totals.totalScore += game.score;
-    d.totals.totalMax += maxScore();
+    d.totals.totalScore += state.score;
+    d.totals.totalMax += maxScore(state);
     if (wrongs === 0) d.totals.perfectRuns += 1;
-    d.totals.totalPlacements += game.placements;
+    d.totals.totalPlacements += state.placements;
     d.totals.totalSlips += wrongs;
     writeUser(u.id, p);
   }
 
-  function finishGame(won) {
-    game.status = won ? "complete" : "lost";
+  function finishGame(ctx, won) {
+    const state = ctx.state;
+    state.status = won ? "complete" : "lost";
     playSfx(won ? "win" : "wrong");
-    recordRun();
-    showResults(won);
+    recordRun(state);
+    showResults(ctx, won);
   }
 
-  function showResults(won) {
-    // game.outcomes is the full ATTEMPT log ("correct"/"wrong" per try), so the
-    // real score is game.score (points) and "perfect" means zero wrong tries.
-    const wrongs = game.outcomes.filter((o) => o === "wrong").length;
+  function showResults(ctx, won) {
+    const state = ctx.state;
+    // state.outcomes is the full ATTEMPT log ("correct"/"wrong" per try), so the
+    // real score is state.score (points) and "perfect" means zero wrong tries.
+    const wrongs = state.outcomes.filter((o) => o === "wrong").length;
     const perfect = won && wrongs === 0;
     $("result-tag").textContent = modeLabel();
     $("result-title").textContent = won
       ? (perfect ? "Perfect timeline!" : "Timeline complete!")
       : "History got you this time.";
     $("result-blurb").textContent = won
-      ? `${game.placements} placed · ` +
+      ? `${state.placements} placed · ` +
         summarizeSelections(ui.deck, ui.selections) +
         (wrongs ? ` · ${wrongs} slip${wrongs === 1 ? "" : "s"}` : "")
       : // Losses only occur in Endless (Daily bounces back), where the run
         // ends after ENDLESS_LIVES slips.
         `${{ 1: "One", 2: "Two", 3: "Three" }[ENDLESS_LIVES] || ENDLESS_LIVES} slips ended the run — but now you know something new.`;
     // Results score counts up as the curtain reveals (600ms, easeOutExpo).
-    if (window.FX) FX.scoreCount($("result-score-num"), game.score);
-    else $("result-score-num").textContent = game.score;
+    if (window.FX) FX.scoreCount($("result-score-num"), state.score);
+    else $("result-score-num").textContent = state.score;
     // A previous run's share text must not bleed into these results.
     $("share-text").classList.add("hidden");
 
     const grid = $("result-grid");
     grid.innerHTML = "";
-    game.outcomes.forEach((out) => {
+    state.outcomes.forEach((out) => {
       const cell = document.createElement("span");
       cell.className = "cell " + (out === "correct" ? "good" : "bad");
       grid.appendChild(cell);
@@ -3228,14 +3168,14 @@
 
     const tl = $("result-timeline");
     tl.innerHTML = "";
-    game.timeline.map((id) => eventById(ui.deck, id)).forEach((e) => {
+    state.timeline.map((id) => eventById(ui.deck, id)).forEach((e) => {
       const li = document.createElement("li");
       // Same state coloring as the game timeline (anchors / clean / slipped).
-      li.className = placedClassFor(e);
+      li.className = placedClassFor(state, e);
       // Micro-feedback: show the points this card earned (anchors are given).
-      const ptsChip = game.anchorIds && game.anchorIds.has(e.id)
+      const ptsChip = state.anchorIds && state.anchorIds.has(e.id)
         ? ""
-        : `<span class="rt-pts">+${Math.max(0, POINTS_PER_CARD - (game.cardSlips[e.id] || 0))}</span>`;
+        : `<span class="rt-pts">+${Math.max(0, POINTS_PER_CARD - (state.cardSlips[e.id] || 0))}</span>`;
       li.innerHTML =
         (fmtYears(e) ? `<span class="yr">${fmtYears(e)}</span>` : "") +
         `<div class="rt-info"><span class="rt-title">${escapeHtml(e.title)}${ptsChip}</span>` +
@@ -3257,21 +3197,21 @@
     // auto-rotating like setup; tapping it expands the full-screen view.
     if (window.GlobeDock) {
       window.GlobeDock.showResults(
-        game.timeline.map((id) => {
+        state.timeline.map((id) => {
           const e = eventById(ui.deck, id);
-          return { ev: e, kind: placedKindFor(e) };
+          return { ev: e, kind: placedKindFor(state, e) };
         })
       );
     }
   }
 
-  function shareText() {
-    const wrongs = game.outcomes.filter((o) => o === "wrong").length;
-    const grid = game.outcomes.map((o) => (o === "correct" ? "🟩" : "🟥")).join("");
+  function shareText(state) {
+    const wrongs = state.outcomes.filter((o) => o === "wrong").length;
+    const grid = state.outcomes.map((o) => (o === "correct" ? "🟩" : "🟥")).join("");
     const head = `Timeline Game — ${ui.deck.name}`;
     const filterStr = summarizeSelections(ui.deck, ui.selections);
     const slips = wrongs ? ` · ${wrongs} slip${wrongs === 1 ? "" : "s"}` : "";
-    return `${head}\n${grid}\n${game.score}/${maxScore()} points${slips}\n${filterStr}`;
+    return `${head}\n${grid}\n${state.score}/${maxScore(state)} points${slips}\n${filterStr}`;
   }
 
   // ---- browse ----------------------------------------------------
@@ -3481,26 +3421,10 @@
   // ---- wire up ---------------------------------------------------
   function init() {
     // Keyboard navigation for the timeline gaps (roving tabindex + arrows).
-    initGapRoving();
-    // Race bindings: P1 = A/S (left/right event), P2 = arrows. Handicap input
-    // delay wraps the answer so a stronger player's press lands late.
-    input.onPress("KeyA", (e) => { e.preventDefault(); withInputDelay(race && race.players[0], () => raceAnswer(0, 0))(); });
-    input.onPress("KeyS", (e) => { e.preventDefault(); withInputDelay(race && race.players[0], () => raceAnswer(0, 1))(); });
-    input.onPress("ArrowLeft", (e) => { e.preventDefault(); withInputDelay(race && race.players[1], () => raceAnswer(1, 0))(); });
-    input.onPress("ArrowRight", (e) => { e.preventDefault(); withInputDelay(race && race.players[1], () => raceAnswer(1, 1))(); });
-    $("race-back").addEventListener("click", () => renderSetup());
+    initGapRoving($("game"));
     // setup screen
     $("setup-back").addEventListener("click", () => renderHub());
-    $("setup-start").addEventListener("click", () => {
-      const versus = $("setup-versus") && $("setup-versus").checked;
-      if (versus) {
-        const p1 = readHandicap("race", "p1");
-        const p2 = readHandicap("race", "p2");
-        startRace(ui.deck, p1, p2, 10);
-      } else {
-        startGame();
-      }
-    });
+    $("setup-start").addEventListener("click", () => startGame());
     $("setup-browse").addEventListener("click", () => renderBrowse());
     // game
     $("back-btn").addEventListener("click", () => openDeck(ui.deck));
@@ -3522,7 +3446,7 @@
     $("home-btn").addEventListener("click", () => renderHub());
     $("again-btn").addEventListener("click", () => startGame());
     $("share-btn").addEventListener("click", () => {
-      const txt = shareText();
+      const txt = shareText(game);
       const pre = $("share-text");
       pre.textContent = txt;
       pre.classList.toggle("hidden");
