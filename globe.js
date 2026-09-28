@@ -165,6 +165,32 @@
     applyAtmosphere();
   }
 
+  // Entrance animation: the docked globe slides down into the strip while
+  // zooming from larger to normal size. big = full slide + zoom when the dock
+  // appears; small = subtle zoom pulse when it switches mode (setup→game→
+  // results). Same-mode re-syncs (every placement) stay still. The dock's
+  // overflow clips the slide, so the globe reads as dropping into place.
+  function playEntrance(big) {
+    if (!state.globe || state.expanded) return;
+    const s = canvasSize();
+    const topOffset = s / 2 - spherePx(s, ALT_DOCKED) / 2;
+    const finalTop = -(topOffset + overhang());
+    const startTop = big ? finalTop - 90 : finalTop;
+    const startScale = big ? 1.3 : 1.08;
+    const dur = big ? 0.55 : 0.3;
+    holder.style.transition = "none";
+    holder.style.top = startTop + "px";
+    holder.style.transform = `translateX(-50%) scale(${startScale})`;
+    void holder.offsetHeight; // force reflow so the transition fires
+    holder.style.transition =
+      `top ${dur}s cubic-bezier(0.22, 1, 0.36, 1), ` +
+      `transform ${dur}s cubic-bezier(0.22, 1, 0.36, 1)`;
+    holder.style.top = finalTop + "px";
+    holder.style.transform = "translateX(-50%) scale(1)";
+    // Restore the stylesheet transition once the entrance settles.
+    setTimeout(() => { holder.style.transition = ""; }, dur * 1000 + 60);
+  }
+
   // ---- globe instance ----------------------------------------------------
   function ensureGlobe() {
     if (state.globe || state.failed) return Promise.resolve();
@@ -200,6 +226,7 @@
         g.pointOfView({ lat: SETUP_POV.lat, lng: SETUP_POV.lng, altitude: ALT_DOCKED }, 0);
         state.globe = g;
         layout();
+        playEntrance(true); // first appearance: slide + zoom into the strip
         applyMotion();
         // Tap (no drag) toggles expand; drag rotates via OrbitControls.
         // While the pointer is down the canvas shows the grabbing cursor
@@ -380,11 +407,19 @@
   // ---- mode plumbing -------------------------------------------------------
   function setMode(mode) {
     if (state.failed) return;
+    const wasHidden = dock.classList.contains("hidden");
+    const modeChanged = state.mode !== mode;
     state.mode = mode;
     if (mode) {
       dock.classList.remove("hidden");
       if (manageBodyClass) document.body.classList.add("dock-active");
-      if (state.globe) { try { state.globe.resumeAnimation(); } catch (_) {} }
+      if (state.globe) {
+        // Entrance: full slide+zoom when the dock appears, a subtle zoom
+        // pulse when it switches mode. Same-mode re-syncs stay still.
+        if (wasHidden) playEntrance(true);
+        else if (modeChanged) playEntrance(false);
+        try { state.globe.resumeAnimation(); } catch (_) {}
+      }
     }
     // Mode changes always collapse an expanded dock.
     if (state.expanded) collapse();

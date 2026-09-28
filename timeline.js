@@ -710,6 +710,9 @@
       // and hidden on every other one (drawRail sets railEl.hidden itself).
       if (name !== "game") {
         Object.keys(railEls).forEach((k) => { railEls[k].hidden = true; });
+        // Leaving the game screen ends split layout: the shared globe dock
+        // returns to full-width (centred) and #app back to its column.
+        screens.game.classList.remove("split");
       }
       // Dock globe lives on setup/game/results only (its mode-setting calls
       // handle visibility); leaving those screens hides + pauses it. In split
@@ -737,6 +740,14 @@
       if (name === "game") {
         const gh = document.querySelector(".game-header");
         if (gh) document.documentElement.style.setProperty("--game-header-h", gh.getBoundingClientRect().top + gh.getBoundingClientRect().height + "px");
+        // Globe sync was deferred at game start so the docks appear under the
+        // curtain; run it now the reveal is done (skip if the player already
+        // left the game screen mid-transition).
+        if (deferGlobeSync && !screens.game.classList.contains("hidden")) {
+          deferGlobeSync = false;
+          const ctxs = splitCtx && splitCtx.length ? splitCtx : (gameCtx() ? [gameCtx()] : []);
+          ctxs.forEach((ctx) => syncGlobe(ctx));
+        }
       }
     });
   }
@@ -1842,6 +1853,7 @@
     // Measure the sticky header so the grid fills exactly the space below it.
     const gh = document.querySelector(".game-header");
     if (gh) document.documentElement.style.setProperty("--game-header-h", (gh.getBoundingClientRect().top + gh.getBoundingClientRect().height) + "px");
+    deferGlobeSync = true; // docks appear after the curtain, not before it
     renderGame(makeCtx(game, $("pane-1")));
     gameMusicRestart = true; // fresh game -> game music starts from the top
     show("game");
@@ -1903,6 +1915,7 @@
     const gh = document.querySelector(".game-header");
     if (gh) document.documentElement.style.setProperty("--game-header-h", (gh.getBoundingClientRect().top + gh.getBoundingClientRect().height) + "px");
 
+    deferGlobeSync = true; // docks appear after the curtain, not before it
     renderGame(splitCtx[0]);
     // Handicap: delayed start — the weaker player's first deal (and prompt)
     // appears after startDelayMs, so the stronger player begins first.
@@ -2014,6 +2027,20 @@
     if (!window.GlobeDock) return null;
     if (splitCtx && splitCtx[1] && splitCtx[1].state === state && window.GlobeDockP2 && window.innerWidth >= SPLIT_GLOBE_MIN) return window.GlobeDockP2;
     return window.GlobeDock;
+  }
+  // Deferred at game start: the docks must not appear BEFORE the curtain
+  // covers (they'd pop in on the setup screen). Set in startGame/startSplit,
+  // cleared after the curtain reveal in show().
+  let deferGlobeSync = false;
+  function syncGlobe(ctx) {
+    const state = ctx.state;
+    const globe = globeFor(ctx);
+    if (!globe) return;
+    const timelineEvents = state.timeline.map((id) => eventById(ui.deck, id));
+    globe.syncGame(
+      timelineEvents.map((e) => ({ ev: e, kind: placedKindFor(state, e) })),
+      currentEvent(state)
+    );
   }
 
   // ---- direct starts (home focus panel) --------------------------
@@ -2316,14 +2343,9 @@
     syncGapTabindex(tl);
 
     // Dock globe: placed markers coloured by outcome, current prompt on top.
-    // Split-screen routes each player to their own globe.
-    const globe = globeFor(ctx);
-    if (globe) {
-      globe.syncGame(
-        timelineEvents.map((e) => ({ ev: e, kind: placedKindFor(state, e) })),
-        currentEvent(state)
-      );
-    }
+    // Split-screen routes each player to their own globe. Deferred at game
+    // start so the docks appear under the curtain, not before it.
+    if (!deferGlobeSync) syncGlobe(ctx);
   }
 
   // Dock-globe marker colour for a placed card — mirrors placedClassFor().
@@ -3379,16 +3401,14 @@
     $("result-timeline").innerHTML = "";
     $("share-text").classList.add("hidden");
     show("results");
-    // Dock globes: each player's geographic recap on their own side. Below
-    // SPLIT_GLOBE_MIN the second globe is hidden and only player 1's recap
-    // shows on the shared dock.
+    // Dock globe: one shared recap of BOTH players' runs, centred (leaving
+    // the game screen removed the split class, so the dock is full-width).
     const recapItems = (s) => s.timeline.map((id) => {
       const e = eventById(ui.deck, id);
       return { ev: e, kind: placedKindFor(s, e) };
     });
-    if (window.GlobeDock) window.GlobeDock.showResults(recapItems(s1));
-    if (window.GlobeDockP2 && window.innerWidth >= SPLIT_GLOBE_MIN) window.GlobeDockP2.showResults(recapItems(s2));
-    else if (window.GlobeDockP2) window.GlobeDockP2.hide();
+    if (window.GlobeDockP2) window.GlobeDockP2.hide();
+    if (window.GlobeDock) window.GlobeDock.showResults(recapItems(s1).concat(recapItems(s2)));
     if (window.FX) setTimeout(() => window.FX.confetti({ tier: "medium" }), 650);
   }
 
