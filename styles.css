@@ -307,22 +307,18 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
 .timeline-wrap { margin: 4px 0; }
 /* Split-screen: two independent panes side by side, each its own scroll
    container. The grid fills exactly the viewport below the sticky header
-   (--game-header-h = header top + height, measured by JS). Each pane scrolls
-   independently (overscroll-behavior stops scroll chaining). The pane prompt
-   is sticky at the pane's top so it never scrolls away. */
+   (--game-header-h = header top + height, measured by JS). grid-template-rows
+   forces the single row to fill the grid height, so both panes stretch top to
+   bottom. Each pane scrolls independently (overscroll-behavior stops scroll
+   chaining). */
 .split-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
   gap: 0;
   height: calc(100vh - var(--game-header-h, 0px));
   height: calc(100dvh - var(--game-header-h, 0px));
   min-height: 0;
-}
-/* The globe dock is a fixed 96px strip at the bottom of the game screen; the
-   grid must stop above it so the timeline isn't hidden behind the globe. */
-body.dock-active .split-grid {
-  height: calc(100vh - var(--game-header-h, 0px) - 96px);
-  height: calc(100dvh - var(--game-header-h, 0px) - 96px);
 }
 .split-pane {
   display: flex;
@@ -335,15 +331,17 @@ body.dock-active .split-grid {
   border-right: 1px solid var(--border, rgba(255,255,255,0.12));
 }
 .split-pane:last-child { border-right: none; }
+/* The globe dock floats over the bottom of the screen; reserve space inside
+   each pane's scroll content so the last card scrolls clear of it. The pane
+   box itself stays full height (its divider reaches the bottom of the screen). */
+body.dock-active .split-pane { padding-bottom: 106px; }
 /* The pane head + prompt are ONE sticky block: they scroll together and never
    shift relative to each other (a hardcoded top offset for the prompt would
-   slide it under/over the head as the pane scrolls). The gradient lives inside
-   the sticky block so it stays put with the prompt. */
+   slide it under/over the head as the pane scrolls). */
 .split-pane .pane-sticky {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: var(--bg, #0a0e1a);
   margin: 0 -12px;
   padding: 0 12px 8px;
 }
