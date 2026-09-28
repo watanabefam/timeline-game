@@ -124,7 +124,6 @@ body.scroll-locked { overflow: hidden; height: 100vh; height: 100dvh; }
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
-  padding-top: var(--game-header-h, 0px);
 }
 
 #app {
@@ -346,7 +345,7 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 8px 12px;
+  padding: 0 12px;
   border-right: 1px solid var(--border, rgba(255,255,255,0.12));
 }
 .split-pane:last-child { border-right: none; }
@@ -362,7 +361,7 @@ body.dock-active .split-pane { padding-bottom: 106px; }
   top: 0;
   z-index: 5;
   margin: 0 -12px;
-  padding: 0 12px 8px;
+  /* padding: 0 12px 8px; */
 }
 .split-pane .pane-head {
   display: flex;
@@ -380,6 +379,7 @@ body.dock-active .split-pane { padding-bottom: 106px; }
   margin: 0 0 8px;
   padding: 4px 0 8px;
   background: linear-gradient(to bottom, var(--bg, #0a0e1a), transparent);
+  margin-top: var(--game-header-h, 0px);
 }
 /* Single-player: pane 1 spans the full width (pane 2 hidden); the prompt lives
    in the sticky .game-header, so the pane's own head/prompt are hidden. */
