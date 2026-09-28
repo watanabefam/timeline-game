@@ -120,8 +120,11 @@ body.scroll-locked { overflow: hidden; height: 100vh; height: 100dvh; }
   padding: 24px 18px 60px;
 }
 /* Game screen breaks out of #app's padding: the header sits at the very top
-   and the timeline grid fills the viewport exactly (no whole-page scroll). */
-body.scroll-locked #app { padding: 0; max-width: none; }
+   and the timeline grid fills the viewport exactly (no whole-page scroll).
+   Single-player keeps #app's 640px column; split-screen spans full width so
+   both panes get room. */
+body.scroll-locked #app { padding: 0; }
+body.scroll-locked #app:has(#game.split) { max-width: none; }
 
 .screen { animation: fade 0.25s ease; }
 .hidden { display: none !important; }
@@ -315,6 +318,12 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
   height: calc(100dvh - var(--game-header-h, 0px));
   min-height: 0;
 }
+/* The globe dock is a fixed 96px strip at the bottom of the game screen; the
+   grid must stop above it so the timeline isn't hidden behind the globe. */
+body.dock-active .split-grid {
+  height: calc(100vh - var(--game-header-h, 0px) - 96px);
+  height: calc(100dvh - var(--game-header-h, 0px) - 96px);
+}
 .split-pane {
   display: flex;
   flex-direction: column;
@@ -326,6 +335,18 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
   border-right: 1px solid var(--border, rgba(255,255,255,0.12));
 }
 .split-pane:last-child { border-right: none; }
+/* The pane head + prompt are ONE sticky block: they scroll together and never
+   shift relative to each other (a hardcoded top offset for the prompt would
+   slide it under/over the head as the pane scrolls). The gradient lives inside
+   the sticky block so it stays put with the prompt. */
+.split-pane .pane-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg, #0a0e1a);
+  margin: 0 -12px;
+  padding: 0 12px 8px;
+}
 .split-pane .pane-head {
   display: flex;
   justify-content: space-between;
@@ -333,29 +354,21 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
   padding: 4px 2px 8px;
   font-size: 0.85rem;
   opacity: 0.85;
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: var(--bg, #0a0e1a);
 }
 .split-pane .pane-name { font-weight: 700; }
 .split-pane .pane-score { font-variant-numeric: tabular-nums; }
-/* Pane prompt: sticky under the pane head so "Place this event" never scrolls
-   out of view while the timeline scrolls. */
+/* Pane prompt: sits inside the sticky block, so it never scrolls away and
+   never shifts relative to the head. The gradient fades into the timeline. */
 .split-pane .pane-prompt {
-  position: sticky;
-  top: 30px;
-  z-index: 5;
   margin: 0 0 8px;
   padding: 4px 0 8px;
   background: linear-gradient(to bottom, var(--bg, #0a0e1a), transparent);
 }
 /* Single-player: pane 1 spans the full width (pane 2 hidden); the prompt lives
-   in the sticky .game-header, so the pane itself starts below it. */
+   in the sticky .game-header, so the pane's own head/prompt are hidden. */
 #game:not(.split) .split-grid { grid-template-columns: 1fr; }
 #game:not(.split) .split-pane { border-right: none; }
-#game:not(.split) .split-pane .pane-prompt { display: none; }
-#game:not(.split) .split-pane .pane-head { display: none; }
+#game:not(.split) .split-pane .pane-sticky { display: none; }
 .timeline { list-style: none; margin: 0; padding: 0 0 0 28px; display: flex; flex-direction: column; gap: 0; }
 /* Card skin lives on an inner wrapper (.tl-card) so FX.focusScale can scale
    the card without moving the rail node/connector or the fact-sheet popover,
