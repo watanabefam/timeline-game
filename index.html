@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Timeline Game — place history in order</title>
-  <link rel="stylesheet" href="styles.css?v=130" />
+  <link rel="stylesheet" href="styles.css?v=131" />
   <link rel="stylesheet" href="assets/leaflet/leaflet.css" />
   <link rel="stylesheet" href="assets/vendor/vis-timeline-graph2d.min.css" />
 </head>
@@ -315,6 +315,13 @@
       <button class="globe-dock-close hidden" id="globe-dock-close" type="button" aria-label="Collapse globe">&times;</button>
       <div id="globe-dock-canvas"></div>
     </div>
+    <!-- Second globe for split-screen: one per player, docked to pane 2's
+         half. Hidden unless a split game is active on a wide screen. -->
+    <div id="globe-dock-p2" class="hidden" aria-hidden="true">
+      <span class="globe-dock-hint">🌍 tap to explore</span>
+      <button class="globe-dock-close hidden" id="globe-dock-p2-close" type="button" aria-label="Collapse globe">&times;</button>
+      <div id="globe-dock-p2-canvas"></div>
+    </div>
 
     <!-- SETTINGS modal -->
     <div class="modal hidden" id="settings-modal">
@@ -476,8 +483,8 @@
   <script src="assets/vendor/anime.umd.min.js"></script>
   <script src="assets/vendor/canvas-confetti-1.9.3.min.js"></script>
 <script src="fx.js?v=26"></script>
-<script src="globe.js?v=11"></script>
+<script src="globe.js?v=12"></script>
 <script src="narration.js?v=20"></script>
-<script src="timeline.js?v=190"></script>
+<script src="timeline.js?v=191"></script>
 </body>
 </html>

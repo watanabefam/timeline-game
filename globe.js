@@ -60,10 +60,18 @@
     setup: "#7fb4ff",
   };
 
-  const dock = document.getElementById("globe-dock");
-  const holder = document.getElementById("globe-dock-canvas");
-  const closeBtn = document.getElementById("globe-dock-close");
-  if (!dock || !holder) return; // markup missing — stay a no-op
+  // One globe per dock. Single-player uses #globe-dock (window.GlobeDock);
+  // split-screen adds a second instance on #globe-dock-p2 (window.GlobeDockP2)
+  // so each player gets their own globe. Only the primary instance manages the
+  // body.dock-active class (pane dock clearance); the p2 instance just shows
+  // and hides its own dock. (Factory body keeps the old IIFE indent.)
+  function createGlobeDock(dock, holder, closeBtn, opts) {
+  opts = opts || {};
+  if (!dock || !holder) return null; // markup missing — stay a no-op
+  const manageBodyClass = opts.manageBodyClass !== false;
+  const rendererConfig = opts.antialias === false
+    ? { antialias: false, alpha: true }
+    : { antialias: true, alpha: true };
 
   const state = {
     mode: null,        // null | "setup" | "game" | "results"
@@ -121,7 +129,10 @@
       const vh = Math.round(window.innerHeight * 0.9);
       return Math.max(320, Math.min(vh, window.innerWidth - 20));
     }
-    return Math.max(320, Math.min(MAX_S, window.innerWidth - 20));
+    // Docked: fit the dock's own width (half-width in split-screen), not the
+    // whole window, so a per-player globe never overflows its pane's half.
+    const w = dock.clientWidth || window.innerWidth;
+    return Math.max(320, Math.min(MAX_S, w - 20));
   }
   // Sphere diameter in px at a given camera altitude (FOV-scaled).
   function spherePx(size, alt) {
@@ -159,12 +170,13 @@
     if (state.globe || state.failed) return Promise.resolve();
     return loadLib().then(() => {
       try {
-        const g = new window.Globe(holder, { waitForGlobeReady: false, animateIn: false })
+        const g = new window.Globe(holder, { waitForGlobeReady: false, animateIn: false, rendererConfig })
           .backgroundColor("rgba(0,0,0,0)")
           .globeImageUrl(window.EARTH_TEXTURES.day)
           .bumpImageUrl(window.EARTH_TEXTURES.topo)
           .showAtmosphere(true)
           .atmosphereColor("#7fb4ff")
+          .pointsMerge(true) // one mesh for all markers — cheaper with 2 globes
           .pointAltitude((d) => (d.isCurrent || d.focused ? 0.06 : 0.02))
           .pointRadius((d) => (d.isCurrent || d.focused ? 0.7 : 0.45))
           .pointColor((d) => (d.focused ? brighten(d.color, state.pulsePhase) : d.color))
@@ -242,7 +254,7 @@
         console.error("globe init failed — dock disabled", err);
         state.failed = true;
         dock.classList.add("hidden");
-        document.body.classList.remove("dock-active");
+        if (manageBodyClass) document.body.classList.remove("dock-active");
         return false;
       }
     });
@@ -371,7 +383,7 @@
     state.mode = mode;
     if (mode) {
       dock.classList.remove("hidden");
-      document.body.classList.add("dock-active");
+      if (manageBodyClass) document.body.classList.add("dock-active");
       if (state.globe) { try { state.globe.resumeAnimation(); } catch (_) {} }
     }
     // Mode changes always collapse an expanded dock.
@@ -513,10 +525,32 @@
       stopPulse();
       if (state.expanded) collapse();
       dock.classList.add("hidden");
-      document.body.classList.remove("dock-active");
+      if (manageBodyClass) document.body.classList.remove("dock-active");
       if (state.globe) { try { state.globe.pauseAnimation(); } catch (_) {} }
     },
   };
 
-  window.GlobeDock = api;
+  // Split-screen only: below the fallback width the second globe is hidden
+  // (timeline.js routes both players to the shared dock there).
+  if (opts.splitOnly) {
+    window.addEventListener("resize", () => {
+      if (window.innerWidth < 900) api.hide();
+    });
+  }
+
+  return api;
+  }
+
+  window.GlobeDock = createGlobeDock(
+    document.getElementById("globe-dock"),
+    document.getElementById("globe-dock-canvas"),
+    document.getElementById("globe-dock-close"),
+    {}
+  );
+  window.GlobeDockP2 = createGlobeDock(
+    document.getElementById("globe-dock-p2"),
+    document.getElementById("globe-dock-p2-canvas"),
+    document.getElementById("globe-dock-p2-close"),
+    { manageBodyClass: false, antialias: false, splitOnly: true }
+  );
 })();

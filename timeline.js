@@ -712,9 +712,11 @@
         Object.keys(railEls).forEach((k) => { railEls[k].hidden = true; });
       }
       // Dock globe lives on setup/game/results only (its mode-setting calls
-      // handle visibility); leaving those screens hides + pauses it.
-      if (window.GlobeDock && name !== "setup" && name !== "game" && name !== "results") {
-        window.GlobeDock.hide();
+      // handle visibility); leaving those screens hides + pauses it. In split
+      // there are two globes — hide both.
+      if (name !== "setup" && name !== "game" && name !== "results") {
+        if (window.GlobeDock) window.GlobeDock.hide();
+        if (window.GlobeDockP2) window.GlobeDockP2.hide();
       }
     };
     // Same-screen renders (initial hub render) swap plainly — no curtain.
@@ -927,18 +929,21 @@
     tlHoverCard = card;
   }
   // Globe-dock marker clicks surface the SAME hover card as timeline items.
-  if (window.GlobeDock) {
+  // Both the shared globe and the split player-2 globe get the same callbacks
+  // (the tooltip anchors at the pointer position, so it works for either).
+  [window.GlobeDock, window.GlobeDockP2].forEach((g) => {
+    if (!g) return;
     // Both click and hover anchor the card to the right of the main column
     // (#app) on desktop, exactly like timeline-item tooltips.
     const mainCol = () => document.getElementById("app");
-    window.GlobeDock.onMarkerClick = (ev, x, y) => showTlHoverCard(ev, x, y, mainCol());
+    g.onMarkerClick = (ev, x, y) => showTlHoverCard(ev, x, y, mainCol());
     // Hover over a globe marker shows the same fact-sheet tooltip (with the
     // Leaflet map); hovering off hides it.
-    window.GlobeDock.onMarkerHover = (ev, x, y) => {
+    g.onMarkerHover = (ev, x, y) => {
       if (ev) showTlHoverCard(ev, x, y, mainCol());
       else hideTlHoverCard();
     };
-  }
+  });
   function attachTlHover(tl, lookupEvent, container) {
     const panelEl = container ? container.closest("#stats-body, .tl-glass-panel") : null;
     // vis-timeline emits lowercase event names
@@ -1726,6 +1731,7 @@
     const subset = filterSubset(ui.deck, ui.selections);
     ui.subset = subset;
     // Dock globe mirrors the filtered subset as ambient points.
+    if (window.GlobeDockP2) window.GlobeDockP2.hide(); // setup is a shared screen
     if (window.GlobeDock) window.GlobeDock.setSetup(subset);
     const note = $("setup-count-note");
     if (subset.length === 0) {
@@ -1992,6 +1998,23 @@
     return null;
   }
   let splitCtx = null; // set by startSplit; null in single-player
+
+  // ---- globe routing (split-screen: one globe per player) ----------------
+  // Player 2 gets its own globe (window.GlobeDockP2) on wide screens; below
+  // SPLIT_GLOBE_MIN both players share the single dock (today's behaviour).
+  const SPLIT_GLOBE_MIN = 900;
+  function globeFor(ctx) {
+    if (!window.GlobeDock) return null;
+    const pane = ctx && ctx.root ? ctx.root.dataset.pane : null;
+    if (pane === "p2" && window.GlobeDockP2 && window.innerWidth >= SPLIT_GLOBE_MIN) return window.GlobeDockP2;
+    return window.GlobeDock;
+  }
+  // eventEl() only has the player's state, not the ctx — match on it.
+  function globeForState(state) {
+    if (!window.GlobeDock) return null;
+    if (splitCtx && splitCtx[1] && splitCtx[1].state === state && window.GlobeDockP2 && window.innerWidth >= SPLIT_GLOBE_MIN) return window.GlobeDockP2;
+    return window.GlobeDock;
+  }
 
   // ---- direct starts (home focus panel) --------------------------
   // One-click practice: no Setup detour. ui.deck/selections are set, then
@@ -2293,8 +2316,10 @@
     syncGapTabindex(tl);
 
     // Dock globe: placed markers coloured by outcome, current prompt on top.
-    if (window.GlobeDock) {
-      window.GlobeDock.syncGame(
+    // Split-screen routes each player to their own globe.
+    const globe = globeFor(ctx);
+    if (globe) {
+      globe.syncGame(
         timelineEvents.map((e) => ({ ev: e, kind: placedKindFor(state, e) })),
         currentEvent(state)
       );
@@ -2854,7 +2879,8 @@
         if (open) {
           positionFactSheet(li); // keep it inside the window once visible
           ensureFactMap(li); // build the mini-map lazily on first open
-          if (window.GlobeDock) window.GlobeDock.focus(e); // aim globe at this card
+          const g = globeForState(state);
+          if (g) g.focus(e); // aim this player's globe at this card
         }
       });
     }
@@ -2864,7 +2890,8 @@
       ensureFactMap(li);
       if (hoverDebounceTimer) { clearTimeout(hoverDebounceTimer); hoverDebounceTimer = null; }
       setCardHovered(true);
-      if (window.GlobeDock) window.GlobeDock.focus(e); // shift globe to this card
+      const g = globeForState(state);
+      if (g) g.focus(e); // shift this player's globe to this card
     });
     // Keyboard users open it via :focus-within — same window-aware placement.
     li.addEventListener("focusin", () => positionFactSheet(li));
@@ -2887,7 +2914,8 @@
       hoverDebounceTimer = setTimeout(() => {
         hoverDebounceTimer = null;
         setCardHovered(false);
-        if (window.GlobeDock) window.GlobeDock.focus(currentEvent(state));
+        const g = globeForState(state);
+        if (g) g.focus(currentEvent(state));
       }, 200);
     });
     return li;
@@ -3017,8 +3045,9 @@
     if (!screens.game.classList.contains("hidden")) updateRail(ctx, true);
     refreshFocusScale(ctx);
     drawRail(ctx);
-    if (window.GlobeDock) {
-      window.GlobeDock.syncGame(
+    const globe = globeFor(ctx);
+    if (globe) {
+      globe.syncGame(
         state.timeline.map((id) => {
           const e = eventById(ui.deck, id);
           return { ev: e, kind: placedKindFor(state, e) };
@@ -3086,7 +3115,8 @@
       // Third miss: stop testing and reveal. A soft "that was wrong" cue only —
       // no shake or juice, so the reveal reads as help, not rebuke.
       playSfx("wrong");
-      if (window.GlobeDock) window.GlobeDock.markCurrent("bad");
+      const g = globeFor(ctx);
+      if (g) g.markCurrent("bad");
       triggerRescue(ctx, lo, hi, ev);
       return;
     }
@@ -3103,8 +3133,9 @@
     }
     playSfx("wrong");
     juiceWrong();
-    // Dock globe ring follows the good/bad scheme.
-    if (window.GlobeDock) window.GlobeDock.markCurrent("bad");
+    // Dock globe ring follows the good/bad scheme (this player's globe).
+    const g = globeFor(ctx);
+    if (g) g.markCurrent("bad");
     // Screen shake: same-frame punctuation alongside beep + gap flash.
     // Short/decaying/positional (4px, 200ms) — FX handles reduced motion.
     if (window.FX) FX.shake(screens.game, 4, 200);
@@ -3348,6 +3379,16 @@
     $("result-timeline").innerHTML = "";
     $("share-text").classList.add("hidden");
     show("results");
+    // Dock globes: each player's geographic recap on their own side. Below
+    // SPLIT_GLOBE_MIN the second globe is hidden and only player 1's recap
+    // shows on the shared dock.
+    const recapItems = (s) => s.timeline.map((id) => {
+      const e = eventById(ui.deck, id);
+      return { ev: e, kind: placedKindFor(s, e) };
+    });
+    if (window.GlobeDock) window.GlobeDock.showResults(recapItems(s1));
+    if (window.GlobeDockP2 && window.innerWidth >= SPLIT_GLOBE_MIN) window.GlobeDockP2.showResults(recapItems(s2));
+    else if (window.GlobeDockP2) window.GlobeDockP2.hide();
     if (window.FX) setTimeout(() => window.FX.confetti({ tier: "medium" }), 650);
   }
 
@@ -3411,6 +3452,8 @@
     initAllFactMaps(tl);
     // Dock globe becomes the geographic recap of the run — docked and
     // auto-rotating like setup; tapping it expands the full-screen view.
+    // Single-player recap lives on the shared globe; hide the split one.
+    if (window.GlobeDockP2) window.GlobeDockP2.hide();
     if (window.GlobeDock) {
       window.GlobeDock.showResults(
         state.timeline.map((id) => {

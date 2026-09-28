@@ -367,7 +367,7 @@ body.dock-active .split-pane { padding-bottom: 106px; }
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 4px 2px 8px;
+  padding: 4px 12px;
   font-size: 0.85rem;
   opacity: 0.85;
 }
@@ -1515,8 +1515,9 @@ body.dock-active .feedback { bottom: calc(104px + env(safe-area-inset-bottom, 0p
 /* Fixed strip at the bottom of setup/game/results. The canvas is clipped by
    overflow:hidden so only the sphere's top cap protrudes; overflow clipping
    also confines pointer events to the visible strip. Sits above content but
-   BELOW modals (z 50) and hover cards (z 70). */
-#globe-dock {
+   BELOW modals (z 50) and hover cards (z 70). #globe-dock-p2 is the second
+   globe for split-screen (one per player). */
+#globe-dock, #globe-dock-p2 {
   position: fixed;
   left: 0; right: 0; bottom: 0;
   height: 96px;
@@ -1525,8 +1526,11 @@ body.dock-active .feedback { bottom: calc(104px + env(safe-area-inset-bottom, 0p
   pointer-events: none; /* container transparent to clicks… */
   transition: height 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
-#globe-dock.expanded { inset: 0; height: auto; }
-#globe-dock-canvas {
+#globe-dock.expanded, #globe-dock-p2.expanded { inset: 0; height: auto; }
+/* Split-screen: each globe docks to its pane's half of the screen. */
+#game.split ~ #globe-dock { left: 0; right: auto; width: 50%; }
+#game.split ~ #globe-dock-p2 { left: 50%; right: auto; width: 50%; }
+#globe-dock-canvas, #globe-dock-p2-canvas {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -1535,7 +1539,7 @@ body.dock-active .feedback { bottom: calc(104px + env(safe-area-inset-bottom, 0p
   transition: top 0.35s cubic-bezier(0.22, 1, 0.36, 1),
               transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
-#globe-dock-canvas canvas { display: block; }
+#globe-dock-canvas canvas, #globe-dock-p2-canvas canvas { display: block; }
 .globe-dock-hint {
   position: absolute;
   left: 14px; bottom: 10px;
@@ -1544,7 +1548,7 @@ body.dock-active .feedback { bottom: calc(104px + env(safe-area-inset-bottom, 0p
   pointer-events: none;
   transition: opacity 0.2s;
 }
-#globe-dock.expanded .globe-dock-hint { opacity: 0; }
+#globe-dock.expanded .globe-dock-hint, #globe-dock-p2.expanded .globe-dock-hint { opacity: 0; }
 .globe-dock-close {
   position: absolute;
   top: 10px; right: 14px;
