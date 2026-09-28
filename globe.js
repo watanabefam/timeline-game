@@ -46,6 +46,12 @@
   // puts central Europe ~20% down the strip with the Mediterranean/North
   // Africa below it.
   const SETUP_POV = { lat: -1, lng: 10 };
+  // Sphere-cap protrusion above the dock strip (px). Halved on narrow
+  // (mobile) screens so the globe eats less vertical space there; the strip
+  // height (DOCK_H) is unchanged. Read at call time so it tracks resizes.
+  function overhang() {
+    return window.innerWidth < 640 ? Math.round(CAP_OVERHANG / 2) : CAP_OVERHANG;
+  }
   const COLORS = {
     good: "#3fb950",          // var(--good)
     bad: "#f85149",           // var(--bad)
@@ -142,7 +148,7 @@
     } else {
       // Sphere top sits slightly above the strip so the cap fills it.
       const topOffset = s / 2 - spherePx(s, ALT_DOCKED) / 2;
-      holder.style.top = -(topOffset + CAP_OVERHANG) + "px";
+      holder.style.top = -(topOffset + overhang()) + "px";
       holder.style.transform = "translateX(-50%)";
     }
     applyAtmosphere();
@@ -349,7 +355,7 @@
       // DOT itself (not the surface point) sits at the strip middle.
       const R = spherePx(canvasSize(), ALT_DOCKED) / 2;
       const wantY = DOCK_H * 0.5; // marker dot half-way down the strip
-      const sinD = Math.max(-1, Math.min(1, (R - CAP_OVERHANG - wantY) / (R * 1.06)));
+      const sinD = Math.max(-1, Math.min(1, (R - overhang() - wantY) / (R * 1.06)));
       const d = Math.asin(sinD) * 180 / Math.PI;
       // TILT_DEG tips the camera target north of the pure centering point so
       // the marker sits slightly lower in the strip — more frontal, toward
