@@ -38,6 +38,101 @@
   // sets how many events YOU place; total cards = count + 2 pre-placed
   // anchors (>= MIN_PLACEMENTS). "All" places the whole filtered subset.
 
+  // ---- keyboard input layer ----------------------------------------
+  // keyMap → state object → game reads state. The game never listens to raw
+  // key events; it reads `input.held` (continuous) and subscribes to
+  // `input.onPress` (one-shot actions). event.code = physical key, so
+  // bindings survive AZERTY/Dvorak layouts. preventDefault is whitelisted
+  // (game keys only — Ctrl+R, Ctrl+Tab etc. keep working). State clears on
+  // window blur so a tab switch can't leave keys stuck "held".
+  const input = (() => {
+    const held = new Set();       // codes currently down (movement/scroll)
+    const pressHandlers = new Map(); // code -> fn, fired on initial press only
+    const GAME_KEYS = new Set([
+      "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+      "Home", "End", "Enter", "Space",
+      "KeyW", "KeyA", "KeyS", "KeyD",
+    ]);
+
+    function onKeyDown(e) {
+      if (!GAME_KEYS.has(e.code)) return;
+      // Never hijack keys while the user is typing in a field.
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.repeat) return; // held keys: only the initial press fires actions
+      held.add(e.code);
+      const fn = pressHandlers.get(e.code);
+      if (fn) fn(e); // handlers call preventDefault only when they act
+    }
+    function onKeyUp(e) {
+      held.delete(e.code);
+    }
+    function onBlur() {
+      held.clear();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
+
+    return {
+      held,
+      onPress(code, fn) { pressHandlers.set(code, fn); },
+      offPress(code) { pressHandlers.delete(code); },
+    };
+  })();
+
+  // ---- roving tabindex for the timeline gaps ------------------------
+  // One gap is in the tab order (tabindex="0"); the rest are reachable with
+  // arrow keys (tabindex="-1"). Follows the settings-tabs pattern already in
+  // this file. syncGapTabindex promotes the focused gap (or the first) after
+  // every rebuild/insert; initGapRoving wires arrow/Home/End navigation.
+  function syncGapTabindex() {
+    const tl = $("timeline");
+    if (!tl) return;
+    const gaps = Array.from(tl.querySelectorAll(".gap"));
+    if (!gaps.length) return;
+    // Promote the focused gap if it's still a gap; else the first gap.
+    const active = document.activeElement;
+    const activeIdx = gaps.indexOf(active);
+    const target = activeIdx >= 0 ? activeIdx : 0;
+    gaps.forEach((g, i) => g.setAttribute("tabindex", i === target ? "0" : "-1"));
+  }
+
+  function initGapRoving() {
+    const tl = $("timeline");
+    if (!tl) return;
+    const move = (dir) => {
+      const gaps = Array.from(tl.querySelectorAll(".gap"));
+      if (!gaps.length) return;
+      const idx = gaps.indexOf(document.activeElement);
+      if (idx === -1) return; // focus not on a gap — don't hijack
+      // Skip locked gaps (rescue makes every non-target gap inert).
+      let next = idx + dir;
+      while (next >= 0 && next < gaps.length && gaps[next].classList.contains("gap--locked")) {
+        next += dir;
+      }
+      if (next < 0 || next >= gaps.length) return;
+      gaps.forEach((g, i) => g.setAttribute("tabindex", i === next ? "0" : "-1"));
+      gaps[next].focus();
+    };
+    const jump = (toEnd) => {
+      const gaps = Array.from(tl.querySelectorAll(".gap"));
+      if (!gaps.length) return;
+      if (gaps.indexOf(document.activeElement) === -1) return;
+      let next = toEnd ? gaps.length - 1 : 0;
+      while (next >= 0 && next < gaps.length && gaps[next].classList.contains("gap--locked")) {
+        next += toEnd ? -1 : 1;
+      }
+      if (next < 0 || next >= gaps.length) return;
+      gaps.forEach((g, i) => g.setAttribute("tabindex", i === next ? "0" : "-1"));
+      gaps[next].focus();
+    };
+    input.onPress("ArrowRight", (e) => { move(1); e.preventDefault(); });
+    input.onPress("ArrowLeft", (e) => { move(-1); e.preventDefault(); });
+    input.onPress("Home", (e) => { jump(false); e.preventDefault(); });
+    input.onPress("End", (e) => { jump(true); e.preventDefault(); });
+  }
+
   // ---- deterministic RNG (mirrors WHEN?'s FNV-1a + mulberry32) ----
   function hashString(value) {
     let hash = 2166136261;
@@ -1938,6 +2033,8 @@
     // hidden (rects are 0); show() refreshes once it is laid out.
     refreshFocusScale();
     drawRail();
+    // Roving tabindex: promote the first gap into the tab order.
+    syncGapTabindex();
 
     // Dock globe: placed markers coloured by outcome, current prompt on top.
     if (window.GlobeDock) {
@@ -2545,7 +2642,10 @@
     g.className = "gap";
     g.dataset.index = String(index);
     g.setAttribute("role", "button");
-    g.setAttribute("tabindex", "0");
+    // Roving tabindex: only the focused gap is in the tab order (tabindex="0");
+    // the rest are reachable with arrow keys (tabindex="-1"). syncGapTabindex
+    // promotes the active gap after every rebuild/insert.
+    g.setAttribute("tabindex", "-1");
     g.textContent =
       index === 0 ? "＋ BEFORE" :
       index === game.timeline.length ? "＋ AFTER" :
@@ -2606,12 +2706,13 @@
       const i = Number(g.dataset.index);
       g.classList.remove("gap--rescue", "gap--locked");
       g.removeAttribute("aria-disabled");
-      g.setAttribute("tabindex", "0");
       g.textContent =
         i === 0 ? "＋ BEFORE" :
         i === game.timeline.length ? "＋ AFTER" :
         "＋ PLACE HERE";
     });
+    // Restore the roving tab order (one gap in the tab sequence).
+    syncGapTabindex();
   }
 
   // A correct placement is committed here so both the normal path and the
@@ -2650,6 +2751,8 @@
     // wiped by the rebuild today, so clear them explicitly here.
     updateGameHud();
     const newEventEl = insertPlacedEvent(index, ev);
+    // Roving tabindex: keep the focused gap promoted (it may have shifted).
+    syncGapTabindex();
     if (!screens.game.classList.contains("hidden")) updateRail(true);
     refreshFocusScale();
     drawRail();
@@ -3219,6 +3322,8 @@
 
   // ---- wire up ---------------------------------------------------
   function init() {
+    // Keyboard navigation for the timeline gaps (roving tabindex + arrows).
+    initGapRoving();
     // setup screen
     $("setup-back").addEventListener("click", () => renderHub());
     $("setup-start").addEventListener("click", () => startGame());
