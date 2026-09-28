@@ -126,10 +126,16 @@
       gaps.forEach((g, i) => g.setAttribute("tabindex", i === next ? "0" : "-1"));
       gaps[next].focus();
     };
-    input.onPress("ArrowRight", (e) => { move(1); e.preventDefault(); });
-    input.onPress("ArrowLeft", (e) => { move(-1); e.preventDefault(); });
-    input.onPress("Home", (e) => { jump(false); e.preventDefault(); });
-    input.onPress("End", (e) => { jump(true); e.preventDefault(); });
+    // Pane-scoped keydown: only acts when focus is INSIDE this pane, so two
+    // split panes never steal each other's arrow keys. (Global input.onPress
+    // would collide — one handler per code.)
+    root.addEventListener("keydown", (e) => {
+      if (!root.contains(document.activeElement)) return;
+      if (e.key === "ArrowRight") { move(1); e.preventDefault(); }
+      else if (e.key === "ArrowLeft") { move(-1); e.preventDefault(); }
+      else if (e.key === "Home") { jump(false); e.preventDefault(); }
+      else if (e.key === "End") { jump(true); e.preventDefault(); }
+    });
   }
 
   // ---- handicap system ----------------------------------------------
@@ -689,6 +695,10 @@
       initGlassOnScreen(); // glass newly-visible controls
       // Rail bounds need a visible screen (offsetTop is 0 while hidden).
       if (name === "game") {
+        // Measure the sticky header now that the screen is visible, so the
+        // grid fills exactly the space below it (prompt hidden in split).
+        const gh = document.querySelector(".game-header");
+        if (gh) document.documentElement.style.setProperty("--game-header-h", (gh.getBoundingClientRect().top + gh.getBoundingClientRect().height) + "px");
         const ctxs = splitCtx && splitCtx.length ? splitCtx : (gameCtx() ? [gameCtx()] : []);
         ctxs.forEach((ctx) => { updateRail(ctx); refreshFocusScale(ctx); drawRail(ctx); });
       }
@@ -714,7 +724,15 @@
       name === "game" ? "Game Start!"
       : name === "setup" && ui.deck ? ui.deck.name
       : SCREEN_TITLES[name] || name;
-    FX.curtain(swap, { title, direction });
+    FX.curtain(swap, { title, direction }).then(() => {
+      // Re-measure the header after the curtain settles (the swap-time
+      // measurement can be a few px off mid-transition), so the grid fills
+      // the viewport exactly.
+      if (name === "game") {
+        const gh = document.querySelector(".game-header");
+        if (gh) document.documentElement.style.setProperty("--game-header-h", gh.getBoundingClientRect().top + gh.getBoundingClientRect().height + "px");
+      }
+    });
   }
 
   // ---- modal open/close with quick fade in/out ----
@@ -1115,7 +1133,8 @@
     updateHoverUI();
   }
   function updateHoverUI() {
-    const promptCard = $("pane-1").querySelector(".prompt-card");
+    // Single-player: the prompt lives in the sticky header. Split: pane 1's.
+    const promptCard = splitCtx ? $("pane-1").querySelector(".prompt-card") : $("prompt-card");
     if (!promptCard) return;
     const hasCurrent = !!currentEvent(game);
     if (isCardHovered) {
@@ -1802,9 +1821,14 @@
     $("result-score-max").textContent = maxScore(game);
     // Single-player renders into pane 1 (full width); pane 2 stays hidden.
     splitCtx = null;
+    screens.game.classList.remove("split");
     $("pane-2").classList.add("hidden");
     $("pane-1").classList.remove("hidden");
+    $("single-prompt").classList.remove("hidden");
     $("pane-1-name").textContent = (activeUser() || {}).name || "Player 1";
+    // Measure the sticky header so the grid fills exactly the space below it.
+    const gh = document.querySelector(".game-header");
+    if (gh) document.documentElement.style.setProperty("--game-header-h", (gh.getBoundingClientRect().top + gh.getBoundingClientRect().height) + "px");
     renderGame(makeCtx(game, $("pane-1")));
     gameMusicRestart = true; // fresh game -> game music starts from the top
     show("game");
@@ -1852,6 +1876,7 @@
     splitCtx = [makeCtx(s1, $("pane-1")), makeCtx(s2, $("pane-2"))];
 
     // Show both panes; label with player names.
+    screens.game.classList.add("split");
     $("pane-1").classList.remove("hidden");
     $("pane-2").classList.remove("hidden");
     const n1 = (p1UserId && readUser(p1UserId).name) || "Player 1";
@@ -1861,6 +1886,11 @@
     $("mode-tag").textContent = "VERSUS";
     $("score-max").textContent = maxScore(s1);
     $("result-score-max").textContent = maxScore(s1);
+    // Split-screen: no shared header prompt — each pane has its own. Hide the
+    // single-player prompt and measure the header (appbar only) for the grid.
+    $("single-prompt").classList.add("hidden");
+    const gh = document.querySelector(".game-header");
+    if (gh) document.documentElement.style.setProperty("--game-header-h", (gh.getBoundingClientRect().top + gh.getBoundingClientRect().height) + "px");
 
     renderGame(splitCtx[0]);
     // Handicap: delayed start — the weaker player's first deal (and prompt)
@@ -2179,10 +2209,15 @@
     const state = ctx.state;
     const root = ctx.root;
     const ev = currentEvent(state);
+    // Single-player shows the prompt in the sticky header; split shows it in
+    // each pane. Update whichever is visible.
+    const emojiEl = splitCtx ? root.querySelector(".prompt-emoji") : $("prompt-emoji");
+    const titleEl = splitCtx ? root.querySelector(".prompt-title") : $("prompt-title");
     if (ev) {
-      root.querySelector(".prompt-emoji").textContent = ev.emoji || "❓";
-      root.querySelector(".prompt-title").textContent = ev.title;
-      if (window.Narrator) {
+      emojiEl.textContent = ev.emoji || "❓";
+      titleEl.textContent = ev.title;
+      // Narration is single-player only: two voices would clash in split mode.
+      if (window.Narrator && !splitCtx) {
         // Narration audio ships with the deck — tell the player which deck is
         // active so it can resolve each card's clip.
         window.Narrator.setDeck(ui.deck);
@@ -2197,8 +2232,8 @@
         window.Narrator.prefetch(upcoming);
       }
     } else {
-      root.querySelector(".prompt-emoji").textContent = "✅";
-      root.querySelector(".prompt-title").textContent = "Timeline complete!";
+      emojiEl.textContent = "✅";
+      titleEl.textContent = "Timeline complete!";
     }
 
     // Count-up from the displayed value (0 on first render — no-op there).
@@ -3597,16 +3632,26 @@
   // ---- wire up ---------------------------------------------------
   function init() {
     // Keyboard navigation for the timeline gaps (roving tabindex + arrows).
+    // Pane-scoped: each pane's listener only acts when focus is inside it, so
+    // split players never steal each other's keys.
     initGapRoving($("pane-1"));
     initGapRoving($("pane-2"));
-    // Split-screen bindings: P1 = W/S (move) + A (place); P2 = arrows + Enter.
-    // These only act when a split game is live (splitCtx set).
-    input.onPress("KeyW", (e) => { e.preventDefault(); splitMove(0, -1); });
-    input.onPress("KeyS", (e) => { e.preventDefault(); splitMove(0, 1); });
-    input.onPress("KeyA", (e) => { e.preventDefault(); splitPlace(0); });
-    input.onPress("ArrowUp", (e) => { e.preventDefault(); splitMove(1, -1); });
-    input.onPress("ArrowDown", (e) => { e.preventDefault(); splitMove(1, 1); });
-    input.onPress("Enter", (e) => { e.preventDefault(); splitPlace(1); });
+    // Split-screen bindings, pane-scoped: P1 = W/S (move) + A (place);
+    // P2 = arrows + Enter. Each only fires when focus is in that player's pane.
+    const bindPane = (paneEl, key, fn) => {
+      paneEl.addEventListener("keydown", (e) => {
+        if (!paneEl.contains(document.activeElement)) return;
+        if (e.key !== key) return;
+        e.preventDefault();
+        fn();
+      });
+    };
+    bindPane($("pane-1"), "w", () => splitMove(0, -1));
+    bindPane($("pane-1"), "s", () => splitMove(0, 1));
+    bindPane($("pane-1"), "a", () => splitPlace(0));
+    bindPane($("pane-2"), "ArrowUp", () => splitMove(1, -1));
+    bindPane($("pane-2"), "ArrowDown", () => splitMove(1, 1));
+    bindPane($("pane-2"), "Enter", () => splitPlace(1));
     // setup screen
     $("setup-back").addEventListener("click", () => renderHub());
     $("setup-start").addEventListener("click", () => {

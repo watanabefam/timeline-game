@@ -297,14 +297,16 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
 /* ---------- TIMELINE ---------- */
 .timeline-wrap { margin: 4px 0; }
 /* Split-screen: two independent panes side by side, each its own scroll
-   container. Explicit height on the grid so each pane's overflow-y:auto has a
-   bounded box; overscroll-behavior keeps one player's scroll from chaining
-   into the other's. Single-player keeps pane 1 full width. */
+   container. The grid fills exactly the viewport below the sticky header
+   (--game-header-h = header top + height, measured by JS). Each pane scrolls
+   independently (overscroll-behavior stops scroll chaining). The pane prompt
+   is sticky at the pane's top so it never scrolls away. */
 .split-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
-  height: calc(100vh - var(--game-header-h, 0px) - 60px);
+  height: calc(100vh - var(--game-header-h, 0px));
+  height: calc(100dvh - var(--game-header-h, 0px));
   min-height: 0;
 }
 .split-pane {
@@ -325,11 +327,29 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
   padding: 4px 2px 8px;
   font-size: 0.85rem;
   opacity: 0.85;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg, #0a0e1a);
 }
 .split-pane .pane-name { font-weight: 700; }
 .split-pane .pane-score { font-variant-numeric: tabular-nums; }
-/* Single-player: pane 1 spans the full width (pane 2 hidden). */
+/* Pane prompt: sticky under the pane head so "Place this event" never scrolls
+   out of view while the timeline scrolls. */
+.split-pane .pane-prompt {
+  position: sticky;
+  top: 30px;
+  z-index: 5;
+  margin: 0 0 8px;
+  padding: 4px 0 8px;
+  background: linear-gradient(to bottom, var(--bg, #0a0e1a), transparent);
+}
+/* Single-player: pane 1 spans the full width (pane 2 hidden); the prompt lives
+   in the sticky .game-header, so the pane itself starts below it. */
 #game:not(.split) .split-grid { grid-template-columns: 1fr; }
+#game:not(.split) .split-pane { border-right: none; }
+#game:not(.split) .split-pane .pane-prompt { display: none; }
+#game:not(.split) .split-pane .pane-head { display: none; }
 .timeline { list-style: none; margin: 0; padding: 0 0 0 28px; display: flex; flex-direction: column; gap: 0; }
 /* Card skin lives on an inner wrapper (.tl-card) so FX.focusScale can scale
    the card without moving the rail node/connector or the fact-sheet popover,
