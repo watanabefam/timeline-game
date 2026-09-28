@@ -1741,12 +1741,15 @@
     if (!tl) return;
     const placed = tl.querySelectorAll(".tl-event");
     if (!placed.length) return;
+    // Read phase: all geometry first (one layout pass), then write.
     const firstY = placed[0].offsetTop + placed[0].offsetHeight / 2;
     const lastY = placed[placed.length - 1].offsetTop + placed[placed.length - 1].offsetHeight / 2;
+    const tlHeight = tl.offsetHeight;
     const newTop = firstY.toFixed(1) + "px";
-    const newBottom = (tl.offsetHeight - lastY).toFixed(1) + "px";
+    const newBottom = (tlHeight - lastY).toFixed(1) + "px";
     const oldTop = tl.style.getPropertyValue("--rail-top");
     const oldBottom = tl.style.getPropertyValue("--rail-bottom");
+    // Write phase.
     if (animate && window.FX && window.FX.railExtend && oldTop && oldBottom &&
         (oldTop !== newTop || oldBottom !== newBottom)) {
       FX.railExtend(tl,
@@ -1817,10 +1820,16 @@
     // --d = 0.025 x card width (the x-shift the node/stub need at the profile's
     // extremes, consumed by the composited tl-node-shift animation).
     const dPx = (0.025 * W).toFixed(2) + "px";
-    tl.querySelectorAll(".tl-event").forEach((el) => {
-      el.style.setProperty("--hc", el.offsetHeight + "px");
-      el.style.setProperty("--d", dPx);
-    });
+    // Batch: read every card's height first (one layout pass), then write the
+    // custom properties. Interleaving read/write per element would force one
+    // synchronous reflow per card — the classic layout-thrash loop.
+    const events = tl.querySelectorAll(".tl-event");
+    const heights = [];
+    for (let i = 0; i < events.length; i++) heights.push(events[i].offsetHeight);
+    for (let i = 0; i < events.length; i++) {
+      events[i].style.setProperty("--hc", heights[i] + "px");
+      events[i].style.setProperty("--d", dPx);
+    }
     // With the inset range the mapping is span = viewport height for EVERY card,
     // so the rail's parabola is the plain sphere arc: sagitta = 0.05 x width,
     // apex at the viewport centre. No reference-height factor.
@@ -1860,14 +1869,11 @@
     }
   }
 
-  function renderGame() {
-    // Cards are being rebuilt — clear any stale hover state.
-    if (hoverDebounceTimer) clearTimeout(hoverDebounceTimer);
-    setCardHovered(false);
-
+  // HUD-only update: prompt card, score, lives, narrator. Shared by the full
+  // rebuild (renderGame) and the incremental placement path (commitPlacement)
+  // so the hot path never rebuilds the timeline list.
+  function updateGameHud() {
     const ev = currentEvent();
-    const timelineEvents = game.timeline.map((id) => eventById(ui.deck, id));
-
     if (ev) {
       $("prompt-emoji").textContent = ev.emoji || "❓";
       $("prompt-title").textContent = ev.title;
@@ -1895,6 +1901,16 @@
     else $("score-num").textContent = game.score;
     // Single mode: no lives — wrong placements bounce back (slips cost points).
     $("lives").textContent = "";
+  }
+
+  function renderGame() {
+    // Cards are being rebuilt — clear any stale hover state.
+    if (hoverDebounceTimer) clearTimeout(hoverDebounceTimer);
+    setCardHovered(false);
+
+    updateGameHud();
+
+    const timelineEvents = game.timeline.map((id) => eventById(ui.deck, id));
 
     const tl = $("timeline");
     tl.innerHTML = "";
@@ -1927,7 +1943,7 @@
     if (window.GlobeDock) {
       window.GlobeDock.syncGame(
         timelineEvents.map((e) => ({ ev: e, kind: placedKindFor(e) })),
-        ev
+        currentEvent()
       );
     }
   }
@@ -2534,19 +2550,83 @@
       index === 0 ? "＋ BEFORE" :
       index === game.timeline.length ? "＋ AFTER" :
       "＋ PLACE HERE";
-    g.addEventListener("click", () => attemptPlace(index));
+    // Read the CURRENT data-index at interaction time, not the creation-time
+    // closure value: insertPlacedEvent bumps data-index on subsequent gaps,
+    // so a captured index would go stale and target the wrong position.
+    const gapIndex = () => parseInt(g.dataset.index, 10);
+    g.addEventListener("click", () => attemptPlace(gapIndex()));
     g.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); attemptPlace(index); }
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); attemptPlace(gapIndex()); }
     });
     return g;
+  }
+
+  // Incremental insert: replace the gap at `index` with [event, gap] — O(1)
+  // DOM work instead of rebuilding the whole timeline. Subsequent gaps get
+  // their data-index bumped (attribute writes only — no layout cost), keeping
+  // attemptPlace / rescue / keyboard targeting correct. Returns the new event
+  // element so the caller can animate it.
+  function insertPlacedEvent(index, ev) {
+    const tl = $("timeline");
+    const oldGap = tl.querySelector(`.gap[data-index="${index}"]`);
+    if (!oldGap) return null;
+    // Snapshot the pre-existing gaps BEFORE the swap: the new gap created
+    // below already carries index+1 and must NOT be bumped by the loop.
+    const existingGaps = Array.from(tl.querySelectorAll(".gap[data-index]"));
+    const newEvent = eventEl(ev, index);
+    const newGap = gapEl(index + 1);
+    // The old gap is KEPT — it becomes the slot before the new event — and
+    // the event + a fresh gap are inserted after it. (Replacing the gap would
+    // consume it and leave the timeline one slot short.)
+    oldGap.insertAdjacentElement("afterend", newEvent);
+    newEvent.insertAdjacentElement("afterend", newGap);
+    // The kept gap can no longer be the trailing "＋ AFTER" slot (the new gap
+    // owns that now); re-label it from its position.
+    oldGap.textContent =
+      index === 0 ? "＋ BEFORE" :
+      index === game.timeline.length ? "＋ AFTER" :
+      "＋ PLACE HERE";
+    // Bump data-index on all subsequent pre-existing gaps (attribute writes —
+    // no layout), keeping attemptPlace / rescue / keyboard targeting correct.
+    existingGaps.forEach((g) => {
+      const i = parseInt(g.dataset.index, 10);
+      if (i > index) g.dataset.index = String(i + 1);
+    });
+    return newEvent;
+  }
+
+  // The full rebuild used to wipe rescue UI (callout + locked gaps) for free;
+  // the incremental path must clear it explicitly. Restores each gap's label,
+  // tabindex and aria state from its (already bumped) data-index.
+  function clearRescueUI() {
+    const tl = $("timeline");
+    if (!tl) return;
+    tl.querySelectorAll(".gap-callout").forEach((c) => c.remove());
+    tl.querySelectorAll(".gap").forEach((g) => {
+      const i = Number(g.dataset.index);
+      g.classList.remove("gap--rescue", "gap--locked");
+      g.removeAttribute("aria-disabled");
+      g.setAttribute("tabindex", "0");
+      g.textContent =
+        i === 0 ? "＋ BEFORE" :
+        i === game.timeline.length ? "＋ AFTER" :
+        "＋ PLACE HERE";
+    });
   }
 
   // A correct placement is committed here so both the normal path and the
   // rescue safety-net (a stray tap while the answer is showing) share one body.
   function commitPlacement(index, ev) {
+    // Capture BEFORE clearing: the incremental path must wipe the rescue
+    // callout/locked gaps itself (the old full rebuild did it for free).
+    // Clear BEFORE the splice: clearRescueUI re-labels gaps from their
+    // data-index against game.timeline.length, so both must still be in the
+    // pre-insert state (insertPlacedEvent bumps the indices afterwards).
+    const hadRescue = !!game.rescue;
     game.rescue = null;
     const live = $("rescue-status");
     if (live) live.textContent = "";
+    if (hadRescue) clearRescueUI();
 
     game.timeline.splice(index, 0, ev.id);
     game.revealedFacts[ev.id] = ev.fact;
@@ -2565,10 +2645,24 @@
     playSfx("correct", { streak: game.streak });
 
     if (game.roundIndex >= game.queue.length) { finishGame(true); return; }
-    renderGame();
+    // Hot path: update the HUD (next prompt/score) and insert just the one
+    // card — no full timeline rebuild. The rescue callout/locked gaps are
+    // wiped by the rebuild today, so clear them explicitly here.
+    updateGameHud();
+    const newEventEl = insertPlacedEvent(index, ev);
+    if (!screens.game.classList.contains("hidden")) updateRail(true);
+    refreshFocusScale();
+    drawRail();
+    if (window.GlobeDock) {
+      window.GlobeDock.syncGame(
+        game.timeline.map((id) => {
+          const e = eventById(ui.deck, id);
+          return { ev: e, kind: placedKindFor(e) };
+        }),
+        currentEvent()
+      );
+    }
     // Animate only the newly inserted event
-    const newGap = document.querySelector(`.gap[data-index="${index}"]`);
-    const newEventEl = newGap && newGap.nextElementSibling;
     if (newEventEl && newEventEl.classList.contains("tl-event")) {
       newEventEl.classList.add("tl-event--entering");
       newEventEl.addEventListener("animationend", () => {
