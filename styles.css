@@ -113,13 +113,19 @@ html, body {
 /* Game screen: the timeline pane is the only scroller. Locking the body stops
    the whole-page scroll from cutting off the top/bottom of the timeline. */
 body.scroll-locked { overflow: hidden; height: 100vh; height: 100dvh; }
-/* #game is a flex column filling the viewport: the sticky header takes its own
-   height (flex: none) and the timeline grid fills exactly the space below it.
-   This removes the fragile JS-measured --game-header-h from the layout: the
-   grid can never be taller than the visible area (which cut off the bottom and
-   made the sticky prompt stick under the appbar). */
-#game { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
-#game .game-header { flex: none; }
+/* #game is a flex column filling the viewport: the header is position: fixed
+   (out of flow), so the column is offset below it with the JS-measured
+   --game-header-h (published at show() and before rescue scrolls), and the
+   timeline grid fills exactly the space below the header. The grid can never
+   be taller than the visible area (which cut off the bottom and made the
+   sticky prompt stick under the appbar). */
+#game {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  padding-top: var(--game-header-h, 0px);
+}
 
 #app {
   max-width: 640px;
@@ -233,17 +239,24 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
 .wordmark span { opacity: 0.6; margin: 0 2px; }
 .home-hero { text-align: center; padding: 18px 0 8px; }
 
-/* ---------- GAME HEADER (sticky appbar + prompt) ---------- */
+/* ---------- GAME HEADER (fixed appbar) ---------- */
+/* Fixed (not sticky): pinned to the viewport top regardless of any ancestor
+   scroll/transform context. #game offsets its content below it via
+   --game-header-h, so the header never overlaps the timeline. */
 .game-header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 20;
   margin: 0;
 }
 .game-header .appbar {
   position: static;
-  margin: 0;
+  margin: 0 auto;
+  max-width: 640px; /* single-player keeps the #app column width */
 }
+#game.split .game-header .appbar { max-width: none; }
 .game-header .prompt {
   margin: 0;
   padding: 4px 0 10px;
@@ -1547,9 +1560,10 @@ body.dock-active .feedback { bottom: calc(104px + env(safe-area-inset-bottom, 0p
 }
 .globe-dock-close:hover { background: rgba(255,255,255,0.15); }
 
-/* Reserve space so dock never covers setup actions / feedback / results CTA */
-body.dock-active #setup,
-body.dock-active #game,
+/* The globe dock floats over the bottom of the screen. The game screen
+   reserves dock space inside each pane (padding-bottom on .split-pane) and
+   setup's Start button sits above the dock zone, so only the results actions
+   need a bottom offset to keep Play again / Share / Home clickable. */
 body.dock-active #results { padding-bottom: 116px; }
 
 /* Reduced motion: no dock expand/collapse animation (JS also gates the
