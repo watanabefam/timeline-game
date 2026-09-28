@@ -747,6 +747,11 @@
           deferGlobeSync = false;
           const ctxs = splitCtx && splitCtx.length ? splitCtx : (gameCtx() ? [gameCtx()] : []);
           ctxs.forEach((ctx) => syncGlobe(ctx));
+          // Keyboard: focus the first gap so arrow keys / Enter work right
+          // away (previously the player had to click a gap first — clicking
+          // the timeline background left focus off the gaps, so keys scrolled).
+          const firstGap = $("pane-1").querySelector(".timeline .gap");
+          if (firstGap) firstGap.focus();
         }
       }
     });

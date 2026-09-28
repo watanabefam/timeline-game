@@ -95,12 +95,17 @@
       var i = 0;
       function next() {
         if (i >= chunks.length) return;
-        var u = new SpeechSynthesisUtterance(chunks[i].trim());
+        // Advance BEFORE speaking: if speechSynthesis fires onerror
+        // synchronously (no voices / blocked TTS), the retry must move to the
+        // NEXT chunk — otherwise it loops forever on the same one and blows
+        // the stack (seen under file:// where TTS is unavailable).
+        var idx = i++;
+        var u = new SpeechSynthesisUtterance(chunks[idx].trim());
         u.lang = "en-US"; u.rate = 1.0;
         if (v) u.voice = v;
         u.onend = next;
         u.onerror = function (e) { if (e.error !== "canceled") next(); };
-        speechSynthesis.speak(u); i++;
+        try { speechSynthesis.speak(u); } catch (e) { next(); }
       }
       next();
     } catch (e) { /* non-fatal */ }
