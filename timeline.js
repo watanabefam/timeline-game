@@ -689,12 +689,14 @@
       initGlassOnScreen(); // glass newly-visible controls
       // Rail bounds need a visible screen (offsetTop is 0 while hidden).
       if (name === "game") {
-        const ctx = gameCtx();
-        if (ctx) { updateRail(ctx); refreshFocusScale(ctx); drawRail(ctx); }
+        const ctxs = splitCtx && splitCtx.length ? splitCtx : (gameCtx() ? [gameCtx()] : []);
+        ctxs.forEach((ctx) => { updateRail(ctx); refreshFocusScale(ctx); drawRail(ctx); });
       }
       // Always: the rail lives on <body>, so it must be shown on the game screen
       // and hidden on every other one (drawRail sets railEl.hidden itself).
-      if (name !== "game") drawRail(gameCtx() || { root: $("game") });
+      if (name !== "game") {
+        Object.keys(railEls).forEach((k) => { railEls[k].hidden = true; });
+      }
       // Dock globe lives on setup/game/results only (its mode-setting calls
       // handle visibility); leaving those screens hides + pauses it.
       if (window.GlobeDock && name !== "setup" && name !== "game" && name !== "results") {
@@ -1113,7 +1115,7 @@
     updateHoverUI();
   }
   function updateHoverUI() {
-    const promptCard = $("prompt-card");
+    const promptCard = $("pane-1").querySelector(".prompt-card");
     if (!promptCard) return;
     const hasCurrent = !!currentEvent(game);
     if (isCardHovered) {
@@ -1634,6 +1636,24 @@
 
     updateSetupSummary();
 
+    // Versus toggle: reveal the handicap panel; sliders update their labels.
+    const versus = $("setup-versus");
+    const panel = $("handicap-panel");
+    if (versus && panel) {
+      const syncPanel = () => panel.classList.toggle("hidden", !versus.checked);
+      versus.addEventListener("change", syncPanel);
+      syncPanel();
+      ["p1", "p2"].forEach((which) => {
+        const slider = $("handicap-" + which);
+        const val = $("handicap-" + which + "-val");
+        if (slider && val) {
+          const sync = () => { val.textContent = (parseInt(slider.value, 10) / 1000).toFixed(1) + "s"; };
+          slider.addEventListener("input", sync);
+          sync();
+        }
+      });
+    }
+
     // Play count selector: reflect manual changes into ui.maxEvents
     const maxSel = $("setup-max");
     if (maxSel && !maxSel.dataset.wired) {
@@ -1780,9 +1800,102 @@
       modeLabel(game);
     $("score-max").textContent = maxScore(game);
     $("result-score-max").textContent = maxScore(game);
-    renderGame(makeCtx(game, $("game")));
+    // Single-player renders into pane 1 (full width); pane 2 stays hidden.
+    splitCtx = null;
+    $("pane-2").classList.add("hidden");
+    $("pane-1").classList.remove("hidden");
+    $("pane-1-name").textContent = (activeUser() || {}).name || "Player 1";
+    renderGame(makeCtx(game, $("pane-1")));
     gameMusicRestart = true; // fresh game -> game music starts from the top
     show("game");
+  }
+
+  // ---- split-screen (two players, same puzzle) -------------------
+  // Both players get the SAME seed => identical anchors + queue, so scores are
+  // directly comparable. Each player's state is independent; outcomes write to
+  // their own profile (state.userId). P1 = W/S + A, P2 = arrows + Enter.
+  function startSplit(deck, p1UserId, p2UserId, p1Handicap, p2Handicap) {
+    if (window.Narrator) window.Narrator.unlock();
+    const dateKey = utcDateKey(new Date());
+    let subset = filterSubset(deck, ui.selections);
+    ui.subset = subset;
+    const pool = subset;
+    const need = ANCHOR_COUNT + MIN_PLACEMENTS;
+    if (pool.length < need) return;
+    const placements = Math.max(
+      MIN_PLACEMENTS,
+      ui.maxEvents && ui.maxEvents > 0
+        ? Math.min(ui.maxEvents, pool.length - ANCHOR_COUNT)
+        : pool.length - ANCHOR_COUNT
+    );
+    // ONE seed for both players — same puzzle, fair comparison.
+    const seed = (Date.now() >>> 0) ^ ((Math.random() * 1e9) >>> 0);
+    const { anchors, queue } = buildPuzzle(pool, seed, placements);
+    const revealedFacts = {};
+    anchors.forEach((a) => { revealedFacts[a.id] = a.fact; });
+
+    const mk = (userId, handicap) => createGameState({
+      mode: "split",
+      userId,
+      deck,
+      dateKey,
+      placements,
+      anchors,
+      queue,
+      revealedFacts,
+      handicap: handicap || {},
+    });
+
+    const s1 = mk(p1UserId, p1Handicap);
+    const s2 = mk(p2UserId, p2Handicap);
+    game = null; // split mode: no single-player state
+    splitCtx = [makeCtx(s1, $("pane-1")), makeCtx(s2, $("pane-2"))];
+
+    // Show both panes; label with player names.
+    $("pane-1").classList.remove("hidden");
+    $("pane-2").classList.remove("hidden");
+    const n1 = (p1UserId && readUser(p1UserId).name) || "Player 1";
+    const n2 = (p2UserId && readUser(p2UserId).name) || "Player 2";
+    $("pane-1-name").textContent = n1;
+    $("pane-2-name").textContent = n2;
+    $("mode-tag").textContent = "VERSUS";
+    $("score-max").textContent = maxScore(s1);
+    $("result-score-max").textContent = maxScore(s1);
+
+    renderGame(splitCtx[0]);
+    renderGame(splitCtx[1]);
+    gameMusicRestart = true;
+    show("game");
+  }
+
+  // Move a split player's focus ring between gaps (dir = -1 up / +1 down).
+  function splitMove(playerIdx, dir) {
+    if (!splitCtx) return;
+    const ctx = splitCtx[playerIdx];
+    const tl = ctx.root.querySelector(".timeline");
+    if (!tl) return;
+    const gaps = Array.from(tl.querySelectorAll(".gap"));
+    if (!gaps.length) return;
+    const idx = gaps.indexOf(document.activeElement);
+    let next = idx === -1 ? (dir > 0 ? 0 : gaps.length - 1) : idx + dir;
+    while (next >= 0 && next < gaps.length && gaps[next].classList.contains("gap--locked")) next += dir;
+    if (next < 0 || next >= gaps.length) return;
+    gaps.forEach((g, i) => g.setAttribute("tabindex", i === next ? "0" : "-1"));
+    gaps[next].focus();
+  }
+
+  // Place the current event for a split player at their focused gap.
+  function splitPlace(playerIdx) {
+    if (!splitCtx) return;
+    const ctx = splitCtx[playerIdx];
+    const tl = ctx.root.querySelector(".timeline");
+    if (!tl) return;
+    const active = document.activeElement;
+    const gap = active && active.classList && active.classList.contains("gap")
+      ? active
+      : tl.querySelector(".gap[tabindex='0']") || tl.querySelector(".gap");
+    if (!gap) return;
+    attemptPlace(ctx, parseInt(gap.dataset.index, 10));
   }
 
   // Build a fresh, independent game state. Split-screen calls this once per
@@ -1814,6 +1927,7 @@
       // gap range and the card being revealed. Null when no rescue is showing.
       rescue: null,
       revealedFacts: opts.revealedFacts || {},
+      handicap: opts.handicap || {},
     };
   }
 
@@ -1827,7 +1941,7 @@
   // The active single-player ctx (or the first split pane). Used by global
   // hooks (show(), share) that aren't player-scoped.
   function gameCtx() {
-    if (game) return makeCtx(game, $("game"));
+    if (game) return makeCtx(game, $("pane-1"));
     if (splitCtx && splitCtx.length) return splitCtx[0];
     return null;
   }
@@ -1939,13 +2053,15 @@
   // window over it slides (styles.css .tl-rail). The curve is a quadratic
   // Bézier, which is exactly a parabola: its control point sits 2x the bow
   // depth off the chord.
-  let railEl = null;
+  let railEls = {}; // pane key -> rail element (one per player in split-screen)
   // Per-pane rail: each player's timeline gets its own fixed overlay scoped to
   // their half of the viewport, with a UNIQUE gradient id (duplicate SVG ids
   // resolve to the first instance — both rails would render with P1's gradient).
   function ensureRailEl(ctx) {
     const root = ctx.root;
-    const gradId = "tl-rail-grad-" + (root.dataset.pane || "single");
+    const key = root.dataset.pane || "single";
+    const gradId = "tl-rail-grad-" + key;
+    let railEl = railEls[key];
     if (!railEl) {
       railEl = document.createElement("div");
       railEl.className = "tl-rail";
@@ -1956,6 +2072,7 @@
         '<stop offset="0" stop-color="#fff" stop-opacity="0.18"/>' +
         '<stop offset="1" stop-color="#fff" stop-opacity="0.55"/>' +
         '</linearGradient></defs><path pathLength="1"/></svg>';
+      railEls[key] = railEl;
     }
     // Mounted on <body>, NOT inside #game: FX.shake() animates a transform on
     // #game, which would make it the containing block for this fixed overlay and
@@ -1963,9 +2080,8 @@
     // shake's duration. Outside the screen, no ancestor transform can touch it.
     if (railEl.parentNode !== document.body) document.body.prepend(railEl);
     // Scope the overlay to this player's pane (single-player = full width).
-    const pane = root.dataset.pane;
-    if (pane === "p1") { railEl.style.left = "0"; railEl.style.right = "50%"; }
-    else if (pane === "p2") { railEl.style.left = "50%"; railEl.style.right = "0"; }
+    if (key === "p1") { railEl.style.left = "0"; railEl.style.right = "50%"; }
+    else if (key === "p2") { railEl.style.left = "50%"; railEl.style.right = "0"; }
     else { railEl.style.left = "0"; railEl.style.right = "0"; }
     // Point the path at this pane's gradient.
     const path = railEl.querySelector("path");
@@ -1978,6 +2094,8 @@
   const RAIL_PEAK = 1.05, RAIL_EDGE = 0.95;
   function drawRail(ctx) {
     const tl = ctx.root.querySelector(".timeline");
+    const key = (ctx.root.dataset.pane) || "single";
+    const railEl = railEls[key];
     if (!railEl) return;
     // The rail lives on <body>, so it must be hidden by hand off the game screen.
     const onGame = tl && !screens.game.classList.contains("hidden");
@@ -2074,10 +2192,13 @@
 
     // Count-up from the displayed value (0 on first render — no-op there).
     const scoreEl = root.querySelector(".score-num");
-    if (window.FX) FX.scoreCount(scoreEl, state.score);
-    else scoreEl.textContent = state.score;
+    if (scoreEl) {
+      if (window.FX) FX.scoreCount(scoreEl, state.score);
+      else scoreEl.textContent = state.score;
+    }
     // Single mode: no lives — wrong placements bounce back (slips cost points).
-    root.querySelector(".lives").textContent = "";
+    const livesEl = root.querySelector(".lives");
+    if (livesEl) livesEl.textContent = "";
   }
 
   function renderGame(ctx) {
@@ -3421,10 +3542,32 @@
   // ---- wire up ---------------------------------------------------
   function init() {
     // Keyboard navigation for the timeline gaps (roving tabindex + arrows).
-    initGapRoving($("game"));
+    initGapRoving($("pane-1"));
+    initGapRoving($("pane-2"));
+    // Split-screen bindings: P1 = W/S (move) + A (place); P2 = arrows + Enter.
+    // These only act when a split game is live (splitCtx set).
+    input.onPress("KeyW", (e) => { e.preventDefault(); splitMove(0, -1); });
+    input.onPress("KeyS", (e) => { e.preventDefault(); splitMove(0, 1); });
+    input.onPress("KeyA", (e) => { e.preventDefault(); splitPlace(0); });
+    input.onPress("ArrowUp", (e) => { e.preventDefault(); splitMove(1, -1); });
+    input.onPress("ArrowDown", (e) => { e.preventDefault(); splitMove(1, 1); });
+    input.onPress("Enter", (e) => { e.preventDefault(); splitPlace(1); });
     // setup screen
     $("setup-back").addEventListener("click", () => renderHub());
-    $("setup-start").addEventListener("click", () => startGame());
+    $("setup-start").addEventListener("click", () => {
+      const versus = $("setup-versus") && $("setup-versus").checked;
+      if (versus) {
+        const users = readUsers();
+        const list = (users && users.users) || [];
+        const p1 = (activeUser() || {}).id || (list[0] && list[0].id) || null;
+        const p2 = (list.find((u) => u.id !== p1) || list[0] || {}).id || null;
+        const h1 = readHandicap("timeline", "p1");
+        const h2 = readHandicap("timeline", "p2");
+        startSplit(ui.deck, p1, p2, h1, h2);
+      } else {
+        startGame();
+      }
+    });
     $("setup-browse").addEventListener("click", () => renderBrowse());
     // game
     $("back-btn").addEventListener("click", () => openDeck(ui.deck));

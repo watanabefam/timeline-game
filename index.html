@@ -88,7 +88,30 @@
           <span class="count-note" id="setup-max-note"></span>
         </div>
         <div class="setup-actions">
+          <label class="versus-toggle" for="setup-versus">
+            <input type="checkbox" id="setup-versus" aria-label="Two-player split-screen mode">
+            <span class="versus-label">Split-screen (2 players)</span>
+          </label>
           <button class="btn btn--primary" id="setup-start">Start!</button>
+        </div>
+        <div class="handicap-panel hidden" id="handicap-panel">
+          <p class="handicap-title">Handicaps — level the race</p>
+          <div class="handicap-row">
+            <div class="handicap-player">
+              <span class="handicap-name" id="handicap-name-p1">Player 1</span>
+              <label class="handicap-control">Delayed start
+                <input type="range" id="handicap-p1" min="0" max="5000" step="1000" value="0">
+                <span class="handicap-val" id="handicap-p1-val">0s</span>
+              </label>
+            </div>
+            <div class="handicap-player">
+              <span class="handicap-name" id="handicap-name-p2">Player 2</span>
+              <label class="handicap-control">Delayed start
+                <input type="range" id="handicap-p2" min="0" max="5000" step="1000" value="0">
+                <span class="handicap-val" id="handicap-p2-val">0s</span>
+              </label>
+            </div>
+          </div>
         </div>
         <p class="setup-summary" id="setup-summary"></p>
         <p class="setup-count-note" id="setup-count-note"></p>
@@ -117,18 +140,45 @@
           </button>
           </div>
         </header>
-
-        <div class="prompt">
-          <div class="prompt-label">PLACE THIS EVENT</div>
-          <div class="prompt-card" id="prompt-card">
-            <span class="prompt-emoji" id="prompt-emoji">❓</span>
-            <span class="prompt-title" id="prompt-title">Loading&hellip;</span>
-          </div>
-        </div>
       </div>
 
-      <div class="timeline-wrap">
-        <ol class="timeline" id="timeline"></ol>
+      <div class="split-grid" id="split-grid">
+        <div class="split-pane" id="pane-1" data-pane="p1">
+          <div class="pane-head">
+            <span class="pane-name" id="pane-1-name">Player 1</span>
+            <span class="pane-score">Score <b class="score-num" id="pane-1-score">0</b></span>
+          </div>
+          <div class="prompt">
+            <div class="prompt-label">PLACE THIS EVENT</div>
+            <div class="prompt-card">
+              <span class="prompt-emoji">❓</span>
+              <span class="prompt-title">Loading&hellip;</span>
+            </div>
+          </div>
+          <div class="timeline-wrap">
+            <ol class="timeline" id="pane-1-timeline"></ol>
+          </div>
+          <div class="feedback" id="pane-1-feedback" role="status" aria-live="polite"></div>
+          <p id="pane-1-rescue" class="sr-only rescue-status" role="status" aria-live="polite"></p>
+        </div>
+        <div class="split-pane hidden" id="pane-2" data-pane="p2">
+          <div class="pane-head">
+            <span class="pane-name" id="pane-2-name">Player 2</span>
+            <span class="pane-score">Score <b class="score-num" id="pane-2-score">0</b></span>
+          </div>
+          <div class="prompt">
+            <div class="prompt-label">PLACE THIS EVENT</div>
+            <div class="prompt-card">
+              <span class="prompt-emoji">❓</span>
+              <span class="prompt-title">Loading&hellip;</span>
+            </div>
+          </div>
+          <div class="timeline-wrap">
+            <ol class="timeline" id="pane-2-timeline"></ol>
+          </div>
+          <div class="feedback" id="pane-2-feedback" role="status" aria-live="polite"></div>
+          <p id="pane-2-rescue" class="sr-only rescue-status" role="status" aria-live="polite"></p>
+        </div>
       </div>
 
       <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
@@ -424,6 +474,6 @@
 <script src="fx.js?v=26"></script>
 <script src="globe.js?v=10"></script>
 <script src="narration.js?v=20"></script>
-<script src="timeline.js?v=172"></script>
+<script src="timeline.js?v=176"></script>
 </body>
 </html>

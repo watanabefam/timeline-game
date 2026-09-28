@@ -296,6 +296,40 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
 
 /* ---------- TIMELINE ---------- */
 .timeline-wrap { margin: 4px 0; }
+/* Split-screen: two independent panes side by side, each its own scroll
+   container. Explicit height on the grid so each pane's overflow-y:auto has a
+   bounded box; overscroll-behavior keeps one player's scroll from chaining
+   into the other's. Single-player keeps pane 1 full width. */
+.split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  height: calc(100vh - var(--game-header-h, 0px) - 60px);
+  min-height: 0;
+}
+.split-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 12px;
+  border-right: 1px solid var(--border, rgba(255,255,255,0.12));
+}
+.split-pane:last-child { border-right: none; }
+.split-pane .pane-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 2px 8px;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+.split-pane .pane-name { font-weight: 700; }
+.split-pane .pane-score { font-variant-numeric: tabular-nums; }
+/* Single-player: pane 1 spans the full width (pane 2 hidden). */
+#game:not(.split) .split-grid { grid-template-columns: 1fr; }
 .timeline { list-style: none; margin: 0; padding: 0 0 0 28px; display: flex; flex-direction: column; gap: 0; }
 /* Card skin lives on an inner wrapper (.tl-card) so FX.focusScale can scale
    the card without moving the rail node/connector or the fact-sheet popover,
