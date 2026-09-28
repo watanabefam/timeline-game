@@ -1863,7 +1863,18 @@
     $("result-score-max").textContent = maxScore(s1);
 
     renderGame(splitCtx[0]);
-    renderGame(splitCtx[1]);
+    // Handicap: delayed start — the weaker player's first deal (and prompt)
+    // appears after startDelayMs, so the stronger player begins first.
+    const delay2 = (s2.handicap && s2.handicap.startDelayMs) || 0;
+    if (delay2 > 0) {
+      $("pane-2").classList.add("pane--waiting");
+      setTimeout(() => {
+        $("pane-2").classList.remove("pane--waiting");
+        renderGame(splitCtx[1]);
+      }, delay2);
+    } else {
+      renderGame(splitCtx[1]);
+    }
     gameMusicRestart = true;
     show("game");
   }
@@ -3010,7 +3021,12 @@
 
     const timelineEvents = state.timeline.map((id) => eventById(ui.deck, id));
     const [lo, hi] = correctIndexRange(ev, timelineEvents);
-    const correct = index >= lo && index <= hi;
+    // Handicap: extra tolerance widens the accepted range (a weaker player can
+    // be a few years off and still count it). Applied as a gap-range extension.
+    const tol = (state.handicap && state.handicap.toleranceYears) || 0;
+    const lo2 = Math.max(0, lo - tol);
+    const hi2 = Math.min(state.timeline.length, hi + tol);
+    const correct = index >= lo2 && index <= hi2;
 
     if (correct) { commitPlacement(ctx, index, ev); return; }
 
@@ -3023,7 +3039,10 @@
     // gap is a live target, so this is a safety net rather than the main path.
     if (state.rescue) { commitPlacement(ctx, state.rescue.lo, ev); return; }
 
-    if (state.wrongOnCurrent >= RESCUE_AFTER) {
+    // Handicap: extra slips raise the rescue threshold (more misses before the
+    // answer is revealed).
+    const rescueAfter = RESCUE_AFTER + ((state.handicap && state.handicap.extraSlips) || 0);
+    if (state.wrongOnCurrent >= rescueAfter) {
       // Third miss: stop testing and reveal. A soft "that was wrong" cue only —
       // no shake or juice, so the reveal reads as help, not rebuke.
       playSfx("wrong");
@@ -3035,7 +3054,7 @@
     // Strike 2 names the direction; strike 1 stays unaided and wordless — the
     // shake, gap flash and buzz already say "miss" (hints on demand; no
     // redundant text).
-    if (state.wrongOnCurrent === RESCUE_AFTER - 1) {
+    if (state.wrongOnCurrent === rescueAfter - 1) {
       flashFeedback(
         index < lo ? "Too early — it comes later." : "Too late — it comes earlier.",
         false,
@@ -3253,7 +3272,43 @@
     state.status = won ? "complete" : "lost";
     playSfx(won ? "win" : "wrong");
     recordRun(state);
+    // Split-screen: when both players have finished, show the head-to-head.
+    if (splitCtx && splitCtx.length === 2) {
+      const other = splitCtx[0] === ctx ? splitCtx[1] : splitCtx[0];
+      if (other.state.status === "complete" || other.state.status === "lost") {
+        showSplitResults();
+      }
+      return;
+    }
     showResults(ctx, won);
+  }
+
+  // Head-to-head results: higher score wins (same puzzle => same max, so raw
+  // score comparison is fair); ties broken by fewer slips, then by time.
+  function showSplitResults() {
+    const [c1, c2] = splitCtx;
+    const [s1, s2] = [c1.state, c2.state];
+    const w1 = s1.outcomes.filter((o) => o === "wrong").length;
+    const w2 = s2.outcomes.filter((o) => o === "wrong").length;
+    let winner = null;
+    if (s1.score !== s2.score) winner = s1.score > s2.score ? 0 : 1;
+    else if (w1 !== w2) winner = w1 < w2 ? 0 : 1;
+    const n1 = $("pane-1-name").textContent;
+    const n2 = $("pane-2-name").textContent;
+    $("result-tag").textContent = "VERSUS";
+    $("result-title").textContent = winner === null
+      ? "It's a tie!"
+      : (winner === 0 ? n1 : n2) + " wins!";
+    $("result-blurb").textContent =
+      `${n1}: ${s1.score} pts (${w1} slip${w1 === 1 ? "" : "s"}) · ` +
+      `${n2}: ${s2.score} pts (${w2} slip${w2 === 1 ? "" : "s"})`;
+    $("result-score-num").textContent = s1.score + " – " + s2.score;
+    $("result-score-max").textContent = maxScore(s1);
+    $("result-grid").innerHTML = "";
+    $("result-timeline").innerHTML = "";
+    $("share-text").classList.add("hidden");
+    show("results");
+    if (window.FX) setTimeout(() => window.FX.confetti({ tier: "medium" }), 650);
   }
 
   function showResults(ctx, won) {
