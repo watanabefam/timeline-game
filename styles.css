@@ -366,7 +366,10 @@ body.dock-active .split-pane { padding-bottom: 106px; }
    in the sticky .game-header, so the pane's own head/prompt are hidden. */
 #game:not(.split) .split-grid { grid-template-columns: 1fr; }
 #game:not(.split) .split-pane { border-right: none; }
-#game:not(.split) .split-pane .pane-sticky { display: none; }
+/* Single-player uses the same in-pane sticky prompt as split-screen, so both
+   modes share one structure (short header + prompt inside the pane). Only the
+   player name/score head is redundant — the appbar already shows the score. */
+#game:not(.split) .split-pane .pane-head { display: none; }
 .timeline { list-style: none; margin: 0; padding: 0 0 0 28px; display: flex; flex-direction: column; gap: 0; }
 /* Card skin lives on an inner wrapper (.tl-card) so FX.focusScale can scale
    the card without moving the rail node/connector or the fact-sheet popover,

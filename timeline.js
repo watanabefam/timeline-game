@@ -1137,8 +1137,8 @@
     updateHoverUI();
   }
   function updateHoverUI() {
-    // Single-player: the prompt lives in the sticky header. Split: pane 1's.
-    const promptCard = splitCtx ? $("pane-1").querySelector(".prompt-card") : $("prompt-card");
+    // The prompt lives inside pane 1 in both single-player and split.
+    const promptCard = $("pane-1").querySelector(".prompt-card");
     if (!promptCard) return;
     const hasCurrent = !!currentEvent(game);
     if (isCardHovered) {
@@ -1828,7 +1828,6 @@
     screens.game.classList.remove("split");
     $("pane-2").classList.add("hidden");
     $("pane-1").classList.remove("hidden");
-    $("single-prompt").classList.remove("hidden");
     $("pane-1-name").textContent = (activeUser() || {}).name || "Player 1";
     // Measure the sticky header so the grid fills exactly the space below it.
     const gh = document.querySelector(".game-header");
@@ -1890,9 +1889,7 @@
     $("mode-tag").textContent = "VERSUS";
     $("score-max").textContent = maxScore(s1);
     $("result-score-max").textContent = maxScore(s1);
-    // Split-screen: no shared header prompt — each pane has its own. Hide the
-    // single-player prompt and measure the header (appbar only) for the grid.
-    $("single-prompt").classList.add("hidden");
+    // Measure the header (appbar only; the prompt lives in each pane) for the grid.
     const gh = document.querySelector(".game-header");
     if (gh) document.documentElement.style.setProperty("--game-header-h", (gh.getBoundingClientRect().top + gh.getBoundingClientRect().height) + "px");
 
@@ -2213,10 +2210,10 @@
     const state = ctx.state;
     const root = ctx.root;
     const ev = currentEvent(state);
-    // Single-player shows the prompt in the sticky header; split shows it in
-    // each pane. Update whichever is visible.
-    const emojiEl = splitCtx ? root.querySelector(".prompt-emoji") : $("prompt-emoji");
-    const titleEl = splitCtx ? root.querySelector(".prompt-title") : $("prompt-title");
+    // The prompt lives inside each pane (same in single-player and split), so
+    // update it within this player's root.
+    const emojiEl = root.querySelector(".prompt-emoji");
+    const titleEl = root.querySelector(".prompt-title");
     if (ev) {
       emojiEl.textContent = ev.emoji || "❓";
       titleEl.textContent = ev.title;
