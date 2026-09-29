@@ -202,7 +202,6 @@
           .bumpImageUrl(window.EARTH_TEXTURES.topo)
           .showAtmosphere(true)
           .atmosphereColor("#7fb4ff")
-          .pointsMerge(true) // one mesh for all markers — cheaper with 2 globes
           .pointAltitude((d) => (d.isCurrent || d.focused ? 0.06 : 0.02))
           .pointRadius((d) => (d.isCurrent || d.focused ? 0.7 : 0.45))
           .pointColor((d) => (d.focused ? brighten(d.color, state.pulsePhase) : d.color))
