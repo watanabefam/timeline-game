@@ -86,14 +86,22 @@
   // arrow keys (tabindex="-1"). Follows the settings-tabs pattern already in
   // this file. syncGapTabindex promotes the focused gap (or the first) after
   // every rebuild/insert; initGapRoving wires arrow/Home/End navigation.
-  function syncGapTabindex(tl) {
+  function syncGapTabindex(tl, ctx) {
     if (!tl) return;
     const gaps = Array.from(tl.querySelectorAll(".gap"));
     if (!gaps.length) return;
-    // Promote the focused gap if it's still a gap; else the first gap.
-    const active = document.activeElement;
-    const activeIdx = gaps.indexOf(active);
-    const target = activeIdx >= 0 ? activeIdx : 0;
+    let target;
+    if (ctx && splitCtx && splitCtx.length) {
+      // Split: follow the player's virtual cursor, not DOM focus — the browser
+      // has one activeElement but each player owns their own cursor.
+      target = ctx.cursor;
+    } else {
+      // Promote the focused gap if it's still a gap; else the first gap.
+      const active = document.activeElement;
+      const activeIdx = gaps.indexOf(active);
+      target = activeIdx >= 0 ? activeIdx : 0;
+    }
+    if (target < 0 || target >= gaps.length) target = 0;
     gaps.forEach((g, i) => g.setAttribute("tabindex", i === target ? "0" : "-1"));
   }
 
@@ -130,6 +138,7 @@
     // split panes never steal each other's arrow keys. (Global input.onPress
     // would collide — one handler per code.)
     root.addEventListener("keydown", (e) => {
+      if (splitCtx && splitCtx.length) return; // split: keys are document-level
       if (!root.contains(document.activeElement)) return;
       if (e.key === "ArrowRight") { move(1); e.preventDefault(); }
       else if (e.key === "ArrowLeft") { move(-1); e.preventDefault(); }
@@ -747,9 +756,11 @@
           deferGlobeSync = false;
           const ctxs = splitCtx && splitCtx.length ? splitCtx : (gameCtx() ? [gameCtx()] : []);
           ctxs.forEach((ctx) => syncGlobe(ctx));
-          // Keyboard: focus the first gap so arrow keys / Enter work right
-          // away (previously the player had to click a gap first — clicking
-          // the timeline background left focus off the gaps, so keys scrolled).
+          // Keyboard: split gives BOTH players a cursor on their first gap;
+          // single-player focuses the first gap so arrow keys work right away.
+          if (splitCtx && splitCtx.length) {
+            splitCtx.forEach((ctx) => renderSplitCursor(ctx));
+          }
           const firstGap = $("pane-1").querySelector(".timeline .gap");
           if (firstGap) firstGap.focus();
         }
@@ -1938,7 +1949,32 @@
     show("game");
   }
 
-  // Move a split player's focus ring between gaps (dir = -1 up / +1 down).
+  // ---- split-screen virtual cursors --------------------------------------
+  // The browser has ONE document.activeElement, so two players can't each own
+  // DOM focus. Instead each player's cursor is an index into their pane's gaps
+  // (ctx.cursor), rendered with a per-player CSS class and kept in the tab
+  // order for screen readers. Keys are handled document-level (see init), so
+  // both players act simultaneously regardless of where focus sits.
+  function renderSplitCursor(ctx) {
+    const tl = ctx.root.querySelector(".timeline");
+    if (!tl) return;
+    const gaps = Array.from(tl.querySelectorAll(".gap"));
+    if (!gaps.length) return;
+    const pane = ctx.root.dataset.pane || "p1";
+    gaps.forEach((g, i) => {
+      g.classList.toggle("gap--cursor-" + pane, i === ctx.cursor);
+      g.setAttribute("tabindex", i === ctx.cursor ? "0" : "-1");
+    });
+  }
+  function setSplitCursor(ctx, index) {
+    ctx.cursor = index;
+    renderSplitCursor(ctx);
+    const gaps = Array.from(ctx.root.querySelectorAll(".timeline .gap"));
+    const gap = gaps[index];
+    if (gap && !gap.classList.contains("gap--locked")) gap.focus();
+  }
+
+  // Move a split player's cursor between gaps (dir = -1 up / +1 down).
   function splitMove(playerIdx, dir) {
     if (!splitCtx) return;
     const ctx = splitCtx[playerIdx];
@@ -1946,25 +1982,22 @@
     if (!tl) return;
     const gaps = Array.from(tl.querySelectorAll(".gap"));
     if (!gaps.length) return;
-    const idx = gaps.indexOf(document.activeElement);
-    let next = idx === -1 ? (dir > 0 ? 0 : gaps.length - 1) : idx + dir;
+    if (ctx.cursor < 0 || ctx.cursor >= gaps.length) ctx.cursor = 0;
+    let next = ctx.cursor + dir;
     while (next >= 0 && next < gaps.length && gaps[next].classList.contains("gap--locked")) next += dir;
     if (next < 0 || next >= gaps.length) return;
-    gaps.forEach((g, i) => g.setAttribute("tabindex", i === next ? "0" : "-1"));
-    gaps[next].focus();
+    setSplitCursor(ctx, next);
   }
 
-  // Place the current event for a split player at their focused gap.
+  // Place the current event for a split player at their cursor's gap.
   function splitPlace(playerIdx) {
     if (!splitCtx) return;
     const ctx = splitCtx[playerIdx];
     const tl = ctx.root.querySelector(".timeline");
     if (!tl) return;
-    const active = document.activeElement;
-    const gap = active && active.classList && active.classList.contains("gap")
-      ? active
-      : tl.querySelector(".gap[tabindex='0']") || tl.querySelector(".gap");
-    if (!gap) return;
+    const gaps = Array.from(tl.querySelectorAll(".gap"));
+    const gap = gaps[ctx.cursor];
+    if (!gap || gap.classList.contains("gap--locked")) return;
     attemptPlace(ctx, parseInt(gap.dataset.index, 10));
   }
 
@@ -2005,7 +2038,7 @@
   // renders into. Single-player uses the #game screen; split-screen uses one
   // pane per player. All game functions take a ctx and read state/root from it.
   function makeCtx(state, root) {
-    return { state, root };
+    return { state, root, cursor: 0 };
   }
 
   // The active single-player ctx (or the first split pane). Used by global
@@ -2345,7 +2378,7 @@
     refreshFocusScale(ctx);
     drawRail(ctx);
     // Roving tabindex: promote the first gap into the tab order.
-    syncGapTabindex(tl);
+    syncGapTabindex(tl, ctx);
 
     // Dock globe: placed markers coloured by outcome, current prompt on top.
     // Split-screen routes each player to their own globe. Deferred at game
@@ -2968,6 +3001,7 @@
     const gapIndex = () => parseInt(g.dataset.index, 10);
     g.addEventListener("click", () => attemptPlace(ctx, gapIndex()));
     g.addEventListener("keydown", (e) => {
+      if (splitCtx && splitCtx.length) return; // split: Enter is P2's key (document-level)
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); attemptPlace(ctx, gapIndex()); }
     });
     return g;
@@ -3026,7 +3060,7 @@
         "＋ PLACE HERE";
     });
     // Restore the roving tab order (one gap in the tab sequence).
-    syncGapTabindex(tl);
+    syncGapTabindex(tl, ctx);
   }
 
   // A correct placement is committed here so both the normal path and the
@@ -3068,7 +3102,9 @@
     updateGameHud(ctx);
     const newEventEl = insertPlacedEvent(ctx, index, ev);
     // Roving tabindex: keep the focused gap promoted (it may have shifted).
-    syncGapTabindex(root.querySelector(".timeline"));
+    syncGapTabindex(root.querySelector(".timeline"), ctx);
+    // Split: re-render the player's cursor highlight (gaps shifted on insert).
+    if (splitCtx && splitCtx.length) renderSplitCursor(ctx);
     if (!screens.game.classList.contains("hidden")) updateRail(ctx, true);
     refreshFocusScale(ctx);
     drawRail(ctx);
@@ -3709,22 +3745,26 @@
     // split players never steal each other's keys.
     initGapRoving($("pane-1"));
     initGapRoving($("pane-2"));
-    // Split-screen bindings, pane-scoped: P1 = W/S (move) + A (place);
-    // P2 = arrows + Enter. Each only fires when focus is in that player's pane.
-    const bindPane = (paneEl, key, fn) => {
-      paneEl.addEventListener("keydown", (e) => {
-        if (!paneEl.contains(document.activeElement)) return;
-        if (e.key !== key) return;
-        e.preventDefault();
-        fn();
-      });
-    };
-    bindPane($("pane-1"), "w", () => splitMove(0, -1));
-    bindPane($("pane-1"), "s", () => splitMove(0, 1));
-    bindPane($("pane-1"), "a", () => splitPlace(0));
-    bindPane($("pane-2"), "ArrowUp", () => splitMove(1, -1));
-    bindPane($("pane-2"), "ArrowDown", () => splitMove(1, 1));
-    bindPane($("pane-2"), "Enter", () => splitPlace(1));
+    // Split-screen keyboard: document-level keyMap so BOTH players' keys work
+    // simultaneously, independent of DOM focus (each player's cursor is
+    // tracked per-pane). Guards: split active, game screen visible, no modal,
+    // and focus not on a UI control (buttons keep Enter/Space for themselves).
+    document.addEventListener("keydown", (e) => {
+      if (!splitCtx || !splitCtx.length) return;
+      if (screens.game.classList.contains("hidden")) return;
+      if (document.querySelector(".modal:not(.hidden)")) return;
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === "BUTTON" || ae.tagName === "A" || ae.tagName === "INPUT" ||
+                 ae.tagName === "TEXTAREA" || ae.tagName === "SELECT" || ae.isContentEditable)) return;
+      switch (e.code) {
+        case "KeyW": splitMove(0, -1); e.preventDefault(); break;
+        case "KeyS": splitMove(0, 1); e.preventDefault(); break;
+        case "KeyA": splitPlace(0); e.preventDefault(); break;
+        case "ArrowUp": splitMove(1, -1); e.preventDefault(); break;
+        case "ArrowDown": splitMove(1, 1); e.preventDefault(); break;
+        case "Enter": splitPlace(1); e.preventDefault(); break;
+      }
+    });
     // setup screen
     $("setup-back").addEventListener("click", () => renderHub());
     $("setup-start").addEventListener("click", () => {

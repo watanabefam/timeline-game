@@ -781,6 +781,10 @@ body.dock-active .split-pane { padding-bottom: 106px; }
   border-color: var(--accent); color: var(--accent);
   background: rgba(110, 168, 254, 0.08); outline: none;
 }
+/* Split-screen virtual cursors: one per player, independent of DOM focus
+   (the browser has a single activeElement). P1 = blue accent, P2 = green. */
+.gap--cursor-p1 { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(110, 168, 254, 0.45); }
+.gap--cursor-p2 { border-color: var(--good); box-shadow: 0 0 0 2px rgba(63, 185, 80, 0.45); }
 .gap.gap--win { border-style: solid; }
 .gap--wrong {
   animation: gap-flash-wrong 0.5s ease;
