@@ -187,8 +187,9 @@
     root.addEventListener("keydown", (e) => {
       if (splitCtx && splitCtx.length) return; // split: keys are document-level
       if (!root.contains(document.activeElement)) return;
-      if (e.key === "ArrowRight") { move(1); e.preventDefault(); }
-      else if (e.key === "ArrowLeft") { move(-1); e.preventDefault(); }
+      // Both player schemes move in single-player: arrows/WASD.
+      if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "s" || e.key === "S") { move(1); e.preventDefault(); }
+      else if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "w" || e.key === "W") { move(-1); e.preventDefault(); }
       else if (e.key === "Home") { jump(false); e.preventDefault(); }
       else if (e.key === "End") { jump(true); e.preventDefault(); }
     });
@@ -3052,7 +3053,8 @@
     g.addEventListener("click", () => attemptPlace(ctx, gapIndex()));
     g.addEventListener("keydown", (e) => {
       if (splitCtx && splitCtx.length) return; // split: Enter is P2's key (document-level)
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); attemptPlace(ctx, gapIndex()); }
+      // Both player schemes place in single-player: Enter/Space (P2) + A (P1).
+      if (e.key === "Enter" || e.key === " " || e.key === "a" || e.key === "A") { e.preventDefault(); attemptPlace(ctx, gapIndex()); }
     });
     return g;
   }
