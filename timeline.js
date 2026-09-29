@@ -105,6 +105,42 @@
     gaps.forEach((g, i) => g.setAttribute("tabindex", i === target ? "0" : "-1"));
   }
 
+  // Smooth-scroll a gap to the vertical center of its pane. Interruptible:
+  // every call cancels the pane's in-flight animation, so rapid cursor moves
+  // never queue — each restart begins from the live scrollTop and the total
+  // time stays ~one duration. Keyboard cursor moves call this; mouse clicks
+  // keep the browser's default minimal scroll (no yank).
+  const paneScrollRaf = new WeakMap(); // pane -> in-flight rAF id
+  function smoothCenterGap(gap, pane) {
+    if (!gap || !pane) return;
+    // getBoundingClientRect deltas are robust to offsetParent (the timeline
+    // isn't positioned); clamp into the scrollable range.
+    const gapMid = gap.getBoundingClientRect().top - pane.getBoundingClientRect().top +
+      gap.offsetHeight / 2;
+    const target = pane.scrollTop + gapMid - pane.clientHeight / 2;
+    const max = pane.scrollHeight - pane.clientHeight;
+    const clamped = Math.max(0, Math.min(max, target));
+    const ongoing = paneScrollRaf.get(pane);
+    if (ongoing) cancelAnimationFrame(ongoing);
+    paneScrollRaf.delete(pane);
+    // Reduced motion (read at call time): instant center, no animation.
+    const reduced = window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) { pane.scrollTop = clamped; return; }
+    if (Math.abs(clamped - pane.scrollTop) < 2) return; // already centered
+    const start = pane.scrollTop;
+    const dur = 220;
+    const t0 = performance.now();
+    const step = (t) => {
+      const p = Math.min(1, (t - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+      pane.scrollTop = start + (clamped - start) * eased;
+      if (p < 1) paneScrollRaf.set(pane, requestAnimationFrame(step));
+      else paneScrollRaf.delete(pane);
+    };
+    paneScrollRaf.set(pane, requestAnimationFrame(step));
+  }
+
   function initGapRoving(root) {
     const tl = root ? root.querySelector(".timeline") : $("timeline");
     if (!tl) return;
@@ -120,7 +156,9 @@
       }
       if (next < 0 || next >= gaps.length) return;
       gaps.forEach((g, i) => g.setAttribute("tabindex", i === next ? "0" : "-1"));
-      gaps[next].focus();
+      // Suppress the browser's instant jump; the smooth follow owns the scroll.
+      gaps[next].focus({ preventScroll: true });
+      smoothCenterGap(gaps[next], root);
     };
     const jump = (toEnd) => {
       const gaps = Array.from(tl.querySelectorAll(".gap"));
@@ -132,8 +170,17 @@
       }
       if (next < 0 || next >= gaps.length) return;
       gaps.forEach((g, i) => g.setAttribute("tabindex", i === next ? "0" : "-1"));
-      gaps[next].focus();
+      gaps[next].focus({ preventScroll: true });
+      smoothCenterGap(gaps[next], root);
     };
+    // User takes over: a manual scroll cancels any in-flight follow animation
+    // so the two never fight.
+    ["wheel", "touchstart", "pointerdown"].forEach((ev) => {
+      root.addEventListener(ev, () => {
+        const ongoing = paneScrollRaf.get(root);
+        if (ongoing) { cancelAnimationFrame(ongoing); paneScrollRaf.delete(root); }
+      }, { passive: true });
+    });
     // Pane-scoped keydown: only acts when focus is INSIDE this pane, so two
     // split panes never steal each other's arrow keys. (Global input.onPress
     // would collide — one handler per code.)
@@ -1971,7 +2018,10 @@
     renderSplitCursor(ctx);
     const gaps = Array.from(ctx.root.querySelectorAll(".timeline .gap"));
     const gap = gaps[index];
-    if (gap && !gap.classList.contains("gap--locked")) gap.focus();
+    if (gap && !gap.classList.contains("gap--locked")) {
+      gap.focus({ preventScroll: true });
+      smoothCenterGap(gap, ctx.root);
+    }
   }
 
   // Move a split player's cursor between gaps (dir = -1 up / +1 down).
