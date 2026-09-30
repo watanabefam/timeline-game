@@ -8,7 +8,8 @@ gamification-layer spec lives in `doc/GAMIFICATION_BRIEF.md`.
 
 A no-backend timeline-ordering game (place historical events in chronological
 order) built as **plain HTML/CSS/JS with no build step**. Decks are pluggable
-data files. Deployed as a static site served over **HTTPS** — the final product
+folder packages (`decks/<id>/`, loaded through a generated classic-script
+index — see rule 4). Deployed as a static site served over **HTTPS** — the final product
 is hosted, so secure-context-only APIs (service workers, notifications) are
 available. **`file://` is a best-effort convenience for local testing only, and
 is never a shipping target.** Prefer designs that keep working there when it is
@@ -43,8 +44,9 @@ A1–A6, age-band gating, derived-state rule).
    `index.html`. Vendored third-party libs may ship an **ESM build** loaded via
    `<script type="module">` (allowed since the hosting change) — but never a
    bundler-required npm package.
-   **Scope:** rules 1–4 govern the web game core (`index.html`, `timeline.js`,
-   `fx.js`, `events-data.js`, `decks/`, `assets/`). The cross-platform
+   **Scope:** rules 1–4 and 6 govern the web game core (`index.html`, `timeline.js`,
+   `fx.js`, `globe.js`, `narration.js`, `decks-io.js`, `events-data.js`,
+   `decks/`, `assets/`). The cross-platform
    packaging layer planned in `doc/CROSS_PLATFORM_ROADMAP.md` (Capacitor/Tauri
    shells, staging scripts, npm dev tooling) is exempt from the no-build rule —
    but it must **wrap the game core unmodified**, not rewrite it. Capacitor and
@@ -54,32 +56,146 @@ A1–A6, age-band gating, derived-state rule).
    To add a library: download the release bundle into `assets/vendor/`, keep
    its license header, pin the version (record it in the file header comment),
    and load it with a `<script>` tag (or `<script type="module">` for ESM
-   builds).
+   builds). **Vendored code must be permissively licensed** (MIT / ISC / BSD /
+   Apache-2.0 / CC0 / public domain) and recorded in `THIRD_PARTY_LICENSES.md`:
+   a package's *declared* license does not cover a copyleft component it
+   bundles. `npm run validate:vendor` enforces this — it fails on
+   GPL/AGPL/LGPL/EUPL/SSPL/FSL-1.1/CC-BY-NC markers, on runtime-TTS artefacts
+   reappearing under `assets/`, on a first-party reference to the retired
+   Kokoro runtime bundle, and on a vendored script losing its license/version
+   header. *(One-time exception, 2026-09-29: the Kokoro + ONNX-Runtime bundle
+   was **moved out of** `assets/vendor/` — moved, never edited — into the
+   gitignored `tools/kokoro-authoring/`. See `doc/LIBRARY_RESEARCH.md` §2.)*
 3. **Cache-busting:** first-party scripts load with `?v=N`
-   (`fx.js?v=11`, `timeline.js?v=81`). Bump `N` whenever you edit that file,
+   (`fx.js?v=26`, `timeline.js?v=196`). Bump `N` whenever you edit that file,
    or returning players get stale code.
 4. **Script load order in `index.html` matters** (classic scripts, sync):
-   `events-data.js` → Leaflet → `world-land.js` → `liquid-glass.js` →
-   `vis-timeline` → `anime.umd.min.js` → `fx.js` → `timeline.js`.
-   `fx.js` must load before `timeline.js` (it defines `window.FX`).
+   `events-data.js` → `decks-io.js` → Leaflet → `world-land.js` →
+   `liquid-glass.js` → `vis-timeline` → `anime.umd.min.js` →
+   `canvas-confetti` → `fx.js` → `globe.js` → `narration-recipe.js` →
+   `narration.js` → `timeline.js`.
+   `fx.js` (defines `window.FX`), `globe.js` (`window.GlobeDock`),
+   `narration-recipe.js` (`window.NarrationText`, generated) and
+   `narration.js` (`window.Narrator`) must all load before `timeline.js`,
+   which uses them. Decks themselves arrive from `decks/index.js` (generated)
+   via the `window.registerDeckSource` registry in `events-data.js`.
    `<script type="module">` tags are deferred by spec — they run after all
    classic scripts, so a module can rely on `window.FX`/`window.DECKS` being
    present, but classic scripts can never rely on a module.
 5. **Run the content gate after touching deck data:**
-   `npm run validate` (Node ≥18). It enforces the fact-quality rule across all
-   decks in `decks/`. The enrichment scripts (`npm run enrich`) also run it.
+   `npm run validate` (Node ≥18) — `validate:index` (generated deck list is
+   fresh), `validate:content` (the fact-quality and year-placement rules across
+   every deck in `decks/`), `validate:vendor` (rule 2), `validate:recipe`
+   (the generated browser copy of the narration recipe is fresh),
+   `validate:narration` (every clip's records, hashes, duration and coverage),
+   `validate:backlog` (the pronunciation backlog is current and under its
+   ceiling), `validate:sourcing` (the sourcing backlog is current and under its
+   ceiling).
+
+   **`validate:pipeline` is deliberately NOT in that chain, and `npm run
+   validate` exits 0 without it.** The content-pipeline gate is honestly red:
+   **0 of 321 events carry a `source`**, against a documented "no source → no
+   ship" policy (`tools/content-pipeline/README.md`). Two decks
+   (`cc-timeline`, `world-literature`) carry `"grandfathered": true`, which
+   downgrades `SOURCE_MISSING` to a warning, so the gate reports 80 errors —
+   one per event in the two *unflagged* decks — and 201 findings as warnings.
+   Chaining a permanently-red gate into the always-green one made all six
+   strict gates unreadable, which is a bigger risk than the content gap.
+
+   The gap is kept visible and bounded rather than merely unmentioned:
+   `content/sourcing-backlog.json` is generated by
+   `scripts/gen-sourcing-backlog.mjs` and counts every unsourced event **by the
+   gate's own `SOURCE_MISSING` finding**, so an exemption never hides a number.
+   `validate` prints a pointer to the excluded gate. Do not "fix" the red by
+   grandfathering the other two decks: that would make the policy apply to
+   nothing. Both ratchets hold their ceiling in the generator **script**, not
+   in the generated file — an earlier version read the ceiling from disk, so
+   hand-editing the JSON raised it and the check still passed. `npm run test` runs the Node
+   tests for the content pipeline and for the narration recipe. The enrichment
+   scripts (`npm run enrich`) run the gate too, but the enrichment pass itself
+   is stale — see `README.md`.
+6. **Narration is pre-rendered, never synthesized at runtime.** Voice audio
+   ships beside the deck (`decks/<id>/narration/<event-id>.mp3`), recorded in
+   the deck's `narration` block in `deck.json` — engine, dtype, voice and the
+   per-clip records — and listed under `assets` in `manifest.json`.
+   `narration.js` only plays it, with a
+   system-voice fallback for decks that have no audio. Nothing may load a TTS
+   engine in the browser (`doc/CROSS_PLATFORM_ROADMAP.md` §19.12).
+
+   **Every override needs a record.** `tools/narration/lexicon-records.mjs` holds
+   one record per grapheme form: the verified phonemes, a status (`fixed`,
+   `confirmed` or `deferred`), a reason, and one of three typed sources
+   (`reference` with a citation, `measurement` for the audit's own
+   engine-vs-dictionary comparison, or `decision` for a project style choice —
+   never a citation for a preference). A `LEXICON` entry with no record fails
+   `npm test`; so does a record with no source. A reason is never a substitute
+   for provenance. Add the alias to `LEXICON` in `text.mjs` and the record in
+   `lexicon-records.mjs` — either alone fails.
+
+   **A `reference` must carry exactly one of `url` or `noUrlBecause`.** Never
+   both, never neither, and `noUrlBecause` must be a real sentence rather than a
+   restatement of the citation. `cleisthenes` shipped the claim "Wiktionary has
+   no entry for this name, so no URL is claimed", which was false — the entry is
+   under `Κλεισθένης` — and it survived inside `citation`, where a test could
+   only see that a string existed. Derive what a machine can compute; only make
+   a human write what it cannot, which is why there is deliberately **no**
+   hand-authored confidence field. A `deferred` record also needs a
+   `deferredKind` (`transliteration`, `historical-reconstruction`,
+   `non-standard-form`, `no-established-pronunciation`, `engine-limit`), so a
+   word that is out of reach of the *mechanism* is not filed beside words
+   nobody knows how to say.
+
+   **An LLM is never the source of a `reference`.** The usual hierarchy puts
+   "our own approved list" first, which is wrong here: an assistant often wrote
+   that list, so it cannot also be its authority — that makes every record
+   validate against the thing it is evidence for. A reading resting on an
+   assistant's say-so is a `decision` (with `decidedBy`) or a `measurement`
+   (only if the engine was actually checked); `reference` means a page was
+   opened and it says that. Where sources disagree, record the losers in
+   `rejected` — `cleisthenes` keeps the reading this project itself shipped,
+   because a correction whose history was deleted is a correction nobody can
+   check.
+
+   **The open backlog is generated and ratcheted.**
+   `tools/narration/pronunciation-backlog.json` comes from
+   `scripts/gen-pronunciation-backlog.mjs` (as `decks/index.json` comes from
+   the deck folders) and is checked by `npm run validate:backlog`. Its
+   `ceiling` is a high-water mark: the count falls as work lands, the ceiling
+   holds, and growth must be asked for by name (`npm run gen:backlog --
+   --raise-ceiling`) so it shows up in a diff as a deliberate act. Deferred
+   words are listed separately, not counted as open. The gate **fails** if the
+   audit cannot run — a check that could not run must never report clean.
+
+   The clips are produced by `tools/narration/` (author-time, never shipped).
+   `tools/narration/text.mjs` is the **single source of truth** for the words
+   that get spoken; `narration-recipe.js` is generated from it for the browser
+   fallback, so the player and the generator can never disagree about how a
+   card is worded. Never hand-edit `narration-recipe.js`, and never let a second
+   copy of the recipe appear in first-party code.
 
 ## File map
 
 | File | Role |
 |---|---|
 | `index.html` | All screens (home/setup/game/results/browse/stats), Settings modal, script tags |
-| `timeline.js` | The entire game: state, screens, placement logic, vis-timeline rendering, Leaflet maps, glass init, settings |
+| `timeline.js` | The entire game: state, screens, placement logic, split-screen, vis-timeline rendering, Leaflet maps, glass init, settings |
 | `fx.js` | Interface effects layer → `window.FX` (see below) |
-| `events-data.js` | Deck loader + `window.DECKS` registry |
-| `decks/*.js` | Deck data files (script-tag globals, not modules) |
-| `scripts/*.mjs` | Node content tooling only (never loaded by the game) |
+| `globe.js` | 3D globe dock → `window.GlobeDock` (and `GlobeDockP2` for the split-screen pane) |
+| `narration.js` | Pre-rendered deck narration playback → `window.Narrator` (rule 6) |
+| `narration-recipe.js` | **Generated** browser copy of the spoken-text recipe → `window.NarrationText`; never hand-edited, regenerate with `npm run gen:recipe` |
+| `decks-io.js` | Deck JSON import/export → `window.exportDeck` / `exportAllDecks` / `importDeckFromFile` / `loadImportedDecks` (Blob + FileReader, no server) |
+| `events-data.js` | Deck registry (`window.DECKS`, `registerDeck`) + deck *sources* + shared filter helpers. **Holds no event data.** |
+| `decks/index.json` + `index.js` | **Generated** deck list (revision + bytes per package) — never hand-edited; regenerate with `npm run gen:index` |
+| `tools/narration/pronunciation-backlog.json` | **Generated** list of spoken words no dictionary knows, plus the accepted ceiling — never hand-edited; regenerate with `npm run gen:backlog` |
+| `content/sourcing-backlog.json` | **Generated** count of events with no registered source, per deck, plus the accepted ceiling — never hand-edited; regenerate with `npm run gen:sourcing` |
+| `decks/<id>/` | A deck package: `manifest.json` + `deck.json` + generated `deck.js` (+ `narration/*.mp3`) |
+| `scripts/*.mjs` | Node content tooling only (never loaded by the game): deck index + content/vendor/narration gates, the recipe mirror generator |
+| `tools/narration/` | Author-time narration generator: the recipe, Kokoro synthesis, ffmpeg post-processing, tests (see its README) |
+| `tools/kokoro-authoring/` | Author-time TTS model bundle only, gitignored and **never shipped** (see rule 2) |
+| `THIRD_PARTY_LICENSES.md` | Attribution manifest for everything third-party; enforced by `npm run validate:vendor` |
 | `doc/GAMIFICATION_BRIEF.md` | Ratified spec for the gamification layer over the mastery review log (streaks, leveling, achievements, feedback copy) |
+| `doc/LIBRARY_RESEARCH.md` | Decision record for third-party libraries: stack-fit ratings, licenses, and the traps |
+| `doc/SUCCESS_FACTORS.md` | Evidence-graded external research; subordinate to the brief and `MARKET_COMPARISON.md` |
 
 ## FX layer (`fx.js` → `window.FX`)
 
@@ -112,9 +228,11 @@ Architecture notes an agent must respect when touching animations:
 - **Glass:** `initGlassOnScreen()` is synchronous on purpose (kills the
   unstyled flash). It runs inside the curtain swap and at load.
 
-## Verification workflow (no test suite)
+## Verification workflow (no game test suite)
 
-There is no unit test framework. Verify changes in a real browser:
+There is no test harness for the game itself (no DOM/browser runner) — the
+Node tests under `tools/content-pipeline/` (`npm run test`) cover the content
+schema and gate only. Verify game changes in a real browser:
 
 ```bash
 python3 -m http.server 8000        # then open http://localhost:8000
@@ -124,6 +242,36 @@ Smoke checklist for FX changes: curtain sweeps both directions with correct
 slant, title carries deck name (setup) / "Game Start!" (game), no console
 errors, glass present at load and after transitions, reduced-motion emulation
 swaps instantly, `?v=` bumped on edited files.
+
+Additional checks for the surfaces built after this doc was last revised:
+
+- **Narration:** toggle it in Settings; *Play sample* plays on a narrated deck
+  (`world-history-first-timeline`) and degrades to the system voice on a deck
+  with no audio; no 404s and no attempt to load a TTS engine. Confirm the
+  fallback speaks the same words a clip would (that comes from
+  `narration-recipe.js`, so check it loaded — a missing one speaks the title
+  alone).
+- **Narration authoring:** `npm run narration -- --deck <id> --dry-run` prints
+  the words each card would speak with a leak check (no model, no ffmpeg);
+  `npm run validate:narration` verifies every shipped clip against the current
+  deck text; `--repair` rebuilds records from the files on disk. Rendering
+  needs `ffmpeg` and the one-time `npm --prefix tools/narration install`.
+  Clips render in **fp32** by default; `--dtype fp16|q8` selects another tier
+  (and re-renders everything, because the tier is in the content key).
+- **Pronunciation QA:** `npm run narration:audit` ranks every deck's risky words
+  against the CMU dictionary (`disagrees` / `no-reference` / `context` /
+  `agrees`); `npm run narration:audit -- --strips` renders one tiny MP3 per
+  candidate and writes a listening sheet. Findings are advisory; only year
+  leaks and dead `LEXICON` entries fail the run. Resolving a `no-reference`
+  word means looking it up **under its own script** — the English exonym is the
+  headword least likely to have a Wiktionary entry, so an English-only probe
+  reports a false negative (`Cleisthenes` 404s; `Κλεισθένης` does not, and its
+  Descendants block names the English form). `npm run narration:worksheet`
+  prints the ranked lookup procedure.
+- **Split-screen:** both panes accept input independently (keyboard **and**
+  pointer), each header shows its own deck/filters, results show head-to-head.
+- **Deck I/O:** export a deck, re-import it, confirm it replaces by id.
+- **Vendored assets:** `npm run validate:vendor` passes (rule 2).
 
 ## Conventions
 

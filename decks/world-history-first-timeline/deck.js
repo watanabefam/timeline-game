@@ -434,7 +434,7 @@ window.registerDeck({
       "who": "Polynesian voyagers",
       "where": "Aotearoa (New Zealand)",
       "why": "One of the last great ocean migrations.",
-      "fact": "Navigators read stars, swells and birds to cross open ocean, then settled a land with no people and few land mammals.",
+      "fact": "Navigators read stars and swells and birds to cross open ocean, then settled a land with no people and few land mammals.",
       "summary": "Polynesian voyagers were among the greatest navigators in history. Sailing in large canoes, they read the stars, ocean swells and birds to find distant islands. Around 1280 they reached Aotearoa, now New Zealand, and settled it. The land had no people and few land mammals, so the settlers adapted their farming and hunting to a colder new world.",
       "lat": -41.3,
       "lng": 174.8,
@@ -787,69 +787,289 @@ window.registerDeck({
     "sampleRate": 24000,
     "format": "mp3",
     "bitrateKbps": 64,
-    "textRule": "strip-years-v1",
+    "textRule": "strip-years-v2",
     "loudnessLufs": -16,
-    "generated": "2026-09-21",
+    "generated": "2026-09-30",
     "files": {
       "alexander-dies": {
         "path": "decks/world-history-first-timeline/narration/alexander-dies.mp3",
-        "bytes": 73965,
-        "sha256": "5e2680c4ffabaa7ce8156615b50986982ee5696ba3c1a681d5a0fbb22e6c1234",
-        "textHash": "aed1d1384323c2992058e83957c53d33e17b978c58c43743efd31de7fe3a1a13"
+        "bytes": 68948,
+        "sha256": "a6165c88270f48749f23019d02a65e07e020984c8d54cb638d32dd42fcf4e832",
+        "textHash": "aed1d1384323c2992058e83957c53d33e17b978c58c43743efd31de7fe3a1a13",
+        "durationMs": 8616
       },
       "athenian-democracy": {
         "path": "decks/world-history-first-timeline/narration/athenian-democracy.mp3",
-        "bytes": 85293,
-        "sha256": "38aadc2a300e6ead25db40a27d812a5336a59235848b163101066df342512b21",
-        "textHash": "d0e8a0f46204da797adb4a2f1f8d1554010c11d417c030d9551cac27425947e2"
+        "bytes": 82964,
+        "sha256": "d1b4d0120b956fb06c707b45c90bed4e28f5d311b49f3e1ec9439cf2055d8e7a",
+        "textHash": "f1e7c1db208032aecdfcdaa0bab12a4a099ebf4cf927ee6a354ca67fa1b20e6a",
+        "durationMs": 10368
       },
       "augustus-principate": {
         "path": "decks/world-history-first-timeline/narration/augustus-principate.mp3",
-        "bytes": 84909,
-        "sha256": "9ff13016214f8b6efbe2d6d44aa97e13c58b80a550631bb1b03ec2823b161f76",
-        "textHash": "cb87a9a63b5e77264cbe61fea50d5b27b58cc96380fa147ee9e2cd05b215e226"
+        "bytes": 79700,
+        "sha256": "7234ae08453b5070d920401b01709d6f609258d02a32f3f7d38833a1a67e0080",
+        "textHash": "f38dcf640e9e595d5ef474f05e0824ea44dc0f79efa74e6d569673faaf305a7d",
+        "durationMs": 9960
       },
       "birth-of-jesus": {
         "path": "decks/world-history-first-timeline/narration/birth-of-jesus.mp3",
-        "bytes": 55917,
-        "sha256": "26b93ed92f5c3bdb2de44da962c10cdf860274f3d580d126efb4e87b1fc0d5e5",
-        "textHash": "20e843f25c6df0ed12373434dbc8c0d8ecb502a686d302bdebd0642e05fc11b8"
+        "bytes": 52244,
+        "sha256": "f461f07538cd235ec93251a17be958434c07c28ce1daa13706daba0f8d60d696",
+        "textHash": "20e843f25c6df0ed12373434dbc8c0d8ecb502a686d302bdebd0642e05fc11b8",
+        "durationMs": 6528
       },
       "buddha-monastic-order": {
         "path": "decks/world-history-first-timeline/narration/buddha-monastic-order.mp3",
-        "bytes": 83949,
-        "sha256": "cd53b6b143bde03236a719b741ab6914aa484020721c16dd6bd1189321417b2c",
-        "textHash": "ad0653025c56d469558cd6157ad1acae41c3292d2a95b3dbb8dbc7daedd6d72a"
+        "bytes": 78740,
+        "sha256": "2759cffe2a1ec306b150dd6951b7b8987e1484d4eff639afb8282d7cf416632a",
+        "textHash": "ad0653025c56d469558cd6157ad1acae41c3292d2a95b3dbb8dbc7daedd6d72a",
+        "durationMs": 9840
       },
       "confucius": {
         "path": "decks/world-history-first-timeline/narration/confucius.mp3",
-        "bytes": 72045,
-        "sha256": "24d01318e2b10eb24177972d38f1b45a653c53d65ce70020f964738521acb5d4",
-        "textHash": "b73dcaece28a91044a1b1c6d59665df88c472770bfaab3fcfaa6aa509ed0eca6"
+        "bytes": 66260,
+        "sha256": "a232ecc0265e9e3b32b351dc242c0c181fb09ecb6b997b36e9a30e3b9b495353",
+        "textHash": "b73dcaece28a91044a1b1c6d59665df88c472770bfaab3fcfaa6aa509ed0eca6",
+        "durationMs": 8280
       },
       "egypt-unifies": {
         "path": "decks/world-history-first-timeline/narration/egypt-unifies.mp3",
-        "bytes": 66669,
-        "sha256": "6818458419b82c6d0facbe9e8583b9fff7b5b79df595be7c5bd239de2dbd224a",
-        "textHash": "1388742602ab865aa90dd6236015592a2ef738617a169a804d272f18db35476c"
+        "bytes": 61844,
+        "sha256": "67d86e4feed5910158cf77434a15a6c7a3fc6a20a78bde091e3f6844e9856fea",
+        "textHash": "1388742602ab865aa90dd6236015592a2ef738617a169a804d272f18db35476c",
+        "durationMs": 7728
       },
       "great-pyramid": {
         "path": "decks/world-history-first-timeline/narration/great-pyramid.mp3",
-        "bytes": 69357,
-        "sha256": "dafce06a11628ef7ac974886b6560cf9c333ec2871330315feb16a36ea9cc12e",
-        "textHash": "471065e1a6393c661c1f82c098427141b857e5932cfe29072be13255a07d1e4e"
+        "bytes": 64724,
+        "sha256": "d4e571fbbe4e43ab29d791afb1fcbca24aca6649b83854a13bdf914e2e4d6f26",
+        "textHash": "471065e1a6393c661c1f82c098427141b857e5932cfe29072be13255a07d1e4e",
+        "durationMs": 8088
       },
       "plato-academy": {
         "path": "decks/world-history-first-timeline/narration/plato-academy.mp3",
-        "bytes": 75117,
-        "sha256": "45368d5524202f1049b3dcb7017505910913e1cdfd690423dbec22ac3d106e70",
-        "textHash": "af676f8b95e89255e69cd3c028f5bb78e732d8d314e224929793363ea0ac889a"
+        "bytes": 69524,
+        "sha256": "b477b5ed75711ac15cad8fd4a0230c45659cade7a6dbb15c5015909e5c1cdaba",
+        "textHash": "af676f8b95e89255e69cd3c028f5bb78e732d8d314e224929793363ea0ac889a",
+        "durationMs": 8688
       },
       "qin-unifies-china": {
         "path": "decks/world-history-first-timeline/narration/qin-unifies-china.mp3",
-        "bytes": 71085,
-        "sha256": "803557f5c6f9dd8398a179e69d57d29aba200ec209662da7152efc83af25feed",
-        "textHash": "694124c4785ea233fa710c029c7af48bf62314fe785bd490eebac62a9fc04f31"
+        "bytes": 65300,
+        "sha256": "7c189c6c94983590f09c8e699bef3c34e1a0a34d5c2106111a5861d186fff0a2",
+        "textHash": "694124c4785ea233fa710c029c7af48bf62314fe785bd490eebac62a9fc04f31",
+        "durationMs": 8160
+      },
+      "first-peoples-australia": {
+        "path": "decks/world-history-first-timeline/narration/first-peoples-australia.mp3",
+        "bytes": 58388,
+        "sha256": "88d1d02987023f566300ff8c5f31ec35c00ad21ada7f626e0460602540b4031d",
+        "textHash": "47c697cb186b7b82da89f0ef251906172457956b4cb49ab0994ada49cae04238",
+        "durationMs": 7296
+      },
+      "first-farming": {
+        "path": "decks/world-history-first-timeline/narration/first-farming.mp3",
+        "bytes": 56276,
+        "sha256": "4c9d8744f731ccadf000434a18efb3c375f87ec1ec71dc8977bab7acdec1bdaf",
+        "textHash": "835392e28728aee3f5771ae689dc93d20d58bad20ebb96c3e1b76613fc356144",
+        "durationMs": 7032
+      },
+      "fall-western-rome": {
+        "path": "decks/world-history-first-timeline/narration/fall-western-rome.mp3",
+        "bytes": 86420,
+        "sha256": "625cece15a3f7e099b7b421ce13bf54e421022d8ccaac97e48c878fd230badeb",
+        "textHash": "402a8d026e91a42d357e6e783bfa099e1aa12b4d920f3f29ede1b603122fd732",
+        "durationMs": 10800
+      },
+      "hijra": {
+        "path": "decks/world-history-first-timeline/narration/hijra.mp3",
+        "bytes": 75860,
+        "sha256": "a5ce513ce81a92deef47b637fbced33577203b7b634ee1816aae02aed30958f6",
+        "textHash": "cc7e215416c4b9c888ddac55dac4991fd19f5d9438b9fe1940e0a6699ff689f1",
+        "durationMs": 9480
+      },
+      "charlemagne": {
+        "path": "decks/world-history-first-timeline/narration/charlemagne.mp3",
+        "bytes": 61460,
+        "sha256": "8af930279443d48b864ed0136de86458010ba00d0e346ac7556c51803f5c328b",
+        "textHash": "26810b826e103e7ebd8034eaf47e4bc5aab3a9a6c914a8706874cd188144554a",
+        "durationMs": 7680
+      },
+      "battle-hastings": {
+        "path": "decks/world-history-first-timeline/narration/battle-hastings.mp3",
+        "bytes": 54932,
+        "sha256": "17b270938030d61315c13559e47e4db12797f5071340151cdd7226fb5286589c",
+        "textHash": "ff57cc3a5ffa90e1692e609ccc71e31b2d9726b815218707f161618d93b76897",
+        "durationMs": 6864
+      },
+      "genghis-khan": {
+        "path": "decks/world-history-first-timeline/narration/genghis-khan.mp3",
+        "bytes": 72020,
+        "sha256": "b8857b9bb2f56bb50bf1ff1c6b1059da3e8115aaff16ea30fb8f566629314121",
+        "textHash": "062cac1134d23bdef83d3202231cbe7f83dfc2e06c69c9d5a5d27f5cf027798a",
+        "durationMs": 9000
+      },
+      "magna-carta-first": {
+        "path": "decks/world-history-first-timeline/narration/magna-carta-first.mp3",
+        "bytes": 66260,
+        "sha256": "6da8730678b845a33ce52ceef1a168f59374ba8835aac47545f2d39cc8b23717",
+        "textHash": "6ffd48a3c768c5fc40a979693c0a472788455fea0a1be217ea89f1dd6b5b6300",
+        "durationMs": 8280
+      },
+      "polynesians-aotearoa": {
+        "path": "decks/world-history-first-timeline/narration/polynesians-aotearoa.mp3",
+        "bytes": 77588,
+        "sha256": "ddf16fc47ced8b925134e62a9f1bfec7afc0027f361f0333f586cf5333112c3d",
+        "textHash": "fea9fe0c3b43877bad1e65b661a8bd44e7f1dcec90698d4249d988b3fd76516d",
+        "durationMs": 9696
+      },
+      "mansa-musa": {
+        "path": "decks/world-history-first-timeline/narration/mansa-musa.mp3",
+        "bytes": 72404,
+        "sha256": "7f86788c30815608e2e09c770ac254c598d208a6a5eaff68c58032dff46b3dea",
+        "textHash": "89f0068c80ac45003df80122e5734d46512974b653321dec51ddba5c4547a3bc",
+        "durationMs": 9048
+      },
+      "tenochtitlan": {
+        "path": "decks/world-history-first-timeline/narration/tenochtitlan.mp3",
+        "bytes": 71828,
+        "sha256": "f26e7f1d78fe137d42dafa26260421dcf20bb5f188c90ad317581c6f57c42dfc",
+        "textHash": "6aa2006d4389637f5568916daaa793ae8a587904130cf81a9be4cb4b74e614dd",
+        "durationMs": 8976
+      },
+      "black-death": {
+        "path": "decks/world-history-first-timeline/narration/black-death.mp3",
+        "bytes": 65492,
+        "sha256": "12f61c5070174ac19cc56235358d9845980b7f2be9641c2a2e3a0aead55ae8e0",
+        "textHash": "f989130912d615265ec0e2caad832264de827f0a765b2940fd2b7efbb1c273de",
+        "durationMs": 8184
+      },
+      "constantinople-falls": {
+        "path": "decks/world-history-first-timeline/narration/constantinople-falls.mp3",
+        "bytes": 69716,
+        "sha256": "e66c3c0135331fe789ed07a89d3f3a67ee6d0098b39ef8310a8e11b6e2c8d7d8",
+        "textHash": "b042775b6b96f49c1884ad42ed1b12545cfcd1a109255645a45349716de80d54",
+        "durationMs": 8712
+      },
+      "columbus-landfall": {
+        "path": "decks/world-history-first-timeline/narration/columbus-landfall.mp3",
+        "bytes": 85844,
+        "sha256": "1f53270c2a49bc929ca48bf7565a8d956ef994a34d4cd94f79f75d3994a7d0aa",
+        "textHash": "ddfa487ca108c2f43f0f98e0afe8491c75c7113bbc4a80ba13c35871538fe444",
+        "durationMs": 10728
+      },
+      "luther-theses": {
+        "path": "decks/world-history-first-timeline/narration/luther-theses.mp3",
+        "bytes": 70100,
+        "sha256": "11cb6930d477b3764e3a1cf77a590db6f7fc93a568254afc67d0fe5e0a5d3087",
+        "textHash": "587c2feba141e57710ec28f7f41093e20b5d3c20f1d7e30f340188a73216f05c",
+        "durationMs": 8760
+      },
+      "babur-mughal": {
+        "path": "decks/world-history-first-timeline/narration/babur-mughal.mp3",
+        "bytes": 84500,
+        "sha256": "ef8b87d5219d1eb67b9e62e5347fd388ad0af42318e9afd0f1aa74c194cff288",
+        "textHash": "be4c5d569b611f74e412c8784e60f250c27f035936f01793176fedc58c6fd3fe",
+        "durationMs": 10560
+      },
+      "american-revolution": {
+        "path": "decks/world-history-first-timeline/narration/american-revolution.mp3",
+        "bytes": 76628,
+        "sha256": "89604745510c07b894061b48a54c7679fecf1fcfa4862c0959a1645e3439fde1",
+        "textHash": "8e43d4104d6964073b9000ea9c9c3a639d8c92d8ccaba9141d217590182abbcc",
+        "durationMs": 9576
+      },
+      "bastille": {
+        "path": "decks/world-history-first-timeline/narration/bastille.mp3",
+        "bytes": 62228,
+        "sha256": "c1f70a1fe98a6c62f047ffa72ef78e581def84c81d4c47cffa35c36382035552",
+        "textHash": "491ff34fa1cf6917ce6262f094d989dc7d5c3e065064922f731961d100422343",
+        "durationMs": 7776
+      },
+      "saint-domingue-uprising": {
+        "path": "decks/world-history-first-timeline/narration/saint-domingue-uprising.mp3",
+        "bytes": 80660,
+        "sha256": "24bae991cdf59c95ae1701926ea35a4ce870baaccc29314cd802c762af67bbda",
+        "textHash": "1134085da895f01ab37ee4f172b55723ff1068ed1ea93f932b9544a113f71d57",
+        "durationMs": 10080
+      },
+      "us-civil-war-first": {
+        "path": "decks/world-history-first-timeline/narration/us-civil-war-first.mp3",
+        "bytes": 76628,
+        "sha256": "a17a7a839411057d31cedf6a229b680f83ceadf744bb3f37b180faff1fed1db2",
+        "textHash": "4ee4eb18731a6312c0d3d569b909de2381d47918f8da78064aaa3b250591ed81",
+        "durationMs": 9576
+      },
+      "meiji-restoration": {
+        "path": "decks/world-history-first-timeline/narration/meiji-restoration.mp3",
+        "bytes": 73748,
+        "sha256": "d5a9af1c3ac582fab258bba2690085f9878adc7785e33fc484556e752b0ca2d3",
+        "textHash": "17994eea55c416ebea29b866e26e8e8587509ad38c065353a68c25a1e42d2e61",
+        "durationMs": 9216
+      },
+      "berlin-conference": {
+        "path": "decks/world-history-first-timeline/narration/berlin-conference.mp3",
+        "bytes": 79700,
+        "sha256": "a079ebb1cc9a67de5fe782448c0a8e59f437311142507477c222c576459eaf1c",
+        "textHash": "3a24c6f6133fa5fcd99835d20d5902610121f621b971191eb28542493a17e478",
+        "durationMs": 9960
+      },
+      "ww1-first": {
+        "path": "decks/world-history-first-timeline/narration/ww1-first.mp3",
+        "bytes": 70484,
+        "sha256": "587bc5500fab8a0513cb6cb6127cf33dc45d6806e394561fc315dbfc4e10a32b",
+        "textHash": "9d8a7048bcd9db3c6467fb677eec4e34616943832e944bf0ca1b0c3643e8e52c",
+        "durationMs": 8808
+      },
+      "ww2-first": {
+        "path": "decks/world-history-first-timeline/narration/ww2-first.mp3",
+        "bytes": 80660,
+        "sha256": "1e7913fe6aa3414e56689a15e67f2094d620cce438aa43383a7d62dc47a81502",
+        "textHash": "ba14dfea0baaad57e052ba2f04609ac06f9342a8ecdb74829d6b1609ca703ab6",
+        "durationMs": 10080
+      },
+      "united-nations": {
+        "path": "decks/world-history-first-timeline/narration/united-nations.mp3",
+        "bytes": 66644,
+        "sha256": "c194758cafc8e677e29d4bd0d0f6e3ee8530a3bc0a783fa3254e51d7b9fbec25",
+        "textHash": "8072338b7a56040a0e3a3abbe885893eb5716ba0d5d964055fc093f8cdaabbc5",
+        "durationMs": 8328
+      },
+      "india-pakistan-independence": {
+        "path": "decks/world-history-first-timeline/narration/india-pakistan-independence.mp3",
+        "bytes": 79508,
+        "sha256": "9d4e7a418eeffdc3cfe46355cddd5fa17a468fa38f8ef57e2f4dc5df0801b0fe",
+        "textHash": "9863943a1c54827570393f24a0d4e5f05787d1b7fbb54ac35195b644484e582d",
+        "durationMs": 9936
+      },
+      "human-rights-declaration": {
+        "path": "decks/world-history-first-timeline/narration/human-rights-declaration.mp3",
+        "bytes": 79124,
+        "sha256": "aa1ab7a37fdf3b757aef00b8de8dca52b9f061cdc06a6490a9bc6605d026cf70",
+        "textHash": "a4ad18ac7f72e3456831cd323ff590afbc334b3041618c6409995cdb63887b95",
+        "durationMs": 9888
+      },
+      "ghana-independence": {
+        "path": "decks/world-history-first-timeline/narration/ghana-independence.mp3",
+        "bytes": 73556,
+        "sha256": "495fb503827831540cb29fc01b5e490d3a9ae2b8f18beda0b2901be422932d22",
+        "textHash": "4479c19df40e1bb5d62a350ad53c5b4fb224a49f63627db1a6cb4cded280baca",
+        "durationMs": 9192
+      },
+      "berlin-wall-falls": {
+        "path": "decks/world-history-first-timeline/narration/berlin-wall-falls.mp3",
+        "bytes": 55892,
+        "sha256": "58e4533a2b014f28c2bc036a3a91d6745d2a3eef2bf6fd8db789c783c61863b9",
+        "textHash": "161f1cc98e860d29c175cff5e25ac1609234de79268a10a09f894ec04fdc5ecb",
+        "durationMs": 6984
+      },
+      "mandela-president": {
+        "path": "decks/world-history-first-timeline/narration/mandela-president.mp3",
+        "bytes": 79124,
+        "sha256": "a301a3ee6e7e7234e828fe0b795188acdb040dd4747c2c801f4e8548a65b381d",
+        "textHash": "a9ec41b6bc3c8bcf0d0f42606c0cee2878f7cee48ce7f6b5fc644d18a44ea3cb",
+        "durationMs": 9888
       }
     }
   },

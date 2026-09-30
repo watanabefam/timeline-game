@@ -126,7 +126,11 @@ async function main() {
   const outPath = path.join(__dirname, "generated-events.json");
   fs.writeFileSync(outPath, JSON.stringify(cleaned, null, 2));
   console.log(`Wrote ${cleaned.length} events to ${outPath}`);
-  console.log("Review, then merge into events-data.js (or load generated-events.json).");
+  console.log(
+    "Review, then merge into a deck (decks/<id>/deck.json for a bundled package, " +
+      "or import via Settings → Decks). This generator is ungrounded — prefer " +
+      "tools/content-pipeline/ for anything that ships."
+  );
   console.log("Run `node scripts/validate-content.mjs` to confirm the fact-quality rule passes.");
 }
 

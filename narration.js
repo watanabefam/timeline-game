@@ -12,6 +12,10 @@
  *              can't get the bytes there
  *   missing  : system voice (speechSynthesis) as a last resort
  *
+ * What the system voice reads comes from narration-recipe.js — the generated
+ * mirror of the authoring recipe (tools/narration/text.mjs), which is what
+ * removes years and other answer giveaways before anything is spoken.
+ *
  * See doc/CROSS_PLATFORM_ROADMAP.md §19.12.
  */
 (function () {
@@ -45,20 +49,17 @@
   function writeLS(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
   // --- system-voice fallback (only when a clip is missing/fails) ---------------
-  // Same year-stripping as the authoring recipe, so the answer is never spoken.
-  function stripYears(text) {
-    var s = String(text || "");
-    s = s.replace(/\(\s*(?:c\.|circa)?\s*\d{1,4}s?\s*(?:–|-|to)?\s*\d{0,4}s?\s*(?:BC|AD|BCE|CE)?\s*\)/gi, "");
-    s = s.replace(/\b(?:c\.|circa)\s*\d{1,4}s?\s*(?:BC|AD|BCE|CE)\b/gi, "");
-    s = s.replace(/\b\d{1,4}s?\s*(?:BC|AD|BCE|CE)\b/gi, "");
-    s = s.replace(/\b(?:1[0-9]{3}|2[0-9]{3})s?\s*(?:–|-|to)\s*(?:1[0-9]{3}|2[0-9]{3})s?\b/g, "");
-    s = s.replace(/\b(?:1[0-9]{3}|2[0-9]{3})s?\b/g, "");
-    s = s.replace(/\b(?:in|on|by|at|of|from|around|circa|c\.|~|near)\s*\d{1,3}s?\b/gi, " ");
-    s = s.replace(/^\s*(?:1[0-9]{3}|2[0-9]{3})s?\s*:\s*/, "");
-    s = s.replace(/\s+(?:in|on|by|at|of|from|around|circa|c\.|near)\s*(?=([,.;:!?]|$|\band\b))/gi, " ");
-    s = s.replace(/\s{2,}/g, " ");
-    s = s.replace(/\s+([,.;:!?])/g, "$1");
-    return s.trim();
+  // The words come from narration-recipe.js — the generated mirror of the
+  // authoring recipe (tools/narration/text.mjs) — so a card read by the system
+  // voice is worded exactly like its recording would be. One source of truth:
+  // the two must never drift, which is how the old inline regex ended up saying
+  // "Built in by the Nile" and leaving "1,789" in the audio.
+  function spokenFor(ev) {
+    var R = window.NarrationText;
+    if (R && R.spokenText) return R.spokenText(ev);
+    // narration-recipe.js is loaded before this file (index.html). If it is
+    // somehow missing, speak the title alone rather than risk the fact.
+    return ev && ev.title ? ev.title : "";
   }
 
   var SYSTEM_VOICE_PREF = ["Samantha", "Karen", "Daniel", "Moira", "Tessa", "Fiona", "Kate"];
@@ -89,7 +90,8 @@
     if (!("speechSynthesis" in window)) return;
     try {
       speechSynthesis.cancel();
-      var clean = stripYears(text);
+      var clean = String(text || "").trim();
+      if (!clean) return;
       var chunks = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [clean];
       var v = pickSystemVoice();
       var i = 0;
@@ -200,7 +202,7 @@
   function play(ev) {
     var url = urlFor(ev);
     if (!url) { // no clip shipped — last-resort system voice
-      speakSystem(ev.title + (ev.fact ? ". " + stripYears(ev.fact) : ""));
+      speakSystem(spokenFor(ev));
       return;
     }
     if (webAudioOK) {
@@ -209,10 +211,10 @@
         .catch(function () {
           // fetch/decode unavailable (file:// origin) — use the media element.
           webAudioOK = false;
-          if (!playElement(url)) speakSystem(ev.title);
+          if (!playElement(url)) speakSystem(spokenFor(ev));
         });
     } else if (!playElement(url)) {
-      speakSystem(ev.title);
+      speakSystem(spokenFor(ev));
     }
   }
   function warm(ev) {

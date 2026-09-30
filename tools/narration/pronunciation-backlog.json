@@ -1,0 +1,1269 @@
+{
+  "banner": "GENERATED FILE, DO NOT EDIT. tools/narration/pronunciation-backlog.json — every spoken word no dictionary knows, and the ceiling this project has accepted for them. Regenerate: npm run gen:backlog   ·   Verify: npm run validate:backlog   ·   payload hash: 50f5911a1b77",
+  "hash": "50f5911a1b77",
+  "ceiling": 138,
+  "openCount": 138,
+  "counts": {
+    "cc-timeline": 50,
+    "inventions-discoveries": 9,
+    "world-history-first-timeline": 0,
+    "world-literature": 79
+  },
+  "deferred": [
+    {
+      "word": "tenochtitlan",
+      "decks": [
+        "cc-timeline",
+        "world-history-first-timeline"
+      ],
+      "deferredKind": "engine-limit",
+      "deferredBecause": "The standard English reading is teh-NOCH-tee-TLAHN, five syllables with the /tl/ cluster intact. The engine force-syllabifies /tl/ as /t.l/ in every candidate tried (teh-noch-tee-tlahn, teh-noch-tee-lahn, teh-noch-tee-clahn, ten-och-tee-tlahn), each yielding six syllables with a doubled tee. A respelling cannot express an unbroken /tl/ cluster, so this is out of reach of the LEXICON layer entirely — the same wall as Raskolnikov's stress. It would need the IPA layer that was dropped, or a different alias strategy. Recorded so the investigation is not repeated."
+    }
+  ],
+  "open": [
+    {
+      "word": "ashoka",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "ɐʃˈoʊkə",
+      "events": [
+        "cc-036"
+      ]
+    },
+    {
+      "word": "bernini",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "bɜːnˈiːni",
+      "events": [
+        "cc-098"
+      ]
+    },
+    {
+      "word": "bolívar",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "bˈɑːlɪvˌɑːɹ",
+      "events": [
+        "cc-114"
+      ]
+    },
+    {
+      "word": "canaanites",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "kˈænɑːnˌaɪts",
+      "events": [
+        "cc-010"
+      ]
+    },
+    {
+      "word": "chalcedon",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "tʃˈælsɛdən",
+      "events": [
+        "cc-055"
+      ]
+    },
+    {
+      "word": "conquistadors",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "kɑːŋkˈiːstədˌoːɹz",
+      "events": [
+        "cc-095"
+      ]
+    },
+    {
+      "word": "cortés",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "kɔːɹtˈeɪz",
+      "events": [
+        "cc-095"
+      ]
+    },
+    {
+      "word": "daoism",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "dˈaʊɪzəm",
+      "events": [
+        "cc-028"
+      ]
+    },
+    {
+      "word": "diocletian",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "dɪəklˈɛʃən",
+      "events": [
+        "cc-047"
+      ]
+    },
+    {
+      "word": "england-france",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "ˈɪŋɡləndfɹˈæns",
+      "events": [
+        "cc-082"
+      ]
+    },
+    {
+      "word": "fdr's",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "ˌɛfdˌiːˈɑːɹz",
+      "events": [
+        "cc-140"
+      ]
+    },
+    {
+      "word": "genji",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "dʒˈɛndʒi",
+      "events": [
+        "cc-064"
+      ]
+    },
+    {
+      "word": "hagia",
+      "deck": "cc-timeline",
+      "count": 2,
+      "engine": "hˈædʒə",
+      "events": [
+        "cc-057"
+      ]
+    },
+    {
+      "word": "harappa",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "hˈæɹæpə",
+      "events": [
+        "cc-006"
+      ]
+    },
+    {
+      "word": "heian",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "hˈaɪən",
+      "events": [
+        "cc-064"
+      ]
+    },
+    {
+      "word": "hittites",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "hˈɪɾaɪts",
+      "events": [
+        "cc-010"
+      ]
+    },
+    {
+      "word": "huaorani",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "hjˌuːeɪˈoːɹˈɑːni",
+      "events": [
+        "cc-151"
+      ]
+    },
+    {
+      "word": "ii",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "ɹˌoʊmən tˈuː",
+      "events": [
+        "cc-069"
+      ]
+    },
+    {
+      "word": "justinian",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "dʒʌstˈɪniən",
+      "events": [
+        "cc-057"
+      ]
+    },
+    {
+      "word": "lao-tzu",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "lˈaʊtsˈuː",
+      "events": [
+        "cc-028"
+      ]
+    },
+    {
+      "word": "legalizes",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "lˈiːɡəlˌaɪzᵻz",
+      "events": [
+        "cc-048"
+      ]
+    },
+    {
+      "word": "martín",
+      "deck": "cc-timeline",
+      "count": 2,
+      "engine": "mˈɑːɹtɪn",
+      "events": [
+        "cc-114"
+      ]
+    },
+    {
+      "word": "mauryan",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "mˈaʊɹiən",
+      "events": [
+        "cc-036"
+      ]
+    },
+    {
+      "word": "mesoamerica",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "mˌɛsoʊɐmˈɛɹɪkə",
+      "events": [
+        "cc-017"
+      ]
+    },
+    {
+      "word": "minoans",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "mˈɪnoʊnz",
+      "events": [
+        "cc-007"
+      ]
+    },
+    {
+      "word": "mohenjo-daro",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "moʊhˈɛndʒoʊdˈæɹoʊ",
+      "events": [
+        "cc-006"
+      ]
+    },
+    {
+      "word": "mycenaeans",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "mˌaɪsənˈiənz",
+      "events": [
+        "cc-007"
+      ]
+    },
+    {
+      "word": "nabopolassar",
+      "deck": "cc-timeline",
+      "count": 2,
+      "engine": "nˈæbəpˌɑːlɐsˌɑːɹ",
+      "events": [
+        "cc-027"
+      ]
+    },
+    {
+      "word": "nebuchadnezzar",
+      "deck": "cc-timeline",
+      "count": 2,
+      "engine": "nˈɛbətʃˌædnɪzˌɑːɹ",
+      "events": [
+        "cc-027"
+      ]
+    },
+    {
+      "word": "nicea",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "nˈaɪsiə",
+      "events": [
+        "cc-050"
+      ]
+    },
+    {
+      "word": "nicene",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "nˈaɪsiːn",
+      "events": [
+        "cc-050"
+      ]
+    },
+    {
+      "word": "olmecs",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "ˈɑːlmɛks",
+      "events": [
+        "cc-017"
+      ]
+    },
+    {
+      "word": "pericles",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "pˈɛɹɪkəlz",
+      "events": [
+        "cc-033"
+      ]
+    },
+    {
+      "word": "prc",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "pˌiːˌɑːɹsˈiː",
+      "events": [
+        "cc-147"
+      ]
+    },
+    {
+      "word": "romana",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "ɹoʊmˈɑːnə",
+      "events": [
+        "cc-041"
+      ]
+    },
+    {
+      "word": "shang",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "ʃˈæŋ",
+      "events": [
+        "cc-014"
+      ]
+    },
+    {
+      "word": "shoguns",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "ʃˈɑːɡʌnz",
+      "events": [
+        "cc-076"
+      ]
+    },
+    {
+      "word": "songhai",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "sˈɔŋhaɪ",
+      "events": [
+        "cc-089"
+      ]
+    },
+    {
+      "word": "soviet-blocs",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "sˈoʊviətblˈɑːks",
+      "events": [
+        "cc-157"
+      ]
+    },
+    {
+      "word": "star-spangled",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "stˈɑːɹspˈæŋɡəld",
+      "events": [
+        "cc-115"
+      ]
+    },
+    {
+      "word": "sumer",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "sˈuːmɚ",
+      "events": [
+        "cc-004"
+      ]
+    },
+    {
+      "word": "systematized",
+      "deck": "cc-timeline",
+      "count": 2,
+      "engine": "sˈɪstəmˌæɾaɪzd",
+      "events": [
+        "cc-075",
+        "cc-096"
+      ]
+    },
+    {
+      "word": "theogony",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "θiːəɡˈɑːni",
+      "events": [
+        "cc-024"
+      ]
+    },
+    {
+      "word": "tokugawa",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "tˌoʊkjuːɡˈɑːwə",
+      "events": [
+        "cc-099"
+      ]
+    },
+    {
+      "word": "un-backed",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "ˈʌnbˈækt",
+      "events": [
+        "cc-149"
+      ]
+    },
+    {
+      "word": "ussher",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "ˈʌsʃɚ",
+      "events": [
+        "cc-002"
+      ]
+    },
+    {
+      "word": "vedas",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "vˈɛdəz",
+      "events": [
+        "cc-015"
+      ]
+    },
+    {
+      "word": "vulgate",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "vˈʌlɡeɪt",
+      "events": [
+        "cc-052"
+      ]
+    },
+    {
+      "word": "ww",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "dˌʌbəljˌuːdˈʌbəljˌuː",
+      "events": [
+        "cc-143"
+      ]
+    },
+    {
+      "word": "zanj",
+      "deck": "cc-timeline",
+      "count": 1,
+      "engine": "zˈændʒ",
+      "events": [
+        "cc-060"
+      ]
+    },
+    {
+      "word": "alchemists",
+      "deck": "inventions-discoveries",
+      "count": 1,
+      "engine": "ˈælkɪmˌɪsts",
+      "events": [
+        "gunpowder"
+      ]
+    },
+    {
+      "word": "berners-lee",
+      "deck": "inventions-discoveries",
+      "count": 1,
+      "engine": "bˈɜːnɚzlˈiː",
+      "events": [
+        "www-proposal"
+      ]
+    },
+    {
+      "word": "brahmagupta",
+      "deck": "inventions-discoveries",
+      "count": 1,
+      "engine": "bɹˈɑːmɐɡˌʊptə",
+      "events": [
+        "brahmagupta-zero"
+      ]
+    },
+    {
+      "word": "electrum",
+      "deck": "inventions-discoveries",
+      "count": 1,
+      "engine": "ᵻlˈɛktɹəm",
+      "events": [
+        "lydia-coins"
+      ]
+    },
+    {
+      "word": "lippershey",
+      "deck": "inventions-discoveries",
+      "count": 1,
+      "engine": "lˈɪpɚʃi",
+      "events": [
+        "lippershey-telescope"
+      ]
+    },
+    {
+      "word": "mendeleev",
+      "deck": "inventions-discoveries",
+      "count": 1,
+      "engine": "mˈɛndɪlˌiːv",
+      "events": [
+        "mendeleev-periodic-table"
+      ]
+    },
+    {
+      "word": "newcomen",
+      "deck": "inventions-discoveries",
+      "count": 1,
+      "engine": "nˈuːkʌmən",
+      "events": [
+        "newcomen-engine"
+      ]
+    },
+    {
+      "word": "röntgen",
+      "deck": "inventions-discoveries",
+      "count": 1,
+      "engine": "ɹˈɜːntdʒən",
+      "events": [
+        "roentgen-x-rays"
+      ]
+    },
+    {
+      "word": "uruk",
+      "deck": "inventions-discoveries",
+      "count": 1,
+      "engine": "jˈʊɹɹʌk",
+      "events": [
+        "writing-uruk"
+      ]
+    },
+    {
+      "word": "alyosha",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ˌælɪˈoʊʃə",
+      "events": [
+        "brothers-karamazov"
+      ]
+    },
+    {
+      "word": "ariosto",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ˌæɹɪˈɑːstoʊ",
+      "events": [
+        "orlando-furioso"
+      ]
+    },
+    {
+      "word": "ariosto’s",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ˌæɹɪˈɑːstoʊz",
+      "events": [
+        "orlando-furioso"
+      ]
+    },
+    {
+      "word": "austerlitz",
+      "deck": "world-literature",
+      "count": 2,
+      "engine": "ˈɔːstɚlˌɪts",
+      "events": [
+        "war-and-peace"
+      ]
+    },
+    {
+      "word": "béroul",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "bˈeɪɹaʊl",
+      "events": [
+        "tristan-and-iseult"
+      ]
+    },
+    {
+      "word": "boccaccio",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "bəkˈæksɪˌoʊ",
+      "events": [
+        "decameron"
+      ]
+    },
+    {
+      "word": "borodino",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "bˌoːɹədˈiːnoʊ",
+      "events": [
+        "war-and-peace"
+      ]
+    },
+    {
+      "word": "brobdingnag",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "bɹˈɑːbdɪŋnˌæɡ",
+      "events": [
+        "gullivers-travels"
+      ]
+    },
+    {
+      "word": "brontë",
+      "deck": "world-literature",
+      "count": 2,
+      "engine": "bɹˈɔntɛ",
+      "events": [
+        "jane-eyre",
+        "wuthering-heights"
+      ]
+    },
+    {
+      "word": "buendía",
+      "deck": "world-literature",
+      "count": 2,
+      "engine": "bjuːˈɛndiə",
+      "events": [
+        "one-hundred-years"
+      ]
+    },
+    {
+      "word": "candide",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "kˈændaɪd",
+      "events": [
+        "candide"
+      ]
+    },
+    {
+      "word": "castilian",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "kæstˈɪliən",
+      "events": [
+        "lay-of-the-cid"
+      ]
+    },
+    {
+      "word": "chrétien",
+      "deck": "world-literature",
+      "count": 2,
+      "engine": "kɹˈeɪʃən",
+      "events": [
+        "lancelot"
+      ]
+    },
+    {
+      "word": "circe",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "sˈɜːsi",
+      "events": [
+        "odyssey"
+      ]
+    },
+    {
+      "word": "clavell",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "klˈeɪvəl",
+      "events": [
+        "shogun"
+      ]
+    },
+    {
+      "word": "creon’s",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "kɹɪˈɑːnz",
+      "events": [
+        "antigone"
+      ]
+    },
+    {
+      "word": "dalloway",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "dˈæləwˌeɪ",
+      "events": [
+        "mrs-dalloway"
+      ]
+    },
+    {
+      "word": "dangereuses",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "dˈeɪndʒɚɹˌuːsᵻz",
+      "events": [
+        "liaisons-dangereuses"
+      ]
+    },
+    {
+      "word": "decameron",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "dᵻkˈæmɚɹən",
+      "events": [
+        "decameron"
+      ]
+    },
+    {
+      "word": "díaz",
+      "deck": "world-literature",
+      "count": 2,
+      "engine": "dˈiːɐs",
+      "events": [
+        "lay-of-the-cid"
+      ]
+    },
+    {
+      "word": "faerie",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "fˈɛɹi",
+      "events": [
+        "faerie-queene"
+      ]
+    },
+    {
+      "word": "furioso",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "fjˌʊɹɹɪˈoʊsoʊ",
+      "events": [
+        "orlando-furioso"
+      ]
+    },
+    {
+      "word": "garcía",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ɡˈɑːɹʃə",
+      "events": [
+        "one-hundred-years"
+      ]
+    },
+    {
+      "word": "genji",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "dʒˈɛndʒi",
+      "events": [
+        "tale-of-genji"
+      ]
+    },
+    {
+      "word": "guinevere’s",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ɡwˈɪnᵻvˌɪɹz",
+      "events": [
+        "lancelot"
+      ]
+    },
+    {
+      "word": "handmaid’s",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "hˈændmeɪdz",
+      "events": [
+        "handmaids-tale"
+      ]
+    },
+    {
+      "word": "havisham",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "hˈævɪʃˌæm",
+      "events": [
+        "great-expectations"
+      ]
+    },
+    {
+      "word": "helsing’s",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "hˈɛlsɪŋz",
+      "events": [
+        "dracula"
+      ]
+    },
+    {
+      "word": "heracles’",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "hˈɛɹəkəlz",
+      "events": [
+        "philoctetes"
+      ]
+    },
+    {
+      "word": "houyhnhnms",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "hˈaʊɪhnhnəmz",
+      "events": [
+        "gullivers-travels"
+      ]
+    },
+    {
+      "word": "ieyasu",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "iːjˈɑːsuː",
+      "events": [
+        "shogun"
+      ]
+    },
+    {
+      "word": "igbo",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ˈɪɡboʊ",
+      "events": [
+        "things-fall-apart"
+      ]
+    },
+    {
+      "word": "ingolstadt",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ɪŋɡˈɑːlstæt",
+      "events": [
+        "frankenstein"
+      ]
+    },
+    {
+      "word": "iseult",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ˈaɪsʌlt",
+      "events": [
+        "tristan-and-iseult"
+      ]
+    },
+    {
+      "word": "karamazov",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "kˈæɹɐməzˌɑːv",
+      "events": [
+        "brothers-karamazov"
+      ]
+    },
+    {
+      "word": "kriemhild",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "kɹˈiːmhɪld",
+      "events": [
+        "nibelungenlied"
+      ]
+    },
+    {
+      "word": "laclos",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "lˈækloʊz",
+      "events": [
+        "liaisons-dangereuses"
+      ]
+    },
+    {
+      "word": "laputa",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "lˈæpjuːɾə",
+      "events": [
+        "gullivers-travels"
+      ]
+    },
+    {
+      "word": "lemnos",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "lˈɛmnoʊz",
+      "events": [
+        "philoctetes"
+      ]
+    },
+    {
+      "word": "lilliput",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "lˈɪlɪpˌʊt",
+      "events": [
+        "gullivers-travels"
+      ]
+    },
+    {
+      "word": "lorris",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "lˈɔɹɪs",
+      "events": [
+        "romance-of-the-rose"
+      ]
+    },
+    {
+      "word": "macondo",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "mækˈɑːndoʊ",
+      "events": [
+        "one-hundred-years"
+      ]
+    },
+    {
+      "word": "márquez",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "mˈɑːɹkɛz",
+      "events": [
+        "one-hundred-years"
+      ]
+    },
+    {
+      "word": "marquise",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "mˈɑːɹkwaɪz",
+      "events": [
+        "liaisons-dangereuses"
+      ]
+    },
+    {
+      "word": "merteuil",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "mˈɜːtjuːˌɪl",
+      "events": [
+        "liaisons-dangereuses"
+      ]
+    },
+    {
+      "word": "metamorphoses",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "mˌɛɾəmˈoːɹfoʊzᵻz",
+      "events": [
+        "metamorphoses"
+      ]
+    },
+    {
+      "word": "meun",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "mjˈuːn",
+      "events": [
+        "romance-of-the-rose"
+      ]
+    },
+    {
+      "word": "meursault",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "mjˈuːəsˌɔlt",
+      "events": [
+        "the-stranger"
+      ]
+    },
+    {
+      "word": "middlemarch",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "mˈɪdəlmˌɑːɹk",
+      "events": [
+        "middlemarch"
+      ]
+    },
+    {
+      "word": "murasaki",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "mjˌʊɹɹɐsˈæki",
+      "events": [
+        "tale-of-genji"
+      ]
+    },
+    {
+      "word": "nibelungenlied",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "nˈaɪbləndʒˌɛnlid",
+      "events": [
+        "nibelungenlied"
+      ]
+    },
+    {
+      "word": "okonkwo",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ɑːkˈɔŋkwoʊ",
+      "events": [
+        "things-fall-apart"
+      ]
+    },
+    {
+      "word": "overstory",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ˌoʊvɚstˈoːɹi",
+      "events": [
+        "overstory"
+      ]
+    },
+    {
+      "word": "ovid",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ˈoʊvɪd",
+      "events": [
+        "metamorphoses"
+      ]
+    },
+    {
+      "word": "ovid’s",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ˈoʊvɪdz",
+      "events": [
+        "metamorphoses"
+      ]
+    },
+    {
+      "word": "philoctetes",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "fˈɪləktˌiːts",
+      "events": [
+        "philoctetes"
+      ]
+    },
+    {
+      "word": "polyneices",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "pˌɑːlɪnˈeɪsᵻz",
+      "events": [
+        "antigone"
+      ]
+    },
+    {
+      "word": "qing-dynasty",
+      "deck": "world-literature",
+      "count": 2,
+      "engine": "kˈɪŋdˈaɪnɐsti",
+      "events": [
+        "liaozhai"
+      ]
+    },
+    {
+      "word": "queene",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "kwˈiːn",
+      "events": [
+        "faerie-queene"
+      ]
+    },
+    {
+      "word": "raskolnikov",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ɹˈæskəlnˌɪkɑːv",
+      "events": [
+        "crime-and-punishment"
+      ]
+    },
+    {
+      "word": "rasselas",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ɹæsˈɛləz",
+      "events": [
+        "rasselas"
+      ]
+    },
+    {
+      "word": "rencesvals",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ɹˈɛnsɛsvəlz",
+      "events": [
+        "song-of-roland"
+      ]
+    },
+    {
+      "word": "saint-malo",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "sˈeɪntmˈɑːloʊ",
+      "events": [
+        "all-the-light"
+      ]
+    },
+    {
+      "word": "samsa",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "sˈæmsə",
+      "events": [
+        "metamorphosis"
+      ]
+    },
+    {
+      "word": "satis",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "sɐtˈiːz",
+      "events": [
+        "great-expectations"
+      ]
+    },
+    {
+      "word": "shikibu",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ʃˈɪkɪbˌuː",
+      "events": [
+        "tale-of-genji"
+      ]
+    },
+    {
+      "word": "shikibu’s",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "ʃˈɪkɪbˌuːz",
+      "events": [
+        "tale-of-genji"
+      ]
+    },
+    {
+      "word": "simorgh",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "sˈɪmoːɹɡ",
+      "events": [
+        "conference-of-the-birds"
+      ]
+    },
+    {
+      "word": "songling",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "sˈɔŋɡəlɪŋ",
+      "events": [
+        "liaozhai"
+      ]
+    },
+    {
+      "word": "sufi",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "sˈuːfi",
+      "events": [
+        "conference-of-the-birds"
+      ]
+    },
+    {
+      "word": "taliban-controlled",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "tˈælɪbəŋkəntɹˈoʊld",
+      "events": [
+        "kite-runner"
+      ]
+    },
+    {
+      "word": "thornfield",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "θˈoːɹnfiːld",
+      "events": [
+        "jane-eyre"
+      ]
+    },
+    {
+      "word": "tokugawa",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "tˌoʊkjuːɡˈɑːwə",
+      "events": [
+        "shogun"
+      ]
+    },
+    {
+      "word": "troyes",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "tɹˈɔɪz",
+      "events": [
+        "lancelot"
+      ]
+    },
+    {
+      "word": "vivar",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "vˈɪvɑːɹ",
+      "events": [
+        "lay-of-the-cid"
+      ]
+    },
+    {
+      "word": "vronsky",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "vɹˈɑːnski",
+      "events": [
+        "anna-karenina"
+      ]
+    },
+    {
+      "word": "wollstonecraft",
+      "deck": "world-literature",
+      "count": 2,
+      "engine": "wˈoʊlstoʊŋkɹˌæft",
+      "events": [
+        "vindication-rights-woman"
+      ]
+    },
+    {
+      "word": "ww",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "dˌʌbəljˌuːdˈʌbəljˌuː",
+      "events": [
+        "all-the-light"
+      ]
+    },
+    {
+      "word": "yossarian’s",
+      "deck": "world-literature",
+      "count": 1,
+      "engine": "jɑːsˈɛɹiənz",
+      "events": [
+        "catch-22"
+      ]
+    }
+  ]
+}

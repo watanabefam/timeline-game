@@ -271,17 +271,18 @@ New (per user, appended inside the existing `writeUser` path):
 
 ## 7. Where to hook in the code
 
-Line refs as of 2026-09-09 (`timeline.js`, 2,640 lines) — verify before editing:
+Line refs **re-verified 2026-09-29** (`timeline.js` 4,259 lines; `fx.js` ~700) —
+they move between commits, so verify again before editing:
 
 | Hook | Location | Use |
 |---|---|---|
-| `recordRun()` | ~1982 | Append one review-log row set; then re-derive streak/level/achievements; call `writeUser` (already here) |
-| `finishGame(won)` | ~2019 | Queue achievement unlocks + next streak milestone for the results screen |
-| `showResults(won)` | ~2026 | Achievement-unlocked modal mounts here (post-curtain); existing graded confetti at ~2078 is the pattern to extend |
+| `recordRun(state)` | timeline.js:3419 | Append one review-log row set; then re-derive streak/level/achievements; call `writeUser` (already here). **Note:** it already writes per-player, so in split-screen each player's outcomes land in their own profile |
+| `finishGame(ctx, won)` | timeline.js:3456 | Queue achievement unlocks + next streak milestone for the results screen |
+| `showResults(ctx, won)` | timeline.js:3508 | Achievement-unlocked modal mounts here (post-curtain); the existing graded confetti is the pattern to extend |
 | `FX.confetti({tier})` | fx.js:385 | Add rarity tiers ("light" first-run … "epic" mastered-week) |
-| `renderStats()` | ~1022 | Mastery-level/achievement surfaces; age-band copy switch (A3) |
-| Focus panel (`focus-panel` host) | ~1250 | Blocked-mix composition for 5–11 (A2); desirable-difficulty framing line (8–11) |
-| Profile create/registry | `newUser()` ~144 | Optional `ageBand` field (unset by default) |
+| `renderStats()` | timeline.js:1345 | Mastery-level/achievement surfaces; age-band copy switch (A3) |
+| Focus panel (`focus-panel` host) | timeline.js:1573 | Blocked-mix composition for 5–11 (A2); desirable-difficulty framing line (8–11) |
+| Profile create/registry | `newUser()` timeline.js:339 (`USERS_KEY` at :333) | Optional `ageBand` field (unset by default) |
 
 New code ships either appended to the `timeline.js` IIFE as a `Gamify = {…}`
 module-level object (matches `FX`/`DECKS` global convention) or, if split out,

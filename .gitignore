@@ -5,3 +5,20 @@ node_modules/
 *.tmp
 diag*.cjs
 grouped-v2.png
+
+# Editor/agent scratch state — never project code.
+.freebuff/
+
+# Author-time only: Kokoro TTS bundle + ONNX model (~125 MB). Used to generate
+# the pre-rendered MP3s in decks/<id>/narration/; never shipped, never committed.
+# It embeds an Emscripten build of eSpeak-NG (GPL-3.0-or-later) inside an
+# otherwise Apache-2.0 package, which is why it lives OUTSIDE assets/ — see
+# tools/kokoro-authoring/README.md and doc/LIBRARY_RESEARCH.md §2.
+tools/kokoro-authoring/cache/
+tools/kokoro-authoring/kokoro/
+
+# Author-time narration tooling (tools/narration). The npm dependency and
+# the incremental render state are per-machine, never committed: the state
+# keys clips by content so only changed cards ever re-synthesise.
+tools/narration/node_modules/
+tools/narration/.cache/

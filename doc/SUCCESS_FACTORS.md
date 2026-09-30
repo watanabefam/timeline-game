@@ -51,7 +51,11 @@ same date; where a page could not be retrieved, that is stated.
 
 ---
 
-## 3. Repo state used for the mapping (verified 2026-09-11)
+## 3. Repo state used for the mapping (verified 2026-09-11 — **snapshot, not current**)
+
+> Current state (2026-09-29): 4 deck packages, 321 events, deck JSON import/export,
+> pre-rendered narration, split-screen two-player, 3D globe. See
+> `doc/CROSS_PLATFORM_ROADMAP.md` §1 for the live table.
 
 | Fact | Evidence |
 |---|---|
@@ -61,13 +65,17 @@ same date; where a page could not be retrieved, that is stated.
 | Shareable result **text** already ships | `shareText()` + `#share-btn` in `timeline.js` (~lines 2234, 2463) |
 | "Streak" is **not** a retention mechanic | `game.streak` is a run of consecutive correct placements driving SFX pitch/juice (`timeline.js` 1589, 2032–2106). The retention streak is *planned* in `doc/GAMIFICATION_BRIEF.md`, not built. |
 | No leaderboard, no review log, no FSRS | absent from first-party code; log is specified in `AGENTS.md` + brief §6–§7 |
-| Single game mode | `modeLabel()` (~1660) returns the deck name; wrong placements bounce back, so the loss branch referencing `ENDLESS_LIVES` (~2181) is unreachable. `#mode-tag`/`#result-tag` still render the literal `DAILY`, a vestigial label, **not** a daily-puzzle loop. |
+| Single game mode | `modeLabel()` returns the deck name; wrong placements bounce back, so the loss branch referencing `ENDLESS_LIVES` is unreachable. `index.html` still ships the literal `DAILY` as the **static placeholder** in `#mode-tag` / `#result-tag`, but `timeline.js` overwrites both before the player sees them (game start / results) — a vestigial label, **not** a daily-puzzle loop. |
 
-**Doc drift found while mapping** (fix on its own commit, not here):
-`README.md` line 96 still advertises "lives, daily seed"; `doc/MARKET_COMPARISON.md`
-§3 marks "Daily challenge ❌" — correct in the sense of *shared Wordle-style daily
-puzzle*, but the two statements together imply a mode that does not exist. Say
-"single mode; no daily-puzzle loop" in both.
+**Doc drift found while mapping — status 2026-09-29.** `README.md` no longer
+advertises "lives, daily seed" (that line was already gone when this was
+re-checked; the surviving copy was the intro's "wrong placement costs a life",
+now fixed). `doc/MARKET_COMPARISON.md` §3's "Daily challenge ❌" is correct in
+the sense of *shared Wordle-style daily puzzle* and now says so explicitly. The
+`DAILY` placeholder is renamed to an honest label in the same pass. The repo
+state below is kept as the 2026-09-11 snapshot the analysis rests on — the tree
+has moved on since (4 decks / 321 events, deck import/export, narration,
+split-screen).
 
 ---
 

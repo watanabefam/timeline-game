@@ -32,8 +32,8 @@ window.DECK_INDEX = {
       "dir": "world-history-first-timeline",
       "entry": "deck.json",
       "script": "deck.js",
-      "revision": "478fa596132a",
-      "bytes": 781197,
+      "revision": "55744f431aa8",
+      "bytes": 2908605,
       "version": "1.0.0",
       "license": "CC-BY-SA-4.0",
       "attribution": []

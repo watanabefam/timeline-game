@@ -4,9 +4,9 @@
 > subscription-based, cross-platform application (iOS, Android, macOS, Windows, Linux)
 > with AI-powered features, in-app purchases, and institutional licensing.
 >
-> **Last updated:** 2026-09-20 | **Version:** 2.3 (adds §19.12 narration assets —
-> voice is pre-rendered and ships with the deck package; Kokoro only, never
-> synthesized at runtime)
+> **Last updated:** 2026-09-29 | **Version:** 2.3.1 (§1 current-state table
+> refreshed; the §19.12 narration retirement is now **executed** in the tree —
+> the runtime worker is deleted and the vendor bundle has left `assets/`)
 
 ---
 
@@ -40,11 +40,17 @@
 
 | Component | Status | Notes |
 |---|---|---|
-| Game engine | Complete | 2,042-line IIFE in `timeline.js` |
-| Event decks | Complete | World History (33 events), Classical Conversations (161 events) |
+| Game engine | Complete | ~4,260-line IIFE in `timeline.js` — deck registry + sources, multi-select filters, split-screen two-player, focus practice, browse/stats |
+| Event decks | Complete | 4 deck packages, 321 events: World History: A First Timeline (40), Inventions & Discoveries (40), Classical Conversations (161), World Literature (80) |
 | UI/UX | Complete | Dark theme, glass morphism, responsive to 480px |
+| Interface effects | Complete | `fx.js` (anime.js v4 + WAAPI curtains), reduced-motion parity |
+| 3D globe | Complete | `globe.js` — offline-texture globe dock; one instance per split-screen pane |
 | Offline maps | Complete | Leaflet + Natural Earth vector basemap |
+| Narration | Partial | Pre-rendered MP3s ship with the deck (§19.12); runtime synthesis retired 2026-09-29; generator + gate shipped 2026-09-29 (`tools/narration/`, §19.12.6); **10 of 321 events** have audio — the other 310 fall back to the system voice by design |
+| Deck import/export | Complete | `decks-io.js` — client-side JSON (Blob + FileReader), no server |
 | Player profiles | Local only | `localStorage` — no cloud sync |
+| Review log / mastery scheduler | None | Planned: append-only `reviewLog` + FSRS behind `rate(outcome) → nextDue` (AGENTS.md product direction, `doc/GAMIFICATION_BRIEF.md`) |
+| Content gate | Partial | `validate:index`, `validate:content`, `validate:vendor` pass. `validate:pipeline` **fails** on the two post-migration decks: 80 `SOURCE_MISSING` errors (their 80 events carry no `sources[]` yet — see `doc/CONTENT_PIPELINE.md` §3, shallow tier) |
 | AI generation | Script only | Node.js script, not integrated into game |
 | Backend | None | Fully client-side |
 | Authentication | None | No user accounts |
@@ -2566,9 +2572,16 @@ Rationale:
 
 Consequences, stated explicitly:
 
-- The runtime Kokoro worker, ORT WASM, model bundle, PCM cache, warm-up gate, and
-  system-voice fallback are **retired** for narration. `narration-worker.js` and
-  `assets/vendor/kokoro/` leave the shipped package.
+- The runtime Kokoro worker, ORT WASM, model bundle, PCM cache and warm-up gate
+  are **retired** for narration. `narration-worker.js` and
+  `assets/vendor/kokoro/` leave the shipped package — **executed 2026-09-29**:
+  the worker was deleted and the bundle was *moved* (never edited) to the
+  gitignored `tools/kokoro-authoring/`, outside `assets/`, so AGENTS.md rule 2
+  stays absolute. `npm run validate:vendor` fails if either returns.
+- **The system-voice fallback stays.** It is the last link of the runtime chain
+  in §19.12.8 (*decoded buffer → `new Audio(url)` → system voice → silence*),
+  reached only when an event has no clip. "Retired" above means the engine — a
+  missing or late clip must never be worse than the system reading the card.
 - Narration audio is fixed at generation time. Changing voice, engine, or
   normalisation is a **content regeneration + re-ship**, not a runtime toggle.
   Accepted — the corpus changes rarely.
@@ -2582,26 +2595,42 @@ Consequences, stated explicitly:
   theme: { background, music, gameMusic, accent },
   narration: {
     engine: "kokoro",                 // sole sanctioned engine
-    engineVersion: "1.0",
     model: "onnx-community/Kokoro-82M-v1.0-ONNX",
-    dtype: "fp16",                    // authoring uses the best available
+    dtype: "fp32",                    // model tier on disk; fp16|q8 also selectable
     voice: "af_heart",
     sampleRate: 24000,
     format: "mp3",
-    bitrateKbps: 48,
-    textRule: "strip-years-v1",       // normalisation recipe (§19.12.5)
-    loudnessLufs: -16,
-    generated: "2026-09-20",
-    files: {                          // event id → asset path
-      "first-peoples-australia": "assets/narration/first-peoples-australia.mp3"
+    bitrateKbps: 64,
+    textRule: "strip-years-v2",       // normalisation recipe (§19.12.5)
+    loudnessLufs: -16,                // target, under a -1.5 dBTP ceiling
+    generated: "2026-09-21",
+    files: {                          // event id → clip + its integrity record
+      "alexander-dies": {
+        path: "decks/<id>/narration/alexander-dies.mp3",  // repo-relative
+        bytes: 73965,
+        sha256: "…",
+        textHash: "…",                // sha256 of the spoken text
+        durationMs: 9216
+      }
     }
   }
 }
 ```
 
 - Every field is optional; a deck with no `narration` block simply has no voice.
-- `files` is a **map keyed by event id** for O(1) lookup. Identical normalised
-  text may map several event ids to one shared file (§19.12.6).
+- `files` is a **map keyed by event id** for O(1) lookup, each value a record
+  rather than a bare path, so integrity and freshness travel with the deck. The
+  schema (`tools/content-pipeline/schema/deck.schema.json`) is strict
+  (`additionalProperties: false`) and has **no `engineVersion` field** — the
+  engine/library version is recorded in `tools/kokoro-authoring/README.md` and
+  `THIRD_PARTY_LICENSES.md` instead. Do not add fields here without updating the
+  schema first.
+- Identical normalised text *may* map several event ids to one shared file
+  (§19.12.6), but measured over the 321-card corpus there are **no duplicates**,
+  so nothing shares a clip today.
+- The recipe applied to a card with no year in it returns the text unchanged, so
+  `textHash` for such a card is `sha256(title + ". " + fact)` — which is why the
+  ten clips recorded under v1 kept their hashes when v2 landed (§19.12.5).
 - Resolution is centralised in one `resolveNarrationSource(deck, eventId)`,
   mirroring `resolveThemeSource()` (§19.2). In-tree decks resolve to a
   same-origin path; packaged decks resolve to an object URL from
@@ -2609,58 +2638,50 @@ Consequences, stated explicitly:
 
 #### 19.12.3 Container layout & manifest
 
-Narration lives under `assets/`, exactly like other package media:
+**As built (2026-09-29), bundled in-tree decks** ship the clips in a
+`narration/` folder beside the deck — not under `assets/`, because a bundled
+deck has no `assets/` folder at all:
 
 ```
-manifest.json
-assets/
-  background.jpg
-  theme.mp3
-  narration/
-    first-peoples-australia.mp3
-    …
+deck.json          ← narration block + per-clip integrity records
+manifest.json      ← "assets": ["narration/<event-id>.mp3", …]
+narration/
+  first-peoples-australia.mp3
+  …
 ```
 
-`manifest.json` gains a `narration` block, and every narration file is also
-listed in `assets[]` with the standard integrity record (§19.3):
-
-```json
-"narration": {
-  "engine": "kokoro",
-  "model": "onnx-community/Kokoro-82M-v1.0-ONNX",
-  "dtype": "fp16",
-  "voice": "af_heart",
-  "sampleRate": 24000,
-  "format": "mp3",
-  "bitrateKbps": 48,
-  "textRule": "strip-years-v1",
-  "loudnessLufs": -16,
-  "generated": "2026-09-20",
-  "files": { "first-peoples-australia": "assets/narration/first-peoples-australia.mp3" }
-},
-"assets": [
-  { "path": "assets/narration/first-peoples-australia.mp3",
-    "mime": "audio/mpeg", "bytes": 18432, "sha256": "…" }
-]
-```
-
-Per-file narration records additionally carry `textHash` (sha256 of the
-normalised spoken text) and `durationMs`.
-
-**Bundled in-tree decks** (no ZIP; §19.1's two-layer rule) ship the same
-`narration/` folder as static files beside the deck, and
-`deck.narration.files` points at those paths. Identical runtime contract — no
-ZIP required for Phase 1.
+- `manifest.assets[]` stays a **plain string list** — that is what
+  `scripts/validate-content.mjs` asserts against the filesystem, and what the
+  packaging layer copies. The richer object form sketched in earlier revisions
+  of this section was never implemented and would break that check.
+- The integrity record (`bytes`, `sha256`, `textHash`, `durationMs`) lives in
+  `deck.narration.files[eventId]` (§19.12.2), which is where the runtime reads
+  the path from anyway (`narration.js` accepts either a string or a record).
+- Phase 2 (§19.12.10) is where `.timedeck` `assets/` and per-file manifest
+  records arrive, reusing `fflate` + `ContentPackStore` (§19.4–19.5). The
+  runtime contract does not change.
 
 #### 19.12.4 Methods & integrity
 
-- Media entries use ZIP `store` (0) — MP3 is already compressed (§19.3).
+- Media entries use ZIP `store` (0) — MP3 is already compressed (§19.3). Phase 2.
 - Integrity reuses §19.3: per-file `sha256` + `bytes`, optional Ed25519 over the
   canonical manifest for paid packs.
 - `textHash` pins each clip to the deck text, so editing a fact without
-  regenerating is caught by the gate (§19.12.7).
+  regenerating is caught by the gate (§19.12.7). It is the **primary** freshness
+  signal; recorded `sha256` is an integrity record, not a cross-machine
+  invariant, because audio bytes legitimately change with a new LAME build.
+- **Byte stability (as built):** the encoder's own metadata is stripped
+  (`-map_metadata -1 -fflags +bitexact -write_id3v2 0`), which removes the
+  `TAG:encoder=Lavf<version>` frame ffmpeg writes by default. Verified: two
+  renders of the same text are byte-identical, and re-encoding is unchanged
+  across ffmpeg patch versions.
+- **`durationMs`** comes from the clip's own MP3 frame count (the Xing/Info
+  header), read by a first-party parser in `tools/narration/audio.mjs` — no
+  probing binary, so the gate can verify the record with nothing installed. The
+  figure includes the encoder's ~60 ms delay, which is the point: generator and
+  gate compute it identically.
 
-#### 19.12.5 Spoken-text recipe (`strip-years-v1`)
+#### 19.12.5 Spoken-text recipe (`strip-years-v2`)
 
 The spoken text is **`title` + `. ` + normalised(`fact`)**, built at generation
 time:
@@ -2668,45 +2689,134 @@ time:
 - `fact` is spoken, but **answer years are stripped** from the spoken text
   (e.g. `"c. 2348 BC"`, `"in 1826"`) so the audio never gives the answer away.
   The card display keeps them.
-- The recipe is versioned (`textRule`) and recorded in the manifest. Changing it
+- The recipe is versioned (`textRule`) and recorded in the deck. Changing it
   invalidates every `textHash` and forces regeneration.
 - This moves year-stripping from a runtime backstop to the **authoring recipe** —
   applied once and verifiable, rather than re-applied on every play.
+- The **same recipe runs in the browser** for the fallback voice. It is written
+  once in `tools/narration/text.mjs` and copied verbatim into the generated
+  `narration-recipe.js` (`npm run gen:recipe`, asserted fresh by
+  `npm run validate:recipe`), because a hand-copied second version is exactly
+  what drifted last time.
 
-#### 19.12.6 Generation pipeline (`tools/generate-narration.mjs`)
+**v2 replaced v1 on 2026-09-29** — one implementation, three defects:
+
+| v1 produced | from | why it mattered |
+|---|---|---|
+| `Built in by the Nile` | `Built in c. 2348 BC by the Nile` | the year went but left a dangling preposition |
+| `About 1,789 people lived there` *(unchanged)* | the same text | the exact case this section names was never stripped |
+| `…(313)…`, `…(8th–13th c.)…` *(unchanged)* | a plain year in a parenthetical and a century range | more leaks, in forms v1's patterns missed |
+| `…the palace fell in, after a siege` | 62 of 321 facts | a fifth of the corpus read as broken English |
+
+v2 removes the whole **span** (parenthetical, range, decade, century, or the
+preposition and its date) and then repairs what is left, and it deliberately
+*keeps* every number that is not a year — measured across the corpus: 116 facts
+contain digits, but only 93 change at all, and durations like `2,300 years`,
+`3,000-year civilization` and counts like `~3,000` survive untouched. A card
+containing no year on any pattern is returned **byte-identical**, so no
+capitalisation or punctuation is ever rewritten (`iPhone Launched` stays
+`iPhone Launched`).
+
+The migration cost nothing: none of the ten shipped facts contains a digit, so
+v2 reproduces their `textHash` exactly — asserted by a test, not by inspection.
+`strip-years-v2` is also the only value the gate accepts; a deck still declaring
+v1 fails with a message rather than being silently mis-verified.
+
+Two failure modes to know about, because the corpus has real examples:
+
+- Titles that *are* the year — `The War of 1812`, `1984 (Orwell)` — degrade to
+  nothing usable, so the card's fact is spoken alone. Two cards do this today.
+- Removing a date can leave a clipped clause where the date sat mid-phrase
+  (`Set in 1873, the ghost…` → `Set, the ghost…`). The recipe repairs what it can
+  and cannot rewrite prose, so the listening pass (`--listen`) is where the
+  handful of awkward-but-harmless lines get caught.
+
+#### 19.12.6 Generation pipeline (`tools/narration/`) — **built 2026-09-29**
 
 Authoring tool — exempt from the no-build rule (rule 1 scope note; `tools/`
-already holds the §19.10 Phase 2 authoring-script precedent).
+already holds the §19.10 Phase 2 authoring-script precedent). Its own
+`package.json` pins **kokoro-js 1.2.1** as a dev dependency, mirroring
+`tools/content-pipeline/`; the game's dependency list is untouched.
 
-1. Load decks.
-2. Build normalised spoken text per event (`strip-years-v1`).
-3. **Content key** = `sha256(normalisedText + voice + model + dtype + format + bitrate)`.
-4. Skip events whose manifest entry already matches the key → **incremental
-   regeneration** (only changed cards re-synthesise).
-5. Synthesise with **Kokoro-82M, offline, fp16**.
-6. Post-process: trim to the speech envelope (~90 ms pad) and loudness-normalise
-   to the manifest's target LUFS.
-7. Encode mono, 24 kHz.
-8. Write `assets/narration/<event-id>.<ext>` — **deterministic naming mirroring
-   the deck's event ids** (the "naming convention is the pipeline killer" lesson
-   from shipped-voice games).
-9. Dedupe: identical normalised text shares one file.
-10. Refresh the manifest `narration` block + `assets[]` records.
-11. `--check` mode for CI: every event covered, hashes match, engine sanctioned.
+| File | Role |
+|---|---|
+| `text.mjs` | the recipe (§19.12.5) + `textHash` + content key |
+| `synth.mjs` | loads Kokoro from the local bundle, synthesises one line |
+| `audio.mjs` | trim, two-pass loudness, deterministic encode, duration, audition strips |
+| `generate.mjs` | CLI: render, `--dry-run`, `--repair`, `--listen`, `--check`, `--dtype` |
+| `pronounce.mjs` / `reference.mjs` | the engine's own phonemes, compared with the CMU dictionary |
+| `audit.mjs` / `strips.mjs` | pronunciation audit (four tiers) and its audition strips |
+| `test/recipe.test.mjs` | fixtures + invariants over all 321 real cards |
+| `test/pronounce.test.mjs`, `test/audit.test.mjs` | guards over the pronunciation QA loop |
 
-#### 19.12.7 Content-gate additions
+What it does, as built:
 
-Extend the §5 / §19 gates:
+1. Build the normalised spoken text per card (§19.12.5).
+2. **Content key** = sha256(recipe + engine version + text + voice + model +
+   dtype + format + bitrate + sample rate).
+3. Skip cards whose recorded key already matches → **incremental regeneration**.
+   The key lives in the tool's gitignored cache (`tools/narration/.cache/`),
+   keyed by deck **path** (not name — a scratch copy beside the real deck would
+   otherwise collide), because the deck schema has nowhere to store it.
+4. Synthesise offline: Kokoro-82M, `fp32`, `af_heart`, `device: cpu`, with
+   `allowRemoteModels = false` so a missing model file fails loudly instead of
+   fetching 326 MB.
+5. Trim to the speech envelope (0.09 s lead / 0.15 s tail), two-pass `loudnorm`,
+   re-measure the encoded file, and **fail the card** if the result is silent,
+   louder than target, more than 2 LU under it, or over the true-peak ceiling.
+6. Encode mono 24 kHz MP3 at 64 kbps, metadata stripped (§19.12.4).
+7. Write `decks/<id>/narration/<event-id>.mp3` — one file per event id, named
+   after it (the "naming convention is the pipeline killer" lesson).
+8. Refresh `deck.narration.files[eventId]` and `manifest.assets[]`.
+9. `--dry-run` prints the words, the key and a leak report with **no engine**;
+   `--repair` rebuilds records from files on disk with no engine; `--listen`
+   writes an HTML contact sheet of players for the human pass (a computer cannot
+   hear a mispronounced name).
 
-- Every event has a narration file, or the deck declares narration off.
-- Per-file `sha256`/`bytes` match; `textHash` matches the deck's *current*
-  normalised text (catches fact edits).
-- `engine` **must be `kokoro`**; any non-sanctioned or non-commercial engine is
-  rejected (§19.8).
-- `textRule` present and known.
-- Bundled-media `license` block present when required (§19.8). Kokoro output
-  needs no third-party media licence, but the engine/model/voice are recorded for
-  audit.
+Measured on the authoring machine (2026-09-29): model load ≈25 s cold, ≈2 s per
+card warm, so the whole 38.4k-character corpus is ~10 minutes of compute. The
+longest spoken card is **197 characters** against Kokoro's 510-token pass limit,
+so **no card needs chunking** and no clip is ever stitched mid-sentence — the
+seam problem that chunk-based pipelines hit (`kokoro#200` suggests ~160-character
+chunks) simply does not arise here. Nothing is downloaded at render time.
+
+The v1 plan's in-memory dedupe (step 9 above) is a no-op in practice — no two
+cards in the corpus share spoken text — so it is not implemented; if a future
+deck needs it, the recipe's `textHash` already identifies the sharing cards.
+
+#### 19.12.7 Content-gate additions — **built 2026-09-29**
+
+`scripts/validate-narration.mjs`, wired into `npm run validate` as
+`validate:narration`. **No dependencies**: it imports the recipe from
+`tools/narration/text.mjs` and reads MP3 durations with the tool's own frame
+parser, so it runs on a clean checkout with nothing installed.
+
+Per narrated deck:
+
+- `engine` **must be `kokoro`** (§19.8/§19.12.1) and `textRule` must be one the
+  gate can reproduce — a stale `strip-years-v1` deck fails rather than being
+  verified with the wrong recipe.
+- Every listed clip exists, with the recorded `bytes` and `sha256`.
+- `textHash` matches the recipe applied to the deck's *current* text — the check
+  that catches a fact edit with no re-record.
+- `durationMs` is present and matches the clip (within 150 ms; both sides come
+  from the same parser, so this only absorbs a record written by an older tool).
+- Every spoken line is non-empty and **leak-free** (`yearLeaks`), which is the
+  independent second opinion on §19.12.5: the generator strips, the gate checks.
+- `deck.narration.files`, the `narration/` folder and `manifest.assets[]` agree
+  in **both** directions — an orphan clip, a phantom record and an unlisted file
+  are all errors (the content gate already warns about orphan files generally).
+
+**Coverage is reported, not enforced.** A deck that ships 10 of 40 cards is a
+valid state: the other 30 fall back to the system voice, which is the whole
+point of §19.12.8. The gate prints the count and `--require-complete` is the
+strict mode for a deck that claims full coverage. Today:
+`world-history-first-timeline` 10/40, other three decks off.
+
+Bundled-media `license` block when required (§19.8) is unchanged: Kokoro output
+needs no third-party media licence, but the engine/model/voice are recorded for
+audit — in `tools/kokoro-authoring/README.md` and `THIRD_PARTY_LICENSES.md`,
+not in the deck (the schema is strict, §19.12.2).
 
 #### 19.12.8 Runtime wiring
 
@@ -2722,33 +2832,51 @@ Extend the §5 / §19 gates:
 
 #### 19.12.9 Format & size
 
-| Format | Decode support | Corpus size (46.5 min, mono 24 kHz) |
+| Format | Decode support | Corpus size (38.4k chars ≈ 42–49 min, mono 24 kHz) |
 |---|---|---|
-| **MP3** ~48 kbps | universal (all browsers, incl. older iPad Safari) | **~16 MB** |
+| **MP3** 64 kbps *(shipped)* | universal (all browsers, incl. older iPad Safari) | **~20–23 MB** |
+| MP3 ~48 kbps | same | ~16 MB |
 | Opus (Ogg) 24–32 kbps | Safari 18.4+ (CAF before that) | ~8 MB |
 | AAC (m4a) ~48 kbps | near-universal | ~14 MB |
 
-**v1 recommendation: single-format MP3** — universal `decodeAudioData` support,
-simplest container, small enough for the whole corpus. Opus is the documented
-size optimisation to revisit once the Safari floor is acceptable (§19.12.11).
+**v1, as shipped: single-format MP3 at 64 kbps** — universal `decodeAudioData`
+support and the simplest container. 64 rather than 48 because the ten existing
+clips are already 64 kbps and re-encoding them to save ~5 MB would invalidate
+every `sha256` for no listening benefit; 48 stays the documented option if the
+package size ever needs it. Opus remains the size optimisation to revisit once
+the Safari floor is acceptable (§19.12.11).
 
 #### 19.12.10 Phasing
 
 - **Phase 1 (bundled decks):** generator + `decks/<id>/narration/` files +
   `deck.narration` + resolver/prefetch/play; retire the runtime worker/bundle.
-  No new dependencies.
+  **Complete 2026-09-29** except for *content*: the generator, the shared recipe,
+  the browser mirror and the gate all exist and are verified; 10 of 321 cards
+  have audio. The remaining work is a listening pass and render time, not code
+  (`npm run narration -- --deck <id>`, then `--listen`).
+  No new game dependencies — the generator's npm dependency is author-time only.
 - **Phase 2:** narration moves inside `.timedeck` `assets/` (reuses `fflate` +
   `ContentPackStore`, §19.4–19.5).
 - **Phase 3:** the identical artifact is delivered via Supabase Storage (§19.7).
 
 #### 19.12.11 Open questions
 
-1. Single voice (`af_heart`), or a small voice set (corpus size ×N)?
-2. MP3-only v1, or Opus-first with a fallback source list?
-3. Do bundled free decks adopt a `narration/` folder layout now (they now carry
-   media), or move to pre-built `.timedeck` at launch? (sharpens §19.11 Q4)
-4. Loudness: standardise on −16 LUFS, or per-voice tuning?
-5. Ship narration for **all** bundled decks at launch, or start with one?
+1. **Answered 2026-09-29:** bundled decks use a deck-relative `narration/`
+   folder now, not `assets/` (§19.12.3); `.timedeck` remains Phase 2.
+2. **Answered 2026-09-29:** MP3 at 64 kbps, matching the shipped clips (§19.12.9).
+3. Still open — single voice (`af_heart`), or a small voice set (corpus size ×N)?
+   The recipe and the content key are voice-aware, so adding one is a settings
+   change plus a render, but every affected clip is re-recorded.
+4. Still open — loudness standard per voice, or keep one target? Measured
+   finding: −16 LUFS with a −1.5 dBTP ceiling is not reachable linearly for this
+   material — the ceiling wins and clips land ≈−17.1 LUFS. That is what ships,
+   and what the generator's ±2 LU band enforces for consistency.
+5. Still open — ship narration for **all** bundled decks at launch, or start
+   with one? Rendering the whole corpus is ~10 minutes of compute plus a human
+   listening pass; content, not engineering (§19.12.10).
+6. New — do any cards need a pronunciation override? Only the listening pass can
+   answer it; `tools/narration/text.mjs` has a `LEXICON` hook whose entries are
+   covered by `textHash`, so a fix is one line plus that card's re-render.
 
 ---
 
@@ -2810,10 +2938,26 @@ size optimisation to revisit once the Safari floor is acceptable (§19.12.11).
 | 2026-09-20 | Narration format v1: MP3, mono, 24 kHz, ~48 kbps | Universal `decodeAudioData` support including older iPad Safari; ~16 MB for the entire corpus. Opus (~8 MB) held as a size optimisation behind a Safari-18.4 floor |
 | 2026-09-20 | Narration text rule `strip-years-v1` applied at generation, not runtime | Years live only in the `year` field; stripping once at authoring is verifiable via `textHash`, replacing a runtime backstop |
 | 2026-09-20 | Narration assets use deterministic per-event filenames + per-file `textHash` | Matches shipped-voice-game practice: naming that mirrors entity ids, and a text hash so an edited fact without regeneration fails the content gate |
+| 2026-09-29 | **§19.12 retirement executed in the tree** — `narration-worker.js` deleted (it was already orphaned), the 125 MB Kokoro/ORT bundle moved out of `assets/vendor/` into the gitignored `tools/kokoro-authoring/` | `kokoro.web.js` statically embeds a GPL-3.0 eSpeak-NG build inside an Apache-2.0 package (`doc/LIBRARY_RESEARCH.md` §2) — a copyleft component sat in a tree headed for app stores, reachable from one orphaned file and copyable by any naive staging script. Moving (not deleting) keeps author-time regeneration possible, and moving it *outside* `assets/` keeps AGENTS.md rule 2 absolute |
+| 2026-09-29 | New `npm run validate:vendor` gate + `THIRD_PARTY_LICENSES.md` | The retirement above was a review finding; the gate makes the whole class mechanical (copyleft/non-commercial markers, retired TTS paths, missing license/version headers). Every vendored asset now has a recorded license and attribution duty |
+| 2026-09-29 | **Narration generator built** — `tools/narration/` (recipe + Kokoro + ffmpeg), npm `kokoro-js@1.2.1` as an author-time dev dependency, plus `npm run validate:narration` and the generated `narration-recipe.js` | The ratified decision needed a tool to produce the clips, and the authoring runtime had to be Node: the vendored browser bundle's `env` proxies bundled transformers 3.5.1 and its ONNX backend is never registered outside a browser, so it cannot be driven headlessly. The npm dependency is author-time only; the game's dependency list still has none |
+| 2026-09-29 | **Recipe v2 (`strip-years-v2`) replaces v1, in the generator *and* the browser fallback** | v1 was one regex doing two jobs badly: it leaked `1,789`, `(313)` and `(8th–13th c.)` into the audio while turning `Built in c. 2348 BC by the Nile` into `Built in by the Nile`, and left 19% of the corpus with dangling punctuation. v2 removes year *spans* and repairs the sentence, keeps non-year numbers, returns year-free text untouched, and is verified by `yearLeaks` in the gate. The two copies are generated from one source so they cannot drift again |
+| 2026-09-29 | Loudness policy recorded as **target −16 LUFS under a −1.5 dBTP ceiling**, peak-limited outcome accepted | Measured: the shipped corpus is already a mean −17.1 LUFS at ≈−1.8 dBTP. Demanding −16 exactly would either clip or require dynamics processing that changes the voice's character; the generator instead enforces a ±2 LU *consistency* band, and re-measures every encoded clip before it is written |
+| 2026-09-30 | `loudnorm` is aimed at **ceiling − 0.5 dB** (`ENCODER_OVERSHOOT`), so the −1.5 dBTP ceiling holds of the **encoded MP3** and not merely of the normalised samples; the 40 shipped clips re-rendered to ≈−2.2 dBTP | The ceiling is a property of the file a player decodes, and lossy encoding adds inter-sample overshoot. `newcomen-engine` normalised to −1.5 dBTP and the encoded file measured −1.0, so the card was rejected. It had stayed latent because every shipped clip happened to be compliant (−1.51 to −1.94) and the gate records no loudness or peak, making `renderClip`'s throw the only enforcement. Found by rendering a deck that had never been narrated — 39 of 40 cards passed, and the one that failed is the signature of a defect that would have been silent across 281 further cards. The earlier `TRUE_PEAK_MARGIN` bump was sized against a 0.01 dB rounding artefact when the real effect is up to 0.5 dB; the two are now separate quantities |
 
 ---
 
-*Last updated: 2026-09-20*
+*Last updated: 2026-09-29*
+*Version: 2.4 — §19.12 Phase 1 finished in code: `tools/narration/` (generator,
+recipe, ffmpeg audio policy), the generated browser mirror `narration-recipe.js`,
+and `npm run validate:narration` / `validate:recipe` gates. Recipe v2 replaces v1
+in both the generator and the browser fallback (§19.12.5); §19.12.3/§19.12.4/
+§19.12.6/§19.12.7/§19.12.9/§19.12.10 corrected to what actually shipped. Ten of
+321 cards have audio — the rest fall back to the system voice by design.*
+*Version: 2.3.1 — §19.12 narration retirement executed in the tree (worker
+deleted, vendor bundle moved out of `assets/`), `npm run validate:vendor` added
+to enforce the licensing rule, and §1 current-state refreshed. No decision
+changed — this records execution of the 2026-09-20 decision.*
 *Version: 2.3 — Adds §19.12 Narration assets: voice is pre-rendered at authoring
 time with Kokoro-82M (Apache-2.0, sole sanctioned engine) and shipped with the
 deck package; runtime synthesis, the ORT/model vendor payload, the PCM cache and

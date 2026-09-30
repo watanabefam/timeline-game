@@ -67,22 +67,23 @@ Legend: ✅ = supported · 🟡 = partial/limited · ❌ = not supported · — 
 | **Content** |
 | Pluggable deck system | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ (expansions) |
 | Multi-select filters | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Deck import/export | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Deck import/export | ✅ (JSON) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Custom deck builder | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Number of events | ~283 | ~100+ | Not disclosed | 1,200+ | Not disclosed | 96 cards | 858 events |
-| Number of categories/decks | 3 | 1 | Multiple (events/monuments/books/art) | 12 | Multiple topics | Multiple themes | 1 |
+| Voice narration | ✅ (pre-rendered, shipped with the deck) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Number of events | 321 | ~100+ | Not disclosed | 1,200+ | Not disclosed | 96 cards | 858 events |
+| Number of categories/decks | 4 | 1 | Multiple (events/monuments/books/art) | 12 | Multiple topics | Multiple themes | 1 |
 | Fact sheets (who/where/why) | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Mini location maps | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Game Modes** |
 | Unlimited play | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Daily challenge | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| Streak tracking | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Daily challenge | ❌ (single mode; no daily-puzzle loop — reseeded daily researched, not built) | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Streak tracking | ❌ (designed in `GAMIFICATION_BRIEF.md` D1–D3, unbuilt) | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
 | Streak freezes | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
 | Shareable results | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
 | Exact-year guessing mode | ❌ | ❌ | ❌ | ✅ (History Pinpoint) | ❌ | ❌ | ❌ |
 | Speed-round / timed | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | AI opponent | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Multiplayer (local/online) | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ (pass-and-play) | ✅ (pass-and-play) |
+| Multiplayer (local/online) | ✅ (split-screen, one device) | ❌ | ❌ | ❌ | ❌ | ✅ (pass-and-play) | ✅ (pass-and-play) |
 | **Learning & Accessibility** |
 | Focus / spaced-repetition | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Player profiles | ✅ | ❌ | ❌ | ✅ (mastery paths) | ❌ | ❌ | ❌ |
@@ -133,22 +134,23 @@ Legend: ✅ = supported · 🟡 = partial/limited · ❌ = not supported · — 
 | **Free + no ads + no IAP + offline** | No digital competitor offers all four. Every mobile app monetises via ads or subscriptions. |
 | **Pluggable deck system** | No digital competitor lets users swap content packs with independent filter screens. Sorting History's 12 categories are baked in. |
 | **Fact sheets + location maps** | Only TimeSort and Sorting History approach this; yours adds Leaflet maps and vis-timeline progress simultaneously. |
-| **No account / no build step** | Runs from any static host or `file://`. Chronle requires an account for cross-device progress. |
+| **No account / no build step** | Runs from any static host. Chronle requires an account for cross-device progress. (`file://` is a best-effort dev convenience only — never the shipping target.) |
+| **Voice narration** | No competitor in the niche reads the cards aloud, and none ships the audio (runtime TTS would need a network + a synthesis engine). Pre-rendered MP3s ship with the deck, work offline, and never speak the answer year. |
 
 ### 5.2 Highest-Value Missing Features (with proven market demand)
 
 | # | Feature | Proof of Demand | Effort | Priority |
 |---|---|---|---|---|
-| 1 | **Daily challenge mode** | Chronle, Timdle, Sorting History, Defrag all use it; single strongest retention mechanic in the niche | Low | Critical |
-| 2 | **More content / decks** | Sorting History has 1,200+ events across 12 categories; your 3 decks are the biggest content gap | Medium | High |
-| 3 | **Shareable result grid** | Chronle/Timdle shareable grids drive organic acquisition; zero-cost virality | Low | High |
-| 4 | **Streak tracking + freezes** | Defrag, Sorting History, Chronle all have it; proven retention multiplier | Low | High |
+| 1 | **Daily challenge mode** — 🔜 researched, not built (`doc/LIBRARY_RESEARCH.md` §4.1: date-seeded from the existing PRNG, no new dependency) | Chronle, Timdle, Sorting History, Defrag all use it; single strongest retention mechanic in the niche | Low | Critical |
+| 2 | **More content / decks** — ✅ now 4 decks / 321 events; still the biggest content gap | Sorting History has 1,200+ events across 12 categories | Medium | High |
+| 3 | **Shareable result grid** — 🟡 a flat text result already ships (`shareText()`); the per-round row grid does not | Chronle/Timdle shareable grids drive organic acquisition; zero-cost virality | Low | High |
+| 4 | **Streak tracking + freezes** — 🔜 designed (`doc/GAMIFICATION_BRIEF.md` D1–D3, including the no-dark-pattern rules), not built | Defrag, Sorting History, Chronle all have it; proven retention multiplier | Low | High |
 | 5 | **Difficulty progression / unlock system** | TimeSort unlocks 3→6 cards; gives players a progression goal | Low | Medium |
-| 6 | **Deck import/export + community sharing** | No competitor offers user-generated content; would differentiate the platform | Medium | Medium |
+| 6 | **Deck import/export + community sharing** — ✅ import/export shipped (`decks-io.js`); 🟡 community *sharing* (a shareable deck artefact) is not | No competitor offers user-generated content; would differentiate the platform | Medium | Medium |
 | 7 | **Exact-year guessing mode** | Sorting History's History Pinpoint; broadens audience | Medium | Medium |
 | 8 | **Timed / speed-round mode** | Untapped; easy to build on existing code | Low | Medium |
-| 9 | **Age-tiered content** | Homeschool market explicitly needs kids vs. adult pools | Medium | Medium |
-| 10 | **Local pass-and-play multiplayer** | Physical card games prove the mechanic; zero backend needed | Medium | Low |
+| 9 | **Age-tiered content** — 🔜 designed (`doc/GAMIFICATION_BRIEF.md` §5: optional `ageBand` gating copy/practice-mix only, never features) | Homeschool market explicitly needs kids vs. adult pools | Medium | Medium |
+| 10 | **Local pass-and-play multiplayer** — ✅ shipped as split-screen two-player (per-pane input, rail and globe; head-to-head results) | Physical card games prove the mechanic; zero backend needed | Medium | Low |
 | 11 | **AI opponent** | History Shuffle has it; competitive mode increases engagement | Medium | Low |
 | 12 | **Online multiplayer** | Highest effort; defer until daily challenge + social are proven | High | Low |
 
@@ -158,15 +160,18 @@ Legend: ✅ = supported · 🟡 = partial/limited · ❌ = not supported · — 
 
 - Competitor pricing and feature claims verified via App Store listings, official websites, and direct app pages as of 2026-09-08.
 - Chronle license: AGPL-3.0 (https://github.com/ajhenry/chronle.com) — free to inspect, but AGPL requires sharing modifications if serving publicly.
-- Your game codebase reviewed: 3 decks (`world-history`, `classical-conversations`, `world-literature`), ~283 events, vendored UMD scripts, no build step.
-- Feature ratings based on direct codebase inspection, not marketing copy.
+- Your game codebase reviewed (refreshed 2026-09-29): 4 deck packages (`world-history-first-timeline`, `inventions-discoveries`, `cc-timeline`, `world-literature`), 321 events, deck JSON import/export, pre-rendered narration, split-screen two-player, vendored UMD scripts, no build step.
+- Feature ratings based on direct codebase inspection, not marketing copy. Competitor columns are unchanged since 2026-09-08 and were not re-verified on 2026-09-29.
 
 ---
 
 ## 7. Next Steps
 
-1. **Prioritise Tier 1** (Daily challenge, streak, share grid) — these compound and are proven in-market.
-2. **Grow content library** — the pluggable-deck mechanism is ready; content volume is the biggest gap vs. Sorting History.
+*Status as of 2026-09-29 — see `doc/LIBRARY_RESEARCH.md` for the build decisions behind each.*
+
+1. **Prioritise Tier 1** (Daily challenge, streak, share grid) — these compound and are proven in-market, and all three are still unbuilt. Streak depends on the mastery review log (`AGENTS.md` product direction), so the log is the real first step.
+2. **Grow content library** — the pluggable-deck mechanism is ready and now holds 4 decks / 321 events; content volume remains the biggest gap vs. Sorting History.
+3. **Shipped since this research:** deck import/export, split-screen two-player, voice narration. Keep them out of the backlog.
 3. **Validate homeschool angle** — no competitor explicitly targets homeschooling families; this is a positioning advantage worth testing.
 
 ---

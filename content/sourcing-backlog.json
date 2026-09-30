@@ -1,0 +1,43 @@
+{
+  "banner": "GENERATED FILE, DO NOT EDIT. content/sourcing-backlog.json — events with no registered source, and the ceiling this project has accepted for them. Regenerate: npm run gen:sourcing   ·   Verify: npm run validate:sourcing   ·   payload hash: c3c6e0eb575c",
+  "hash": "c3c6e0eb575c",
+  "ceiling": 321,
+  "totalEvents": 321,
+  "sourcedEvents": 0,
+  "unsourcedEvents": 321,
+  "grandfatheredDecks": [
+    "cc-timeline",
+    "world-literature"
+  ],
+  "note": "No source → no ship (tools/content-pipeline/README.md). Grandfathered decks downgrade SOURCE_MISSING to a warning; this file counts them anyway, so an exemption never hides a number.",
+  "decks": [
+    {
+      "id": "cc-timeline",
+      "events": 161,
+      "sourced": 0,
+      "unsourced": 161,
+      "grandfathered": true
+    },
+    {
+      "id": "inventions-discoveries",
+      "events": 40,
+      "sourced": 0,
+      "unsourced": 40,
+      "grandfathered": false
+    },
+    {
+      "id": "world-history-first-timeline",
+      "events": 40,
+      "sourced": 0,
+      "unsourced": 40,
+      "grandfathered": false
+    },
+    {
+      "id": "world-literature",
+      "events": 80,
+      "sourced": 0,
+      "unsourced": 80,
+      "grandfathered": true
+    }
+  ]
+}

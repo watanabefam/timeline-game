@@ -5,7 +5,8 @@
  *
  * Each deck is a self-contained, reusable content pack:
  *   {
- *     id:       unique string (used in the daily seed)
+ *     id:       unique string (reserved for the future daily seed — no daily
+ *               mode ships today; see doc/LIBRARY_RESEARCH.md §6)
  *     name:     human label
  *     blurb:    one-line description
  *     emoji:    a glyph for the deck card
