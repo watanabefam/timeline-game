@@ -318,7 +318,7 @@ All client-side; no new dependency is required by any phase.
 pre-existing `validate:backlog` ratchet, and the pure derivations are
 machine-checked. **The browser smoke is no longer owed** — the level card's DOM
 contract is now asserted end-to-end by `tools/offline-smoke/mastery.mjs`
-(`npm run smoke:mastery`, 21/21 in Chromium): one seeded profile whose score is
+(`npm run smoke:mastery`, 18/18 in Chromium): one seeded profile whose score is
 exactly 15, the stats screen reached through the real UI, the DOM checked
 against `window.Gamify.mastery()`, and the age gate (17+ numeric, 8–11
 name-first, 5–7 name-only with no badge/bar/percentage) plus unset-band and
