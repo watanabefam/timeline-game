@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Author-time browser smoke for the offline layer (installability, offline boot, content updates, storage) in two engines. Never loaded by the game (AGENTS.md rule 1 scope note).",
+  "description": "Author-time browser smokes: the offline layer (installability, offline boot, content updates, storage) in two engines, and the S2 mastery level card. Never loaded by the game (AGENTS.md rule 1 scope note).",
   "scripts": {
     "smoke": "node smoke.mjs",
     "smoke:webkit": "node webkit.mjs",
+    "smoke:mastery": "node mastery.mjs",
     "browsers": "playwright install --with-deps webkit"
   },
   "devDependencies": {
