@@ -12,7 +12,7 @@
  * DERIVED score (`masteryOf()`), and the age-band gate (A3/§5) changes what
  * the card is allowed to say — the youngest band gets a name and one
  * encouraging line, with no badge, no progress bar, no percentage and no
- * "not enough data" copy anywhere on the screen. That is a copy + DOM
+ * level number in the level card. That is a copy + DOM
  * contract with no Node-testable half, so it needs a real browser.
  *
  * What it exercises, in a real Chromium, against a real HTTP server:
@@ -56,6 +56,11 @@ const check = (name, ok, detail = "") => {
   results.push({ name, ok });
   console.log(`  ${ok ? "✓" : "✗"} ${name}${detail ? `\n      ${detail}` : ""}`);
 };
+// A recorded GAP, not an assertion — printed so scope is visible, but kept out
+// of `results` so the pass tally counts only things that were actually checked.
+const note = (name, detail = "") => {
+  console.log(`  · ${name}${detail ? `\n      ${detail}` : ""}`);
+};
 const started = Date.now();
 let lastMark = started;
 const phase = (title) => {
@@ -78,7 +83,12 @@ let server = null;
 const openServer = (port) =>
   new Promise((resolve, reject) => {
     server = createServer((req, res) => {
-      let p = decodeURIComponent(new URL(req.url, "http://x/").pathname);
+      let p;
+      try {
+        p = decodeURIComponent(new URL(req.url, "http://x/").pathname);
+      } catch {
+        res.writeHead(400); res.end("bad request"); return;
+      }
       if (p.endsWith("/")) p += "index.html";
       const file = resolvePath(root, "." + p);
       // Read-only, and never outside the repo.
@@ -252,8 +262,12 @@ async function main() {
     check("the badge and the progress bar are gone",
       c.card.badge == null && c.card.bar == null,
       `badge=${c.card.badge}, bar=${!!c.card.bar}`);
-    check("no percentage and no level number appear anywhere in the card",
-      !/%/.test(c.card.text || "") && !/"Lv/.test(c.card.text || ""),
+    // textContent carries no HTML attribute text, so a `"Lv` probe is vacuously
+    // true — probe the rendered words directly (the 5–7 card is digit-free:
+    // "Apprentice Historian" plus the encouraging line).
+    check("no percentage, no level number and no digit appear anywhere in the card",
+      !/%/.test(c.card.text || "") && !/\bLv\b/.test(c.card.text || "") &&
+      !/\d/.test(c.card.text || ""),
       `text=<${c.card.text}>`);
     check("the weekly rows switch to a 0–4 star readout instead of a percentage",
       c.card.weekVals.length === 1 &&
@@ -289,11 +303,11 @@ async function main() {
 
     /* ---- 7. not covered here ---- */
     phase("7 · explicitly not covered by this run");
-    check("print output is NOT verified here", true,
+    note("print output is NOT verified here",
       "@media print restyles the card; a headless DOM check cannot see the printed page");
-    check("how the card LOOKS is NOT verified here", true,
+    note("how the card LOOKS is NOT verified here",
       "this asserts DOM text, roles and aria attributes, not pixels");
-    check("iOS Safari is NOT verified here", true,
+    note("iOS Safari is NOT verified here",
       "headless Chromium is not iOS; the same card is engine-independent, but that is an argument, not a measurement");
   } finally {
     await browser.close().catch(() => {});

@@ -371,13 +371,13 @@ optional band dropdown lives in the stats header (`#stats-band`,
 `Mastery NN%` for 5–7.
 
 **Browser-verified:** the level card's DOM contract is asserted end-to-end by
-`tools/offline-smoke/mastery.mjs` (`npm run smoke:mastery`, 21/21 checks in
-Chromium, ~9 s). It seeds one profile whose mastery score is exactly 15 (4
+`tools/offline-smoke/mastery.mjs` (`npm run smoke:mastery`, 18/18 checks in
+Chromium, ~8 s). It seeds one profile whose mastery score is exactly 15 (4
 mastered events + 1 mastered week + 2 capped perfect runs), reaches the stats
 screen through the real UI (user button → player name), and checks that the DOM
 title/badge/bar agree with `window.Gamify.mastery()`; that band 17+ shows the
-numeric breakdown; that 8–11 drops it; that 5–7 loses the badge, the bar, every
-percentage and the level number and turns the weekly rows into a star readout;
+numeric breakdown; that 8–11 drops it; that 5–7 loses the badge, the bar, the
+card's percentage and the level number and turns the weekly rows into a star readout;
 that an unset band behaves as the highest; and that all of it still holds under
 `prefers-reduced-motion: reduce`. It is **not** part of `npm test` (it needs a
 browser download), and it does not verify print output, pixel appearance or iOS.
