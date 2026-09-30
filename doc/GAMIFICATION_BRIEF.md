@@ -8,7 +8,7 @@
 > *incorporated* from a library — all patterns are hand-ported to this repo's
 > no-build vanilla stack.
 >
-> **Last updated:** 2026-09-30 | **Status:** ratified design; **phase 1 (review-log data layer) and phase 2 (mastery leveling) landed**; build order revised and amendments A7–A11 added after auditing the full vault against this layer. Phases 3–9 pending. Both landed phases are code-complete and gate-green but still owe a **browser smoke pass** (§13) — no DOM runner exists here, so only their pure derivations are machine-verified.
+> **Last updated:** 2026-09-30 | **Status:** ratified design; **phase 1 (review-log data layer) and phase 2 (mastery leveling) landed**; build order revised and amendments A7–A11 added after auditing the full vault against this layer. Phases 3–9 pending. Both landed phases are code-complete and gate-green. Phase 1 is data-only (nothing to render); **phase 2's level card is now covered by an automated browser smoke** — `npm run smoke:mastery` (`tools/offline-smoke/mastery.mjs`), which drives the real stats screen in Chromium and asserts the card's DOM against `window.Gamify.mastery()` for all four age bands plus reduced motion. The remaining §13 checklist items still belong to the phases that own them.
 
 ---
 
@@ -370,6 +370,18 @@ optional band dropdown lives in the stats header (`#stats-band`,
 `renderFocusPanel()` on the home screen is the one known gap — it still prints
 `Mastery NN%` for 5–7.
 
+**Browser-verified:** the level card's DOM contract is asserted end-to-end by
+`tools/offline-smoke/mastery.mjs` (`npm run smoke:mastery`, 21/21 checks in
+Chromium, ~9 s). It seeds one profile whose mastery score is exactly 15 (4
+mastered events + 1 mastered week + 2 capped perfect runs), reaches the stats
+screen through the real UI (user button → player name), and checks that the DOM
+title/badge/bar agree with `window.Gamify.mastery()`; that band 17+ shows the
+numeric breakdown; that 8–11 drops it; that 5–7 loses the badge, the bar, every
+percentage and the level number and turns the weekly rows into a star readout;
+that an unset band behaves as the highest; and that all of it still holds under
+`prefers-reduced-motion: reduce`. It is **not** part of `npm test` (it needs a
+browser download), and it does not verify print output, pixel appearance or iOS.
+
 ---
 
 ## 6. Data model & storage
@@ -626,6 +638,10 @@ No unit-test framework — extend the existing browser smoke checklist
   name and a friendly line with **no** score, percentage or bar, and "Mastery by
   week" shows stars and never "not enough data yet". Set it back to "Not set" →
   the full readout returns (unset = highest band).
+- **Mastery level card — now automated:** `npm run smoke:mastery`
+  (`tools/offline-smoke/mastery.mjs`) covers the level card, the age gate and
+  the reduced-motion path in Chromium; run it instead of clicking by hand for
+  that surface.
 - Achievements unlock once, queue on results, never mid-curtain.
 - Reduced-motion emulation → celebrations silent/static but still recorded.
 - Pre-reveal prompt (A8): appears at most **once per round**, is always followed

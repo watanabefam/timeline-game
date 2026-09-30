@@ -205,7 +205,7 @@ designing any learning or motivational surface, and cite it by § number.
 | `decks/<id>/` | A deck package: `manifest.json` + `deck.json` + generated `deck.js` (+ `narration/*.mp3`) |
 | `scripts/*.mjs` | Node content tooling only (never loaded by the game): deck index + content/vendor/narration/offline gates, the recipe mirror and icon generators |
 | `tools/narration/` | Author-time narration generator: the recipe, Kokoro synthesis, ffmpeg post-processing, tests (see its README) |
-| `tools/offline-smoke/` | Author-time browser smoke for the offline layer: `smoke.mjs` (Chromium) and `webkit.mjs` (Safari's engine). Not part of `npm test` — it needs a real browser download, and a check that cannot run must never report clean |
+| `tools/offline-smoke/` | Author-time browser smokes: the offline layer (`smoke.mjs` in Chromium, `webkit.mjs` in Safari's engine) and the S2 mastery level card (`mastery.mjs`, Chromium). Not part of `npm test` — they need a real browser download, and a check that cannot run must never report clean |
 | `tools/kokoro-authoring/` | Author-time TTS model bundle only, gitignored and **never shipped** (see rule 2) |
 | `THIRD_PARTY_LICENSES.md` | Attribution manifest for everything third-party; enforced by `npm run validate:vendor` |
 | `doc/GAMIFICATION_BRIEF.md` | Ratified spec for the gamification layer over the mastery review log (streaks, leveling, achievements, feedback copy) |
@@ -304,6 +304,14 @@ Additional checks for the surfaces built after this doc was last revised:
   itself (Add to Home Screen, iOS storage eviction), the browser's own install
   dialog, and eviction under memory pressure. `sw.js` must also stay **not**
   registered under `file://`.
+- **Mastery level card (S2, phase 2):** run the automated smoke —
+  `npm run smoke:mastery` (Chromium, ~9 s) covers the stats-screen age gate and
+  the level card's DOM contract for all four bands plus unset and
+  reduced-motion: the card's title/badge/bar must agree with
+  `window.Gamify.mastery()`, 17+ and unset show the numeric breakdown, 8–11
+  drops it, 5–7 loses the badge, the bar, every percentage and the level number
+  and turns the weekly rows into a star readout. **What it cannot cover:** print
+  output, pixel appearance, and iOS — check those by hand.
 - **Vendored assets:** `npm run validate:vendor` passes (rule 2).
 
 ## Conventions

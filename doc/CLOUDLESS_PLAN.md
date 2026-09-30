@@ -14,8 +14,10 @@
 > driven through two real engines (`npm run smoke:offline` in Chromium, 48/48;
 > `npm run smoke:webkit` in Safari's engine, 20/20) — see §3 S1. What remains is
 > the handful of behaviours no container can reproduce (iOS Safari itself, the
-> browser's own install dialog, eviction under memory pressure). D-CL2 remains
-> open, and so does the mastery layer's browser smoke (GAMIFICATION_BRIEF phase 2).
+> browser's own install dialog, eviction under memory pressure). The mastery
+> layer's browser smoke (GAMIFICATION_BRIEF phase 2) is now also automated —
+> `npm run smoke:mastery` — so S2's level card is no longer owed a manual pass.
+> D-CL2 remains open.
 >
 > **Interpretation note:** "cloud-less" here means *product builds that need no
 > cloud infrastructure*. It does not mean "no network" (the game is served over
@@ -127,7 +129,8 @@ validate`, `npm test`) cover content and narration, **not game behaviour**. So:
    real regression isn't lost in a known one.
 4. **Browser smoke on the served path.** For the offline layer this is now
    *automated* — `npm run smoke:offline` (Chromium) and `npm run smoke:webkit`
-   drive a real browser against a real server in `tools/offline-smoke/` — so
+   drive a real browser against a real server in `tools/offline-smoke/`, and
+   `npm run smoke:mastery` covers the S2 level card — so
    prefer it over clicking by hand; the one thing to keep in mind is that a
    browser download (`npm --prefix tools/offline-smoke install`, plus
    `npm --prefix tools/offline-smoke run browsers`) is a prerequisite. For
@@ -313,7 +316,14 @@ All client-side; no new dependency is required by any phase.
 `timeline.js`, the level card in `renderStats()`, and the stats-screen age gate
 (§11 has the design decisions). `npm run validate` stays green apart from the
 pre-existing `validate:backlog` ratchet, and the pure derivations are
-machine-checked; the **browser smoke is still owed** (no DOM runner here).
+machine-checked. **The browser smoke is no longer owed** — the level card's DOM
+contract is now asserted end-to-end by `tools/offline-smoke/mastery.mjs`
+(`npm run smoke:mastery`, 21/21 in Chromium): one seeded profile whose score is
+exactly 15, the stats screen reached through the real UI, the DOM checked
+against `window.Gamify.mastery()`, and the age gate (17+ numeric, 8–11
+name-first, 5–7 name-only with no badge/bar/percentage) plus unset-band and
+reduced-motion paths all covered. What it does not cover: print output, pixel
+appearance, iOS (the same honesty rule as S1).
 *Note:* the one item here that touches a shipped feature is **A7** (narration
 currently autoplays a verbatim read-along over the deciding moment) — it is a
 one-call-site change and it needs its own measurement.

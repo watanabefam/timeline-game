@@ -31,6 +31,7 @@
     "pipeline:sources": "node tools/content-pipeline/check-sources.mjs",
     "smoke:offline": "node tools/offline-smoke/smoke.mjs",
     "smoke:webkit": "node tools/offline-smoke/webkit.mjs",
+    "smoke:mastery": "node tools/offline-smoke/mastery.mjs",
     "validate:backlog": "node scripts/gen-pronunciation-backlog.mjs --check",
     "validate:content": "node scripts/validate-content.mjs",
     "validate:index": "node scripts/gen-deck-index.mjs --check",
