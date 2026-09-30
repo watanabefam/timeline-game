@@ -4,11 +4,11 @@
 > calendar, mastery leveling, achievements, celebration) that will sit **on top
 > of** the Focus-practice → mastery-system work described in `AGENTS.md`.
 > Based on online product/learning-science research (June–Sep 2026) and the
-> evidence vault in the sibling `course-studio` repo. Nothing here may be
+> learning-science vault vendored in `doc/references/`. Nothing here may be
 > *incorporated* from a library — all patterns are hand-ported to this repo's
 > no-build vanilla stack.
 >
-> **Last updated:** 2026-09-09 | **Status:** ratified design, not yet implemented.
+> **Last updated:** 2026-09-30 | **Status:** ratified design; **phase 1 (review-log data layer) and phase 2 (mastery leveling) landed**; build order revised and amendments A7–A11 added after auditing the full vault against this layer. Phases 3–9 pending. Both landed phases are code-complete and gate-green but still owe a **browser smoke pass** (§13) — no DOM runner exists here, so only their pure derivations are machine-verified.
 
 ---
 
@@ -17,7 +17,7 @@
 1. [Repository context — read first](#1-repository-context--read-first)
 2. [North star](#2-north-star)
 3. [Design decisions D1–D8](#3-design-decisions-d1d8)
-4. [Cross-product amendments A1–A6](#4-cross-product-amendments-a1a6)
+4. [Cross-product amendments A1–A11](#4-cross-product-amendments-a111)
 5. [Age-band gating](#5-age-band-gating)
 6. [Data model & storage](#6-data-model--storage)
 7. [Where to hook in the code](#7-where-to-hook-in-the-code)
@@ -70,10 +70,22 @@ conventions. Before implementing, an agent must be aware of:
   Defrag and Sorting History; achievements in The Timeline Game (iOS). Their
   streak/freeze/Paywalled patterns are the cautionary baseline, not the model.
 - **`README.md`** — player/content docs.
-- **Sibling evidence vault (NOT in this repo):**
-  `Education/course-studio/mcg_research_priorities.md` and
-  `mcg_research_synthesis.md` (course-content pedagogy; §4 amendments A1–A6 are
-  the transferable subset — most of that vault does **not** apply to a game).
+- **Learning-science vault (vendored here 2026-09-30):**
+  - `doc/references/mcg_research_synthesis.md` — 26 fronts (18 research fronts +
+    cross-front decision layers + a media landscape) with effect sizes, boundary
+    conditions and anti-patterns. §4 amendments A1–A11 are the subset that
+    transfers; most of the vault is course-content pedagogy (lesson templates,
+    SCORM, quiz blueprints) and should **not** pull this game toward "course"
+    territory.
+  - `doc/references/evidence-base.md` — per-pattern evidence ratings
+    (✅/🟡/⚠️/❌) for the patterns we borrowed. **Scope caveat:** it was written
+    for the sibling Montessori grammar-symbol project, so only its **§7
+    gamification** row (local-only/no-leaderboards is the right call; mastery
+    must outrank the streak) and its general SDT/feedback rows transfer. Its
+    grammar-symbol, Montessori-material and dyslexia-font rows do **not** apply
+    here — do not act on them from this repo.
+  - The older `Education/course-studio/…` paths are the vault's pre-vendoring
+    home; the in-repo `doc/references/` copies are now authoritative.
 
 ---
 
@@ -107,7 +119,7 @@ streak-experiment data is the only large-scale field evidence and it says the
 - **Spec:** a streak day is earned by completing **one placement round** (a
   round = one run; a loss still counts — learning happened). Score/perfect/XP
   never touch the streak.
-- **Hook:** inside `recordRun()` (timeline.js:1982), after `writeUser`.
+- **Hook:** inside `recordRun()` (timeline.js:3523), after `writeUser`.
 
 ### D2 — Forgiveness is a feature, not a cheat
 - **Evidence:** JCR (Silverman et al. 2023): users who break streaks often quit;
@@ -138,10 +150,10 @@ streak-experiment data is the only large-scale field evidence and it says the
   children game easy tasks for points.
 - **Spec:** level/title advancement uses **quality signals you already record**
   — first-try placements, perfect runs, curriculum-week mastery ≥80% (computed
-  today in stats/focus, timeline.js:1145, 1274). Do **not** add a total-XP
+  today in stats/focus, timeline.js:1572, 1701). Do **not** add a total-XP
   counter that rewards farming short easy rounds. Keep per-round points
   informational (as today), never the level engine.
-- Preserve the existing competence voice in `showResults()` (timeline.js:2026):
+-  Preserve the existing competence voice in `showResults()` (timeline.js:3620):
   "Perfect timeline!", "…but now you know something new."
 
 ### D5 — Achievements: few, real, reveal-able; no inflation, no day-0 progress bars
@@ -180,12 +192,19 @@ streak-experiment data is the only large-scale field evidence and it says the
 
 ---
 
-## 4. Cross-product amendments A1–A6
+## 4. Cross-product amendments A1–A11
 
-Transferable findings from the sibling `course-studio` evidence vault
-(`mcg_research_priorities.md` = P-references; `mcg_research_synthesis.md` =
-§-references). Only these transfer; the rest of that vault is course-content
-pedagogy and should not pull this game toward "course" territory.
+Transferable findings from the learning-science vault, now vendored at
+`doc/references/mcg_research_synthesis.md` (§-references) and
+`doc/references/evidence-base.md` (per-pattern ratings). A1–A6 were extracted
+while the vault still lived in the sibling `course-studio` repo; **A7–A11 were
+added 2026-09-30**, when it landed here and the *full* 26-front synthesis could
+be audited against this layer instead of only its originally-quoted subset.
+
+Only these transfer. The vault is course-content pedagogy and should not pull
+this game toward "course" territory: what transfers is the **learning
+mechanism**, never the course template (lesson templates, SCORM tiers, quiz
+blueprints and prompt engineering stay out).
 
 ### A1 — §24 quote is the north star (§2 above).
 ### A2 — Interleaving gate: blocked practice for young learners
@@ -215,6 +234,112 @@ pedagogy and should not pull this game toward "course" territory.
   round must be short/winnable so a failure state cannot occur on run #1
   (early-win rule, P1-8 / §2).
 
+### A7 — Narration is a support, not a transcript (⚠️ mixed evidence — move it, don't remove it)
+- **§17 conflict rule (explicit):** *"In self-paced courses, text + image is
+  sufficient. Do NOT add spoken narration to written text — the redundancy effect
+  (Adesope & Nesbit 2011) outweighs UDL's representation goal."* §6 names our
+  exact configuration as an anti-pattern: **"Full transcript as caption —
+  on-screen text that is an exact duplicate of the voiceover."**
+- **Why it lands here.** The clip is generated from `title + fact`
+  (`tools/narration/text.mjs` → `spokenText`) and the card *displays* those same
+  two fields, so the shipped narration is a verbatim read-along — and
+  `timeline.js:2475` autoplays it on **every card load**, i.e. over the exact
+  moment the child must read the card and decide where it goes. That is
+  redundancy *plus* split attention (§6, §7) at the retrieval moment, which is
+  the one moment this game cannot afford it. Narration also defaults **on**
+  (`narration.js` `boot()`).
+- **Honest counterweight.** The redundancy meta is genuinely mixed: spoken +
+  written can *beat* written alone for **low prior knowledge, system-paced,
+  picture-free** material, and audio is the accessibility layer for pre-readers
+  (§3 UDL). Our learners are low-prior-knowledge but *self-paced* — which is why
+  this is ⚠️, not a verdict to delete the feature.
+- **Spec (cheap, reversible, testable):** keep the feature and the existing
+  toggle; change *when* it fires. Autoplay at the **reveal/story moment** (after
+  placement) rather than on the deciding card, and always leave an on-demand
+  listen control on the card. Per band, §5. One call-site change
+  (`timeline.js:2475`) plus the reveal hook — revisit first if narration is ever
+  retuned.
+
+### A8 — One predirected micro-prompt before the reveal (✅ strong, tiny cost)
+- **§9:** self-explanation prompts g=0.55 overall, but the *format* dominates —
+  fill-in-the-blank g=0.90, **predirected g=0.70**, multiple-choice **g=0.24**
+  (the weakest). §13 supplies the rule that keeps it honest: *"Simply asking
+  learners to rate confidence without revealing actual accuracy does not improve
+  calibration. Every confidence prompt must be followed by the correct answer
+  disclosure."*
+- **Spec:** at most **one** prompt per round (prompt fatigue — §9 and §13 both
+  cap this at 1–2 per section), placed **before** the reveal and always followed
+  immediately by it. Predirected form only (*"Which event do you think came just
+  before this one?"*); never a multiple-choice self-explanation. Age gates per
+  §20: 5–7 **skip** it (abstract self-rating overloads working memory — progress
+  indicators only); 8–11 one simple self-check; 12+ full cycle.
+- **Compound payoff:** the answer is a second signal beside
+  `outcome: firstTry|slip`. Record it as an optional `confidence` field on the
+  same append-only row (never backfilled) — self-rated confidence is the
+  eventual `rate(outcome) → nextDue` grade's weakest input today, and D3's
+  derived-state rule makes adding it safe.
+
+### A9 — Keep the retrieval moment quiet (🟡 hypothesis — cheapest of the five)
+- **§7 (coherence, segmenting), §4 (`seductive details` effect), §3 (ADHD design:
+  "calm neutral colour palette, minimalist layouts").** The FX layer's ambient
+  chrome — curtain, vignette, shake, floatText, confetti — is *celebration*; during
+  the placement decision it is extraneous load with no learning job.
+- **Spec:** extend the existing `timeline.fx` toggle (`fx.js:27`) rather than
+  adding a second control — ambient FX suppressed in Focus/game, celebrations
+  untouched on the results screen, reduced-motion floor unchanged (D8). Available
+  to every profile (AGENTS.md: never educational-only); defaulted per band only
+  when `ageBand` is actually set.
+- **Mark this a hypothesis.** The mapped evidence is about *instructional
+  materials*, not ambient motion. Validate it against the §12 harm check
+  (slips/run must not rise) before treating it as settled.
+
+### A10 — For a history corpus, reach-back beats interval precision (✅ — saves work)
+- **§10 boundary:** *"For humanities/ethics/awareness courses, retrieval practice
+  still works but the spacing interval matters less — interleaving concepts from
+  earlier modules is the primary benefit."* Spacing effects are strongest in
+  isolated training (g=0.43), weaker course-embedded (g=0.24), and most
+  consistently demonstrated in **STEM** — not in history.
+- **Spec:** keep `rate(outcome) → nextDue` exactly as specified (AGENTS.md) — but
+  the first mastery win to build is the **reach-back due-queue** (surface events
+  last seen k rounds ago, weighted toward an earlier era/week), *not* FSRS
+  parameter tuning and *not* the ts-fsrs vendoring. **Do not gate any phase in
+  §11 on FSRS landing.** For the 5–11 bands this stays *blocked* per A2 — reach
+  back within the same era/week, never across it.
+
+### A11 — Model one placement, once, then get out of the way (✅ cheap, age-gated)
+- **§19 matrix:** for a knowledge course, Worked Examples = **Optional** and
+  Cognitive Apprenticeship = **Skip** — so do **not** build a worked-example
+  ladder or a fading sequence. But §20 keeps **modeling** for 5–7 ("Modeling +
+  exploration only"), and §14's own boundary says the worked-example effect is
+  *smaller for declarative knowledge (history facts)*.
+- **Why it lands here.** Onboarding today *is* the **"How to play" modal**
+  (`index.html:444`, opened by `#how-btn` at :52), and it is §2's first
+  anti-pattern verbatim — **"feature tour as onboarding"**: five ordered steps
+  about choosing a deck, picking a gap and the 3-point/1-slip economy, with no
+  example placement and no *why*. It also **leads with the scoring economy**,
+  which is the §9/D4 concern ("points never crowd out the feedback moment")
+  standing in the very first thing a new player reads. There is no modeled
+  placement anywhere in the game (verified 2026-09-30). §2's other trap,
+  **"no early win"**, is already A6's to own.
+- **Spec:** the first run demonstrates **one complete place → why** cycle on a
+  finished example (*"this mentions the printing press, so it goes after 1440 —
+  that's why it sits here"*), then hands over. One example, not a ladder; skipped
+  for profiles that have already completed a run (§14 expertise reversal —
+  demonstrating a placement the player can already do is worse than nothing).
+
+### Conflict ledger (tensions this layer actually faces)
+
+The vault resolves cross-front conflicts in its §17; these are the ones that bite
+*this* layer. Recorded here so the next agent does not re-litigate them.
+
+| Tension | Resolution in this layer | Basis |
+|---|---|---|
+| Narration vs redundancy | Keep it, **move it to the reveal**; never a verbatim read-along over the deciding card | §6, §17 → A7 |
+| Mastery-first vs streak-first | Mastery is the **progress signal**, the streak is retention support; never ship a streak as the *only* visible progress surface | §10/§8 vs evidence-base §7; D3, D4 |
+| Transfer-appropriate format vs interaction variety | Keep **placement** as the single graded format (§21: practice must match the performance task); vary the *scaffold* (anchors offered, era width, direction), not the graded format — §24's variety targets sameness *across content types* | §21 vs §24 |
+| Interleaving benefit vs age gate | Blocked for 5–11, conditional 12+ (already A2); A10's reach-back must respect it | §11, §20 |
+| Elaborated feedback vs efficiency | Depth by age band: full elaboration 5–11, moderate 12–16, concise 17+ | §8, §17; §5 |
+
 ---
 
 ## 5. Age-band gating
@@ -230,17 +355,27 @@ Source table: MCG §20 (values High/Medium/Low/Skip condensed).
 | Weekly-goal opt-in ("commit") | Never | Never | Optional, must monitor | SDT Autonomy / A5 |
 | Difficulty framing copy ("this feels tricky…") | Skip | Framing only | Full framing | Desirable Difficulties |
 | Post-slip feedback depth | Full elaboration | Full elaboration | Moderate | Feedback Depth |
+| Narration timing (A7) | At the reveal | At the reveal | On-demand | Multimedia §6 |
+| Pre-reveal prompt (A8) | Skip (progress indicators only) | One simple self-check | Full cycle | Self-explanation §9 |
 | Competition (family league) | Never | Opt-in off default | Opt-in off default | Social comparison |
 
 Implementation: one `band(profile)` helper; **no feature hidden behind age unless
 the profile actually set it** — unset behaves as the highest band.
+
+**Built 2026-09-30 (phase 2):** `band()` lands at `timeline.js:500` and the
+optional band dropdown lives in the stats header (`#stats-band`,
+`index.html` + `renderStats()`). The applied rows are the **Mastery %** row
+(level card and "Mastery by week", stats screen) and the **Narration timing** /
+**Pre-reveal prompt** rows are still pending (phases 8 and 4).
+`renderFocusPanel()` on the home screen is the one known gap — it still prints
+`Mastery NN%` for 5–7.
 
 ---
 
 ## 6. Data model & storage
 
 All new state is **derived** from the review log; only the log + tiny config are
-written. Existing shapes (timeline.js:138–209) unchanged:
+written. Existing shapes (timeline.js:333–398) unchanged:
 
 ```
 "timeline.users.v1"                       → { users: [{id,name,createdAt,hue,ageBand?}], activeId }
@@ -249,14 +384,22 @@ written. Existing shapes (timeline.js:138–209) unchanged:
     runs: [...], events: { <eventId>: { placements, slips, firstTry } } } } }
 ```
 
-New (per user, appended inside the existing `writeUser` path):
+New (per user, appended inside the existing `writeUser` path) — ✅ **shipped
+2026-09-30** (phase 1), except the `confidence?` field (A8, phase 4):
 
 ```
 "timeline.user.<id>.v1" += {
-  reviewLog: [ { ts, deck, eventId, outcome: "firstTry"|"slip", mode } ],   // append-only, cap ~2000, oldest pruned
-  meta: { tz: "Europe/Berlin" }                                             // IANA only, never fixed offset
+  reviewLog: [ { ts, deck, eventId, outcome: "firstTry"|"slip", mode,
+                 confidence? } ],        // append-only, cap 2000, oldest pruned
+  meta: { tz: "Europe/Berlin" }         // IANA only, never fixed offset
 }
 ```
+
+`confidence?` is the **only** sanctioned schema addition (A8): optional, written
+only for rows where the pre-reveal prompt was actually shown, and **never
+backfilled** — older rows stay absent, so every reader must tolerate `undefined`.
+Adding a field to an append-only log is safe *only* because nothing derives
+state from a mutable counter (D3); any future field must meet the same bar.
 
 - Streak/calendar/level/achievements = pure functions over `reviewLog` +
   existing `totals`/`events`. Nothing else is written, so cloud-profile sync
@@ -271,18 +414,26 @@ New (per user, appended inside the existing `writeUser` path):
 
 ## 7. Where to hook in the code
 
-Line refs **re-verified 2026-09-29** (`timeline.js` 4,259 lines; `fx.js` ~700) —
-they move between commits, so verify again before editing:
+Line refs **re-verified 2026-09-30** (`timeline.js` 4,533 lines; `fx.js` 690;
+`index.html` 501; `styles.css` 1,745) — they move between commits, so verify
+again before editing:
 
 | Hook | Location | Use |
 |---|---|---|
-| `recordRun(state)` | timeline.js:3419 | Append one review-log row set; then re-derive streak/level/achievements; call `writeUser` (already here). **Note:** it already writes per-player, so in split-screen each player's outcomes land in their own profile |
-| `finishGame(ctx, won)` | timeline.js:3456 | Queue achievement unlocks + next streak milestone for the results screen |
-| `showResults(ctx, won)` | timeline.js:3508 | Achievement-unlocked modal mounts here (post-curtain); the existing graded confetti is the pattern to extend |
+| `recordRun(state)` | timeline.js:3668 | Append one review-log row set; then re-derive streak/level/achievements; call `writeUser` (already here). **Note:** it already writes per-player, so in split-screen each player's outcomes land in their own profile |
+| `finishGame(ctx, won)` | timeline.js:3713 | Queue achievement unlocks + next streak milestone for the results screen |
+| `showResults(ctx, won)` | timeline.js:3765 | Achievement-unlocked modal mounts here (post-curtain); the existing graded confetti is the pattern to extend |
 | `FX.confetti({tier})` | fx.js:385 | Add rarity tiers ("light" first-run … "epic" mastered-week) |
-| `renderStats()` | timeline.js:1345 | Mastery-level/achievement surfaces; age-band copy switch (A3) |
-| Focus panel (`focus-panel` host) | timeline.js:1573 | Blocked-mix composition for 5–11 (A2); desirable-difficulty framing line (8–11) |
-| Profile create/registry | `newUser()` timeline.js:339 (`USERS_KEY` at :333) | Optional `ageBand` field (unset by default) |
+| `renderStats()` | timeline.js:1552 | Mastery-level card (phase 2, live) + age-band copy switch (A3); achievement surfaces (phase 6) |
+| `masteryOf(p)` / `band(user)` | timeline.js:549 / :500 | The phase-2 derivations — pure, deck-agnostic; the whole level comes from here |
+| `renderFocusPanel()` → `$("focus-panel")` | timeline.js:1821 (host :1822) | Blocked-mix composition for 5–11 (A2); desirable-difficulty framing line (8–11). **Still shows `Mastery NN%` for 5–7** — §5 gap noted in §11 |
+| Week-mastery calc (`firstTry / placements`) | timeline.js:1709 (stats), :1846 (focus) | The quality signal D4 levels from; `placements < 3` already renders "not enough data yet" |
+| `Narrator.speakEvent(ev, …)` | timeline.js:2620 | Autoplay site — **moves to the reveal per A7**; today it fires on every card load |
+| "How to play" modal | index.html:444 (`#how-btn` :52) | A11: leads with the points economy; needs one modeled *place → why* example |
+| Session log write (`appendReviewLog`) | timeline.js:445 | Cap enforcement (oldest pruned); the only write path for the log |
+| `syncTimezone()` | timeline.js:479 (called from `init()`) | Forward-only tz re-sync |
+| `window.Gamify` | timeline.js:597 | Read-only accessors: `reviewLog`, `activeDays`, `currentStreak`, **`mastery`, `band`**, `timezone` |
+| Profile create/registry | `newUser()` timeline.js:339 (`USERS_KEY` :333, `readUser`/`writeUser` :394/:398) | Optional `ageBand` field. **Set from the stats screen** (`#stats-band`, index.html) — deliberately not at create time, so §15.2's "Not set" default survives profile creation |
 
 New code ships either appended to the `timeline.js` IIFE as a `Gamify = {…}`
 module-level object (matches `FX`/`DECKS` global convention) or, if split out,
@@ -347,17 +498,78 @@ Derived from Feedback Quality (MCG §8 / P2) + Retrieval §10:
 
 Phases (each independently shippable):
 
-1. **Data layer:** `reviewLog` appended in `recordRun()`; day/streak derivation;
-   `tz` meta. No UI.
-2. **Streak UI:** profile/home chip + calendar (port Trophy UI's Streak Calendar
-   *structure* to a plain CSS grid); forgiveness states + copy (D2).
-3. **Mastery leveling** on the stats screen from existing quality signals (D4);
-   age-band copy switch (A3).
-4. **Achievements:** predicate registry + unlocked modal; new `FX` rarity tiers
-   (D8).
-5. **Optional:** family league (D6) once multi-profile usage justifies it.
+1. **Data layer:** ✅ **shipped 2026-09-30.** `reviewLog` appended in `recordRun()`
+   (one row per practiced card: `{ ts, deck, eventId, outcome, mode }`, capped at
+   2000); IANA `meta.tz` written with the log and re-synced forward-only on load
+   (`syncTimezone()` in `init()`); pure `activeDays()` / `currentStreak()`
+   derivation from local calendar days. Exposed read-only as `window.Gamify`.
+   No UI (unchanged).
+2. **Mastery leveling** on the stats screen from existing quality signals (D4);
+   age-band copy switch (A3). ✅ **Landed 2026-09-30** — see "what landed"
+   below. **Ordered ahead of the streak UI (was phase 3)**
+   after auditing the vault: evidence-base §7 rates gamification 🟡 — *"keep
+   streaks/badges as light support, but make mastery the real progress signal;
+   never let the streak become the goal"* — while retrieval practice and
+   elaborated feedback are the ✅-rated engines (§16). Shipping the streak first
+   would make it the *only* visible progress surface for that window, which is
+   precisely the misuse pattern §7 warns about. *Counter-argument, recorded:*
+   Duolingo's streak-separation data makes the streak the stronger **retention**
+   lever, so if retention is the near-term priority, ship 2 and 5 **together** in
+   one UI phase rather than reordering again.
 
-Forward-compat: phases 1–4 must not write state a future server cannot re-derive
+   **What landed (2026-09-30), and the decisions it forced.** A profile-wide
+   `masteryOf(profile)` derives one `{ score, index, title, next, pct, … }`
+   object from the signals D4 names, and `renderStats()` draws a level card
+   above the deck-scoped overview. Points a reader will want justified:
+   - **The score is quality-only and volume is worth nothing.** `masteredEvents`
+     (≥80% first-try accuracy, the bar the stats screen already used for a week)
+     + 5 per **mastered week** (≥3 placements at ≥80%) + 3 per perfect run,
+     **capped at 5 perfect runs**. The cap is the anti-farm clause: replaying a
+     short easy deck can contribute at most 15 of the first 80 marks, so a level
+     built mainly from distinct mastered events cannot be bought with volume.
+   - **Mastery is recoverable.** An event is judged on its *ratio*, not on a
+     never-slipped-again flag, so a single early slip does not lock an event out
+     of "mastered" forever. Volume alone still earns nothing: 500 placements on
+     a 50% event derive a score of 0.
+   - **Level is a property of the player, not of the open deck** (§6's derived
+     rule), so it reads every deck even when the stats screen is scoped to one.
+     Weeks are therefore keyed **per deck as well as by number** — two decks both
+     have a "Week 3", and merging them would invent a week no curriculum has.
+   - **Ladder:** Newcomer → Explorer → Apprentice Historian → Chronicler →
+     Historian → Master Historian → Keeper of the Timeline (0/4/10/20/35/55/80).
+     Thresholds, not XP: §15.3 still owns the final names.
+   - **Age gating is now reachable.** `band(user)` implements §5 with "unset =
+     highest band", and the stats header carries the **optional band dropdown**
+     §15.2 recommended ("Not set" default), so the 5–7 branch is testable rather
+     than dead code. For 5–7 the level card shows the title and an encouraging
+     line with **no score, no percentage and no bar**, and the "Mastery by week"
+     rows swap the percentage and the "not enough data yet" copy for a 0–4 star
+     readout.
+   - **Known gap, stated rather than papered over:** §5's mastery-% row is applied
+     to the **stats screen only**. `renderFocusPanel()` (home) still prints
+     `Mastery NN%` for a 5–7 profile. Phase 2 was scoped to the stats screen; the
+     home panel is a one-line follow-up, not an oversight to re-discover.
+3. **Reach-back due-queue** over the review log (A10). `rate(outcome) → nextDue`
+   stays the interface; for a history corpus reach-back is the first mastery win,
+   ahead of FSRS parameter work or the ts-fsrs vendoring. Age-gated per A2 —
+   within the block for 5–11.
+4. **Feedback depth at the moment of the slip** (§8/§9 copy rules, EFE — the only
+   feedback type effective for low prior knowledge) **+ one predirected
+   pre-reveal prompt** and the optional `confidence` field (A8).
+5. **Streak UI:** profile/home chip + calendar (port Trophy UI's Streak Calendar
+   *structure* to a plain CSS grid); forgiveness states + copy (D2, A5).
+6. **Achievements:** predicate registry + unlocked modal; new `FX` rarity tiers
+   (D8).
+7. **First-run modeling** (A11): one *place → why* cycle on a finished example,
+   skipped once a profile has completed a run.
+8. **Narration timing** (A7) + **quiet retrieval moment** (A9): one call-site
+   change each (`timeline.js:2475`; `fx.js:27`), no schema change.
+9. **Optional:** family league (D6) once multi-profile usage justifies it.
+
+Phases 2 and 5 are both UI-level and may land in either order — the *pair* is
+what matters; the streak must not ship alone (see the counter-argument in 2).
+
+Forward-compat: phases 1–9 must not write state a future server cannot re-derive
 from a synced log (roadmap §6.4). Phase 7 of the roadmap (server social) is
 *gated on* D6's local opt-in design being validated first.
 
@@ -371,8 +583,30 @@ Keep measurement minimal (no analytics infra — this is client-side):
 - **Harm checks (must not regress):** no mechanic increases average slips/run
   (grind signal); no red/punitive framing added; reduced-motion parity on all
   new surfaces.
-- Content gate: `npm run validate` still passes (no deck data touched by this
-  layer).
+- Content gate: this layer touches no deck data, so the `npm run validate` chain
+  (`validate:index`, `:content`, `:vendor`, `:recipe`, `:narration`,
+  `:sourcing`) stays green.
+- **Do not misread that green as "the content is sourced".** It is not. Sourcing
+  is a **ratchet, not a pass**: `content/sourcing-backlog.json` records **0
+  sourced / 321 unsourced events** against an accepted ceiling of 321, with
+  `cc-timeline` and `world-literature` grandfathered, and `validate:pipeline`
+  (the strict `SOURCE_MISSING` gate) is **deliberately excluded from the
+  `validate` chain** — the script prints a notice saying so instead. This is the
+  same principle the content pipeline states for itself: enumerating exposure is
+  not closing it (`doc/CONTENT_PIPELINE.md` §3). A green `validate` therefore
+  proves nothing about grounding; only `npm run validate:pipeline` speaks to that.
+- **Known-failing gate, pre-existing and unrelated (2026-09-30):**
+  `validate:backlog` fails — *"pronunciation-backlog.json is stale (0 open word(s)
+  now, on disk: 138)"* — and so does the one test that asserts the committed
+  backlog is current (`tools/narration/test/backlog.test.mjs:28`). Diagnosed: the
+  narration push's new lexicon/reference layer resolved every previously-unknown
+  spoken word, so the generator now derives an **empty** open set and the payload
+  hash no longer matches the checked-in file (on disk `50f5911a1b77`, derived
+  `38bfbe07fd53`). `npm run gen:backlog` is the mechanical resync and is the
+  intended workflow — the accepted ceiling (`138`) lives in **code**, not in the
+  file, precisely so a regeneration cannot blur the ratchet. Left unrun here
+  because it rewrites tracked content data; it is a narration-tooling follow-up
+  for the 2026-09-30 push, **not** a regression from this layer.
 
 ---
 
@@ -384,8 +618,22 @@ No unit-test framework — extend the existing browser smoke checklist
 - Miss a day → freeze consumed, chain intact; miss again → "paused" state, no
   broken-flame shame UI.
 - Wrong-first-try on two events → mastery drops, **no** penalty UI appears.
+- **Mastery level (phase 2):** the level card advances on first-try accuracy
+  and ≥80% weeks; replaying the shortest deck over and over must **not** move it
+  (volume earns nothing), while cleaning up an event that was previously slipped
+  **does** count once its own ratio clears 80%.
+- **Age band (phase 2, A3):** set a profile to 5–7 → the level card shows the
+  name and a friendly line with **no** score, percentage or bar, and "Mastery by
+  week" shows stars and never "not enough data yet". Set it back to "Not set" →
+  the full readout returns (unset = highest band).
 - Achievements unlock once, queue on results, never mid-curtain.
 - Reduced-motion emulation → celebrations silent/static but still recorded.
+- Pre-reveal prompt (A8): appears at most **once per round**, is always followed
+  by the reveal in the same interaction, and is absent entirely for a 5–7 profile.
+- Narration (A7): does **not** autoplay on the deciding card; plays at the reveal;
+  the on-demand listen control still works; toggling it off mid-round silences it.
+- Quiet mode (A9): with `timeline.fx` off, Focus/game ambient FX are suppressed
+  while results-screen celebrations still play; reduced-motion parity holds.
 - Two profiles → independent logs/streaks; switch active profile correctly.
 - `?v=` bumped on every edited first-party script (AGENTS.md rule 3).
 
@@ -414,11 +662,24 @@ No unit-test framework — extend the existing browser smoke checklist
   principles (tactile, reward-every-action). Neither is incorporable (React/
   Tailwind); port to plain CSS behind existing `styles.css` tokens.
 
-**Course-content pedagogy (amendments A1–A6 only):**
-- `Education/course-studio/mcg_research_priorities.md` — P-rules.
-- `Education/course-studio/mcg_research_synthesis.md` — §11 Interleaving,
-  §13 SRL, §20 age-gate, §23 Productive Failure, §24 Interaction-First,
-  §8 Feedback, §2 Onboarding, §5 SDT.
+**Learning-science pedagogy (amendments A1–A11) — vendored in `doc/references/`:**
+- `doc/references/mcg_research_synthesis.md` — §§2, 3, 4, 6, 7, 8, 9, 10, 11, 13,
+  14, 15, 17, 19, 20, 21, 23, 24, plus the §16 priority matrix. Section numbers
+  ("§11") throughout this brief refer to this file.
+- `doc/references/evidence-base.md` — ratings/corrections for the borrowed
+  patterns. **Only its §7 (gamification) and general SDT/feedback rows apply to
+  this repo** — it was written for the sibling Montessori grammar project; see the
+  scope caveat in §1 before quoting it.
+- Primary sources newly cited by A7–A11: Adesope & Nesbit 2011 (redundancy meta,
+  k=57); Noetel et al. 2021 (multimedia meta-meta, 29 reviews); Sweller, van
+  Merriënboer & Paas 2019 (CLT retrospective); Bisra et al. 2018 (self-explanation
+  meta, k=68); Guo 2022 (metacognitive prompts, g=0.50); Dignath et al. 2023
+  (monitoring tools, d=0.42); Murray et al. 2025 + Bego et al. 2024 (spacing, and
+  its weaker humanities/embedded boundary); Renkl 2014 and Barbieri et al. 2023
+  (worked examples — cited as the reason **not** to build a WE ladder); Kalyuga et
+  al. 2003 (expertise reversal); Collins, Brown & Newman 1989 (modeling).
+- The old `Education/course-studio/…` paths were the vault's pre-vendoring home;
+  the in-repo `doc/references/` copies are now authoritative.
 
 ---
 
@@ -429,8 +690,22 @@ No unit-test framework — extend the existing browser smoke checklist
    SRS-hostile. Recommendation: daily with D2 forgiveness; revisit if 5–11
    churn data says otherwise.
 2. **`ageBand` input:** store birth year or band at profile create? (Default:
-   optional band dropdown, "Not set" default.)
+   optional band dropdown, "Not set" default.) **Resolved 2026-09-30:** the
+   default was implemented as-is, but on the **stats screen** rather than at
+   profile create — a band chosen before a profile has any progress is a
+   decision the player has no reason to make, and putting it next to the level
+   card keeps cause and effect visible.
 3. **Level names/titles:** which milestones and whether first-try-only or
    include perfect-run credit (D4).
 4. Whether leveling replaces or coexists with per-round points display.
-5. Exact port list from Trophy/LingoKit to port (see §8 + §11 phase 2/4).
+5. Exact port list from Trophy/LingoKit to port (see §8 + §11 phase 5/6).
+6. **Narration timing (A7):** does moving autoplay to the reveal actually help,
+   and how is it measured? This is the only amendment touching an *accessibility*
+   feature, so it needs the §12 harm check plus an explicit read-along path for
+   5–7 if the change regresses their experience.
+7. **Phase 2 vs 5 order** (mastery leveling vs streak UI): the evidence-led order
+   is mastery first, but Duolingo's streak-separation data argues the other way.
+   Decide before starting either — the *pair* must not ship split (§11 phase 2,
+   conflict ledger).
+8. Whether `confidence` (A8) is worth the UI cost outside Focus practice — it is
+   cheapest on the Focus round, where the player already expects a prompt.

@@ -53,7 +53,7 @@
 | **Readability** | You set the grade level | ~73% of articles score below the "standard" reading threshold; median Flesch–Kincaid grade ≈ 9 (avg. adult reads at grade 7–8) |
 | **Safety** | You control every word | Wikipedia is explicitly **not censored** (violence, nudity, sexual content); Common Sense Media rates it 13+; schools have blocked it |
 | **Credibility** | Sourced, consistent, controlled | Contested in education; only ~40% of academics call it reliable |
-| **Offline** | Ships with the deck | Needs network; runtime caches are not durable (iOS may evict storage after ~7 days idle) |
+| **Offline** | Ships with the deck | Needs network, and caches are best-effort only — WebKit evicts on an LRU basis under storage pressure; `navigator.storage.persist()` is the only durability lever, and it can be refused |
 | **Payload** | ~2 KB of text | Full article ≈ 1.26 MB incl. ~53 images |
 
 Credibility here comes from **sourcing**, not from the Wikipedia brand: a curated

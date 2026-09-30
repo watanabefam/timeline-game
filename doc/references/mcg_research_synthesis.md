@@ -1,6 +1,7 @@
 # MCG Research Synthesis
 
 **Date:** 2026-07-07
+**Vendored into this repo:** 2026-09-30 (previously `Education/course-studio/`). In-repo consumers: `doc/GAMIFICATION_BRIEF.md` §4 (amendments A1–A11), which cites this file by § number — "§11" means section 11 *here*, not of that brief. It is **course-content pedagogy**: what transfers to a game is the learning mechanism (spacing, retrieval, feedback depth, interleaving and age gates), never the course template.
 **Purpose:** Consolidated research findings across 12 learning-science fronts to inform prompt improvements for MCG course generation.
 **Status:** v6 — 24 sections (17 research fronts + 7 cross-front/application sections). Each front includes boundary conditions, anti-patterns, prompt coverage, and research evidence.
 
