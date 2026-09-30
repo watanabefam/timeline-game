@@ -396,6 +396,213 @@
     catch (_) { return { decks: {} }; }
   }
   function writeUser(id, p) { try { localStorage.setItem(userKey(id), JSON.stringify(p)); } catch (_) {} }
+
+  // ---- review log + derived streak (GAMIFICATION_BRIEF §6, §11 phase 1) ----
+  // The motivational layer (streak, level, achievements) is DERIVED, never
+  // stored: only this append-only outcome log (+ tiny meta) is written, so a
+  // future cloud sync (roadmap §6.4) can replicate the log verbatim and
+  // re-derive every surface. Phase 1 is data only — no UI yet.
+  const REVIEW_LOG_CAP = 2000;
+  function localTimeZone() {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; }
+    catch (_) { return "UTC"; }
+  }
+  // `Intl.DateTimeFormat` construction is expensive, so one formatter is
+  // cached per zone and reused across all log rows (the streak walks up to
+  // REVIEW_LOG_CAP rows, which must not build a formatter each time).
+  const DAY_FORMATTERS = new Map();
+  function dayFormatter(tz) {
+    let fmt = DAY_FORMATTERS.get(tz);
+    if (!fmt) {
+      fmt = new Intl.DateTimeFormat("en-CA", {
+        timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+      });
+      DAY_FORMATTERS.set(tz, fmt);
+    }
+    return fmt;
+  }
+  // Local calendar day (YYYY-MM-DD) for a UTC timestamp in an IANA zone. The
+  // IANA id (not a fixed offset) carries the DST rules, and we read the parts
+  // rather than a locale string so the key is unambiguous.
+  function localDayKey(ts, tz) {
+    try {
+      const parts = dayFormatter(tz || localTimeZone()).formatToParts(new Date(ts));
+      const get = (t) => (parts.find((p) => p.type === t) || {}).value || "";
+      return `${get("year")}-${get("month")}-${get("day")}`;
+    } catch (_) {
+      return new Date(ts).toISOString().slice(0, 10);
+    }
+  }
+  // Move a YYYY-MM-DD key by whole CALENDAR days. Never 24-hour arithmetic:
+  // a DST day is 23 or 25 hours long, so "now - 86400000" can land on the
+  // wrong local date (it silently skips back two days across a spring-forward).
+  function shiftDayKey(key, delta) {
+    const [y, m, d] = key.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d + delta));
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`;
+  }
+  function appendReviewLog(p, rows) {
+    const log = Array.isArray(p.reviewLog) ? p.reviewLog : (p.reviewLog = []);
+    for (const r of rows) log.push(r);
+    if (log.length > REVIEW_LOG_CAP) log.splice(0, log.length - REVIEW_LOG_CAP);
+    p.meta = Object.assign({}, p.meta, { tz: localTimeZone() });
+  }
+  // Sorted unique active days (ascending) from the review log.
+  function activeDays(p) {
+    const tz = (p && p.meta && p.meta.tz) || localTimeZone();
+    const set = new Set();
+    for (const r of Array.isArray(p && p.reviewLog) ? p.reviewLog : []) {
+      if (r && r.ts) set.add(localDayKey(r.ts, tz));
+    }
+    return [...set].sort();
+  }
+  // Current streak: walk backward one CALENDAR day at a time from today (or
+  // from yesterday, so a day not yet played today is forgiven until it is
+  // actually missed — D2 forgiveness; the "paused" UI arrives in phase 2).
+  // Day-string comparison, not elapsed-hours, so DST cannot break a streak.
+  function currentStreak(p, now) {
+    const set = new Set(activeDays(p));
+    if (!set.size) return 0;
+    const tz = (p && p.meta && p.meta.tz) || localTimeZone();
+    const today = localDayKey(now == null ? Date.now() : now, tz);
+    let cursor = set.has(today) ? today : shiftDayKey(today, -1);
+    let streak = 0;
+    while (set.has(cursor)) {
+      streak += 1;
+      cursor = shiftDayKey(cursor, -1);
+    }
+    return streak;
+  }
+  // Forward-only timezone sync (D1/D3): if the device zone changed, newly
+  // logged rows group by the new zone; past rows are never rewritten.
+  function syncTimezone() {
+    const u = readUsers();
+    if (!u || !Array.isArray(u.users)) return;
+    const tz = localTimeZone();
+    let changed = false;
+    u.users.forEach((usr) => {
+      const p = readUser(usr.id);
+      if (!p.meta || p.meta.tz !== tz) {
+        p.meta = Object.assign({}, p.meta, { tz });
+        writeUser(usr.id, p);
+        changed = true;
+      }
+    });
+    return changed;
+  }
+
+  // ---- age band (GAMIFICATION_BRIEF §5, D7/A3) -----------------------------
+  // One helper, one source of truth. A profile with no declared band behaves
+  // as the highest one, so no surface is ever hidden behind an age the player
+  // never set (§5: "unset behaves as the highest band").
+  const AGE_BANDS = ["5-7", "8-11", "12-16", "17+"];
+  function band(user) {
+    const b = user && user.ageBand;
+    return AGE_BANDS.includes(b) ? b : "17+";
+  }
+  // Mastery as a 0–4 star readout for the youngest band: a progress indicator
+  // that carries no percentage and no "not enough data" copy (§5, A3).
+  function masteryStars(pct) {
+    if (pct >= 90) return 4;
+    if (pct >= 75) return 3;
+    if (pct >= 50) return 2;
+    if (pct > 0) return 1;
+    return 0;
+  }
+  function starString(n) { return "★".repeat(n) + "☆".repeat(4 - n); }
+
+  // ---- mastery level (GAMIFICATION_BRIEF §11 phase 2, D4) ------------------
+  // Level advances on QUALITY, never volume. Every input is a signal the game
+  // already records: an event is "mastered" at >=80% first-try accuracy (the
+  // same bar the stats screen already uses for a week), a curriculum week at
+  // >=80% with >=3 placements, and perfect runs (capped, so replaying a short
+  // easy deck cannot carry a level on its own). There is deliberately no
+  // total-XP counter: nothing here moves by volume alone, so grinding short
+  // rounds earns nothing (D4).
+  const MASTERY_LEVELS = [
+    { at: 0, title: "Newcomer" },
+    { at: 4, title: "Explorer" },
+    { at: 10, title: "Apprentice Historian" },
+    { at: 20, title: "Chronicler" },
+    { at: 35, title: "Historian" },
+    { at: 55, title: "Master Historian" },
+    { at: 80, title: "Keeper of the Timeline" },
+  ];
+  // x3 marks each, so at most 15 — a farm of perfect runs cannot dominate a
+  // score built mainly from distinct mastered events and mastered weeks.
+  const PERFECT_RUN_CAP = 5;
+  function eventMastered(s) {
+    return !!s && s.placements > 0 && s.firstTry / s.placements >= 0.8;
+  }
+  // Distinct from the deck-scoped `eventById(deck, id)` helper above: this
+  // resolves the deck by id first. Named apart on purpose — two declarations
+  // of the same name in this scope would silently shadow each other.
+  function deckEventById(deckId, id) {
+    const dk = window.DECKS.find((x) => x.id === deckId);
+    return (dk && dk.events.find((e) => e.id === id)) || null;
+  }
+  // A level is a property of the PLAYER, not of the deck open on the stats
+  // screen, so this reads every deck. Weeks are keyed per deck as well as by
+  // number — two decks both have a "Week 3", and merging them would invent a
+  // week that no curriculum has.
+  function masteryOf(p) {
+    let masteredEvents = 0;
+    let masteredWeeks = 0;
+    let perfectRuns = 0;
+    const decks = (p && p.decks) || {};
+    Object.keys(decks).forEach((deckId) => {
+      const d = decks[deckId] || {};
+      const events = d.events || {};
+      Object.keys(events).forEach((id) => {
+        if (eventMastered(events[id])) masteredEvents += 1;
+      });
+      const weeks = {};
+      Object.keys(events).forEach((id) => {
+        const ev = deckEventById(deckId, id);
+        if (!ev || !ev.week) return;
+        const w = weeks[ev.week] || (weeks[ev.week] = { placements: 0, firstTry: 0 });
+        w.placements += events[id].placements;
+        w.firstTry += events[id].firstTry;
+      });
+      Object.keys(weeks).forEach((wk) => {
+        const w = weeks[wk];
+        if (w.placements >= 3 && w.firstTry / w.placements >= 0.8) masteredWeeks += 1;
+      });
+      perfectRuns += (d.totals && d.totals.perfectRuns) || 0;
+    });
+    const score = masteredEvents + masteredWeeks * 5 + Math.min(perfectRuns, PERFECT_RUN_CAP) * 3;
+    let index = 0;
+    for (let i = 0; i < MASTERY_LEVELS.length; i += 1) {
+      if (score >= MASTERY_LEVELS[i].at) index = i;
+    }
+    const cur = MASTERY_LEVELS[index];
+    const next = MASTERY_LEVELS[index + 1] || null;
+    const pct = next ? Math.round(((score - cur.at) / (next.at - cur.at)) * 100) : 100;
+    return {
+      score,
+      index,
+      title: cur.title,
+      next,
+      pct,
+      toNext: next ? next.at - score : 0,
+      masteredEvents,
+      masteredWeeks,
+      perfectRuns,
+    };
+  }
+
+  window.Gamify = {
+    localDayKey,
+    reviewLog: (userId) => readUser(userId || activeUser().id).reviewLog || [],
+    activeDays: (userId) => activeDays(readUser(userId || activeUser().id)),
+    currentStreak: (userId) => currentStreak(readUser(userId || activeUser().id)),
+    mastery: (userId) => masteryOf(readUser(userId || activeUser().id)),
+    band,
+    timezone: localTimeZone,
+    syncTimezone,
+  };
+
   function mostPlayedDeckId(userId) {
     const p = readUser(userId);
     return Object.keys(p.decks)
@@ -1345,6 +1552,9 @@
   function renderStats() {
     const u = ensureUsers().users.find((x) => x.id === statsUserId);
     if (!u) return;
+    // Age band (A3): the only input for §5's gating. "" = not set.
+    const bandSel = $("stats-band");
+    if (bandSel) bandSel.value = u.ageBand || "";
     $("stats-avatar").style.background = letterColor(u.name.trim()[0] || "P");
     $("stats-avatar").textContent = (u.name.trim()[0] || "?").toUpperCase();
     $("stats-name").textContent = u.name;
@@ -1421,6 +1631,37 @@
     }
     const avgPct = totals.totalMax ? Math.round((totals.totalScore / totals.totalMax) * 100) : 0;
 
+    // Mastery level (D4) — profile-wide, above the deck-scoped stats, because
+    // a level describes the player rather than the open deck. Age-band copy
+    // switch (A3): the youngest band gets the name and an encouraging line,
+    // with no mastery score, percentage or progress bar at all (§5).
+    const userBand = band(u);
+    const mast = masteryOf(p);
+    const lc = document.createElement("div");
+    lc.className = "level-card";
+    if (userBand === "5-7") {
+      lc.innerHTML =
+        `<span class="level-head"><span class="level-title">${escapeHtml(mast.title)}</span></span>` +
+        `<span class="level-sub">Every timeline you finish makes you a better historian.</span>`;
+    } else {
+      const nextLine = mast.next
+        ? (userBand === "8-11"
+            ? `${mast.toNext} more to become ${escapeHtml(mast.next.title)}`
+            : `${mast.toNext} mastery mark${mast.toNext === 1 ? "" : "s"} to ${escapeHtml(mast.next.title)} · across all decks`)
+        : "Highest level reached";
+      const detail = userBand === "8-11"
+        ? `<span class="level-sub">${nextLine}</span>`
+        : `<span class="level-sub">${nextLine} · ${mast.masteredEvents} event${mast.masteredEvents === 1 ? "" : "s"} mastered · ` +
+          `${mast.masteredWeeks} week${mast.masteredWeeks === 1 ? "" : "s"} mastered · ${mast.perfectRuns} perfect run${mast.perfectRuns === 1 ? "" : "s"}</span>`;
+      lc.innerHTML =
+        `<span class="level-head"><span class="level-badge">Lv ${mast.index + 1}</span>` +
+        `<span class="level-title">${escapeHtml(mast.title)}</span></span>` +
+        `<span class="level-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" ` +
+        `aria-valuenow="${mast.pct}" aria-label="Mastery progress to the next level"><span style="width:${mast.pct}%"></span></span>` +
+        detail;
+    }
+    body.appendChild(lc);
+
     // Overview
     const ov = document.createElement("div");
     ov.className = "stats-overview";
@@ -1482,7 +1723,15 @@
         bar.innerHTML = `<span style="width:${w.mastery}%"></span>`;
         const val = document.createElement("span");
         val.className = "mastery-val";
-        val.textContent = w.placements < 3 ? "not enough data yet" : `Mastery ${w.mastery}%`;
+        if (userBand === "5-7") {
+          // §5: hide the percentage and the "not enough data yet" copy; the
+          // bar above stays as a non-numeric progress indicator.
+          const stars = masteryStars(w.placements < 3 ? 0 : w.mastery);
+          val.textContent = starString(stars);
+          val.setAttribute("aria-label", `${stars} of 4 stars`);
+        } else {
+          val.textContent = w.placements < 3 ? "not enough data yet" : `Mastery ${w.mastery}%`;
+        }
         row.append(label, bar, val);
         sec.appendChild(row);
       });
@@ -3424,6 +3673,10 @@
       totals: { runs: 0, totalScore: 0, totalMax: 0, perfectRuns: 0, totalPlacements: 0, totalSlips: 0 },
       runs: [], events: {},
     });
+    const now = Date.now();
+    // Raw, append-only review outcomes — one row per practiced (non-anchor)
+    // card (GAMIFICATION_BRIEF §6). Streak/level/achievements derive from this.
+    const reviewRows = [];
     state.timeline.forEach((id) => {
       if (state.anchorIds.has(id)) return; // anchors are given, not practiced
       const slips = state.cardSlips[id] || 0;
@@ -3431,10 +3684,14 @@
       e.placements += 1;
       e.slips += slips;
       if (slips === 0) e.firstTry += 1;
+      reviewRows.push({ ts: now, deck: ui.deck.id, eventId: id,
+                        outcome: slips === 0 ? "firstTry" : "slip",
+                        mode: state.mode });
     });
+    appendReviewLog(p, reviewRows);
     const wrongs = state.outcomes.filter((o) => o === "wrong").length;
     d.runs.unshift({
-      date: Date.now(),
+      date: now,
       deck: ui.deck.name,
       filters: summarizeSelections(ui.deck, ui.selections),
       placements: state.placements,
@@ -3792,6 +4049,9 @@
 
   // ---- wire up ---------------------------------------------------
   function init() {
+    // Forward-only timezone sync so the derived streak groups by the current
+    // device zone (GAMIFICATION_BRIEF §6).
+    syncTimezone();
     // Keyboard navigation for the timeline gaps (roving tabindex + arrows).
     // Pane-scoped: each pane's listener only acts when focus is inside it, so
     // split players never steal each other's keys.
@@ -4112,6 +4372,20 @@
       }
     });
     $("stats-print").addEventListener("click", () => window.print());
+    // Age band (A3) — optional, "Not set" by default (§5/§15.2). Clearing it
+    // removes the field so the profile falls back to the highest band.
+    const statsBand = $("stats-band");
+    if (statsBand) {
+      statsBand.addEventListener("change", () => {
+        const state = ensureUsers();
+        const u = state.users.find((x) => x.id === statsUserId);
+        if (!u) return;
+        if (statsBand.value) u.ageBand = statsBand.value;
+        else delete u.ageBand;
+        writeUsers(state);
+        renderStats();
+      });
+    }
     $("stats-delete").addEventListener("click", () => {
       const state = ensureUsers();
       const u = state.users.find((x) => x.id === statsUserId);

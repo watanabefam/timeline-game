@@ -1380,10 +1380,38 @@ body.dock-active .feedback { bottom: calc(104px + env(safe-area-inset-bottom, 0p
 }
 .danger-btn:hover { background: var(--bad); color: #fff; }
 
+/* Mastery level card (GAMIFICATION_BRIEF §11 phase 2, D4) */
+.stats-band-row { display: flex; align-items: center; gap: 8px; margin: 2px 0 8px; }
+.stats-band-label { font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.stats-band-row select {
+  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+  border-radius: 999px; padding: 4px 10px; font-size: 0.78rem;
+}
+.level-card {
+  display: flex; flex-direction: column; gap: 8px;
+  background: linear-gradient(160deg, var(--glass-tint), rgba(14, 22, 42, 0.45));
+  border: 1px solid var(--glass-rim); border-radius: 16px;
+  padding: 14px 16px; margin-bottom: 20px;
+}
+.level-head { display: flex; align-items: baseline; gap: 10px; }
+.level-badge {
+  font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--accent); border: 1px solid var(--accent);
+  border-radius: 999px; padding: 2px 10px;
+}
+.level-title { font-size: 1.18rem; font-weight: 700; color: var(--text); }
+.level-bar {
+  display: block; height: 10px; border-radius: 999px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+.level-bar > span { display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.level-sub { font-size: 0.82rem; color: var(--muted); }
+
 /* Print: a clean, readable progress report */
 @media print {
   .appbar, .deck-chips, .mini-btn, .modal, #focus-panel,
-  .stats-danger, .deck-grid, .scroll-frame { display: none !important; }
+  .stats-band-row, .stats-danger, .deck-grid, .scroll-frame { display: none !important; }
   html, body { background: #fff !important; }
   #stats-body {
     background: #fff !important;
@@ -1392,8 +1420,10 @@ body.dock-active .feedback { bottom: calc(104px + env(safe-area-inset-bottom, 0p
   }
   #stats-body, #stats-body *, .stats-who h2 { color: #111 !important; text-shadow: none !important; }
   .stat b { color: #111 !important; }
-  .mastery-bar { background: #eee !important; }
-  .mastery-bar span { background: #555 !important; }
+  .mastery-bar, .level-bar { background: #eee !important; }
+  .mastery-bar span, .level-bar > span { background: #555 !important; }
+  .level-card { background: #fff !important; border-color: #bbb !important; }
+  .level-badge { border-color: #111 !important; }
   .user-avatar { border: 1px solid #999; color: #111 !important; background: #fff !important; }
 }
 
@@ -1713,3 +1743,32 @@ body.dock-active #results { padding-bottom: 116px; }
 .story-disclosure .disclosure-title { margin: 0 0 0.5rem; font-size: 0.95rem; letter-spacing: 0.01em; }
 .story-disclosure p { margin: 0.35rem 0; font-size: 0.9rem; line-height: 1.5; opacity: 0.9; }
 .story-disclosure .disclosure-changed { font-size: 0.82rem; opacity: 0.68; font-style: italic; }
+
+/* ---------- Install suggestion (offline.js, S1a) ----------
+   One quiet bar on the home screen, shown only when the browser reports the
+   app is installable. It never appears over a game, and it is a plain button
+   plus a dismiss control — no motion beyond a fade, which respects the
+   reduced-motion floor. */
+.install-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0 auto var(--sp-2);
+  padding: 10px 12px 10px 16px;
+  max-width: 560px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-2);
+  box-shadow: var(--shadow);
+}
+.install-bar-text { font-size: 0.9rem; color: var(--muted); }
+.install-bar-actions { display: inline-flex; align-items: center; gap: 6px; }
+@media (prefers-reduced-motion: no-preference) {
+  .install-bar { animation: install-in 220ms ease-out both; }
+}
+@keyframes install-in { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 560px) {
+  .install-bar { flex-direction: column; align-items: stretch; gap: 10px; text-align: center; }
+  .install-bar-actions { justify-content: center; }
+}

@@ -1,0 +1,669 @@
+{
+  "formatVersion": 1,
+  "hash": "1420678c942a",
+  "generatedBy": "scripts/gen-offline-manifest.mjs",
+  "cacheName": "timeline-offline",
+  "totalBytes": 19139534,
+  "files": [
+    {
+      "path": "assets/audio/alex-morgan-battle-boss-fight-game-music-583276.mp3",
+      "rev": "89b69c8c31d4",
+      "bytes": 5261568
+    },
+    {
+      "path": "assets/audio/correct-1.mp3",
+      "rev": "cfddb452457f",
+      "bytes": 8821
+    },
+    {
+      "path": "assets/audio/correct-2.mp3",
+      "rev": "4e55373f2dc6",
+      "bytes": 14463
+    },
+    {
+      "path": "assets/audio/correct-3.mp3",
+      "rev": "76176d790159",
+      "bytes": 9448
+    },
+    {
+      "path": "assets/audio/correct-4.mp3",
+      "rev": "8ca7e5ea9b30",
+      "bytes": 13209
+    },
+    {
+      "path": "assets/audio/correct-pluck-1.mp3",
+      "rev": "64009e32d937",
+      "bytes": 3805
+    },
+    {
+      "path": "assets/audio/correct-pluck-2.mp3",
+      "rev": "96852fa0051d",
+      "bytes": 5686
+    },
+    {
+      "path": "assets/audio/impact-soft-1.mp3",
+      "rev": "d18efd374fb4",
+      "bytes": 4432
+    },
+    {
+      "path": "assets/audio/impact-soft-2.mp3",
+      "rev": "23027066cd04",
+      "bytes": 5686
+    },
+    {
+      "path": "assets/audio/impact-soft-3.mp3",
+      "rev": "15e762a20ddd",
+      "bytes": 5059
+    },
+    {
+      "path": "assets/audio/impact-wood-1.mp3",
+      "rev": "19d377d21999",
+      "bytes": 9448
+    },
+    {
+      "path": "assets/audio/impact-wood-2.mp3",
+      "rev": "c75f8314d271",
+      "bytes": 9448
+    },
+    {
+      "path": "assets/audio/music-game.mp3",
+      "rev": "437a2556cbc6",
+      "bytes": 5258123
+    },
+    {
+      "path": "assets/audio/place-1.mp3",
+      "rev": "76e35b8d7ec2",
+      "bytes": 5059
+    },
+    {
+      "path": "assets/audio/place-2.mp3",
+      "rev": "530428968534",
+      "bytes": 6313
+    },
+    {
+      "path": "assets/audio/place-3.mp3",
+      "rev": "4911a181720a",
+      "bytes": 6313
+    },
+    {
+      "path": "assets/audio/tick-1.mp3",
+      "rev": "eacad4454d96",
+      "bytes": 2551
+    },
+    {
+      "path": "assets/audio/tick-2.mp3",
+      "rev": "7aec484107af",
+      "bytes": 1924
+    },
+    {
+      "path": "assets/audio/ui-click-1.mp3",
+      "rev": "3afa5253ffe5",
+      "bytes": 3805
+    },
+    {
+      "path": "assets/audio/ui-click-2.mp3",
+      "rev": "3dd5ba970acd",
+      "bytes": 1924
+    },
+    {
+      "path": "assets/audio/ui-click-3.mp3",
+      "rev": "6e5a9824600f",
+      "bytes": 1924
+    },
+    {
+      "path": "assets/audio/ui-click-4.mp3",
+      "rev": "ea99db7b353d",
+      "bytes": 1924
+    },
+    {
+      "path": "assets/audio/ui-close-1.mp3",
+      "rev": "225d3b0b86ff",
+      "bytes": 5059
+    },
+    {
+      "path": "assets/audio/ui-glass-1.mp3",
+      "rev": "8972b777cbf3",
+      "bytes": 8194
+    },
+    {
+      "path": "assets/audio/ui-glass-2.mp3",
+      "rev": "8475f7240a3f",
+      "bytes": 4432
+    },
+    {
+      "path": "assets/audio/ui-glass-3.mp3",
+      "rev": "dbf804037eac",
+      "bytes": 4432
+    },
+    {
+      "path": "assets/audio/ui-glitch-1.mp3",
+      "rev": "7ae364d0e3cf",
+      "bytes": 1924
+    },
+    {
+      "path": "assets/audio/ui-glitch-2.mp3",
+      "rev": "8cba884279e1",
+      "bytes": 2551
+    },
+    {
+      "path": "assets/audio/ui-open-1.mp3",
+      "rev": "146964108a0b",
+      "bytes": 5059
+    },
+    {
+      "path": "assets/audio/ui-rollover-1.mp3",
+      "rev": "95abbaae58cf",
+      "bytes": 6940
+    },
+    {
+      "path": "assets/audio/ui-rollover-2.mp3",
+      "rev": "d5bd85bde5b3",
+      "bytes": 3178
+    },
+    {
+      "path": "assets/audio/ui-select-1.mp3",
+      "rev": "cba5c22756f6",
+      "bytes": 2551
+    },
+    {
+      "path": "assets/audio/ui-select-2.mp3",
+      "rev": "473e8c3aa17f",
+      "bytes": 2551
+    },
+    {
+      "path": "assets/audio/ui-select-3.mp3",
+      "rev": "dabf95bbdbf6",
+      "bytes": 10702
+    },
+    {
+      "path": "assets/audio/ui-switch-1.mp3",
+      "rev": "334baabee1d7",
+      "bytes": 8821
+    },
+    {
+      "path": "assets/audio/ui-switch-2.mp3",
+      "rev": "c743ada10ea0",
+      "bytes": 9448
+    },
+    {
+      "path": "assets/audio/ui-switch-3.mp3",
+      "rev": "269fbae6f65c",
+      "bytes": 10075
+    },
+    {
+      "path": "assets/audio/ui-toggle-1.mp3",
+      "rev": "caac90268570",
+      "bytes": 5059
+    },
+    {
+      "path": "assets/audio/ui-toggle-2.mp3",
+      "rev": "9bd5567874e9",
+      "bytes": 5059
+    },
+    {
+      "path": "assets/audio/ui-toggle-3.mp3",
+      "rev": "e5126ecdc31e",
+      "bytes": 5059
+    },
+    {
+      "path": "assets/audio/win-1.mp3",
+      "rev": "a07db4a41bbf",
+      "bytes": 4432
+    },
+    {
+      "path": "assets/audio/wrong-1.mp3",
+      "rev": "2af0b6d6a03e",
+      "bytes": 5686
+    },
+    {
+      "path": "assets/audio/wrong-2.mp3",
+      "rev": "351aaef7f278",
+      "bytes": 5686
+    },
+    {
+      "path": "assets/audio/wrong-3.mp3",
+      "rev": "0e474706fcec",
+      "bytes": 14463
+    },
+    {
+      "path": "assets/audio/wrong-4.mp3",
+      "rev": "8e0f11a199d4",
+      "bytes": 3805
+    },
+    {
+      "path": "assets/cursors/grab.png",
+      "rev": "66fccaf6d9bb",
+      "bytes": 10567
+    },
+    {
+      "path": "assets/cursors/grab@0.5x.png",
+      "rev": "83e2120cf02b",
+      "bytes": 3481
+    },
+    {
+      "path": "assets/cursors/grabbing.png",
+      "rev": "8729d845861b",
+      "bytes": 8955
+    },
+    {
+      "path": "assets/cursors/grabbing@0.5x.png",
+      "rev": "8c5f0c0314e6",
+      "bytes": 2894
+    },
+    {
+      "path": "assets/cursors/move.png",
+      "rev": "ae2e5772d1da",
+      "bytes": 10640
+    },
+    {
+      "path": "assets/cursors/move@0.5x.png",
+      "rev": "5934b46dbc05",
+      "bytes": 3241
+    },
+    {
+      "path": "assets/cursors/pointer-hand.png",
+      "rev": "400bad1c6b02",
+      "bytes": 8949
+    },
+    {
+      "path": "assets/cursors/pointer-hand@0.5x.png",
+      "rev": "67392549e62c",
+      "bytes": 2928
+    },
+    {
+      "path": "assets/cursors/pointer.png",
+      "rev": "d1e49b959e8e",
+      "bytes": 6325
+    },
+    {
+      "path": "assets/cursors/pointer@0.5x.png",
+      "rev": "ca92cdb90dab",
+      "bytes": 2597
+    },
+    {
+      "path": "assets/cursors/wait.png",
+      "rev": "24166c390bce",
+      "bytes": 10553
+    },
+    {
+      "path": "assets/cursors/wait@0.5x.png",
+      "rev": "f25572e0f7ac",
+      "bytes": 3334
+    },
+    {
+      "path": "assets/earth-textures.js",
+      "rev": "174ba88e3f62",
+      "bytes": 922424
+    },
+    {
+      "path": "assets/images/background.jpg",
+      "rev": "509b24ac7b9d",
+      "bytes": 437290
+    },
+    {
+      "path": "assets/images/scroll-border.png",
+      "rev": "f5fbacceb98d",
+      "bytes": 197781
+    },
+    {
+      "path": "assets/images/scroll.png",
+      "rev": "10eda52c1113",
+      "bytes": 165358
+    },
+    {
+      "path": "assets/images/title.png",
+      "rev": "362ce82f347f",
+      "bytes": 125972
+    },
+    {
+      "path": "assets/leaflet/leaflet.css",
+      "rev": "a78371028241",
+      "bytes": 14806
+    },
+    {
+      "path": "assets/leaflet/leaflet.js",
+      "rev": "db49d009c841",
+      "bytes": 147552
+    },
+    {
+      "path": "assets/vendor/anime.umd.min.js",
+      "rev": "8d5b3a58a1f6",
+      "bytes": 118043
+    },
+    {
+      "path": "assets/vendor/canvas-confetti-1.9.3.min.js",
+      "rev": "1d8ee774eb8b",
+      "bytes": 12010
+    },
+    {
+      "path": "assets/vendor/globe.gl.min.js",
+      "rev": "1dfc568c903f",
+      "bytes": 1885558
+    },
+    {
+      "path": "assets/vendor/liquid-glass.js",
+      "rev": "5986d51ed7fa",
+      "bytes": 8369
+    },
+    {
+      "path": "assets/vendor/vis-timeline-graph2d.min.css",
+      "rev": "67273f3f1bfc",
+      "bytes": 19837
+    },
+    {
+      "path": "assets/vendor/vis-timeline-graph2d.min.js",
+      "rev": "22045807e537",
+      "bytes": 548806
+    },
+    {
+      "path": "assets/world-land.js",
+      "rev": "0319dd909497",
+      "bytes": 138180
+    },
+    {
+      "path": "decks-io.js",
+      "rev": "511d628f03e2",
+      "bytes": 7541
+    },
+    {
+      "path": "decks/cc-timeline/deck.js",
+      "rev": "e5897fc5eea4",
+      "bytes": 85003
+    },
+    {
+      "path": "decks/index.js",
+      "rev": "6850b37e236d",
+      "bytes": 1346
+    },
+    {
+      "path": "decks/index.json",
+      "rev": "c77b43384360",
+      "bytes": 1254
+    },
+    {
+      "path": "decks/inventions-discoveries/deck.js",
+      "rev": "0a6bc231188f",
+      "bytes": 43658
+    },
+    {
+      "path": "decks/world-history-first-timeline/deck.js",
+      "rev": "88cecbd24cb3",
+      "bytes": 53037
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/alexander-dies.mp3",
+      "rev": "a6165c88270f",
+      "bytes": 68948
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/american-revolution.mp3",
+      "rev": "89604745510c",
+      "bytes": 76628
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/athenian-democracy.mp3",
+      "rev": "d1b4d0120b95",
+      "bytes": 82964
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/augustus-principate.mp3",
+      "rev": "7234ae08453b",
+      "bytes": 79700
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/babur-mughal.mp3",
+      "rev": "ef8b87d5219d",
+      "bytes": 84500
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/bastille.mp3",
+      "rev": "c1f70a1fe98a",
+      "bytes": 62228
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/battle-hastings.mp3",
+      "rev": "17b270938030",
+      "bytes": 54932
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/berlin-conference.mp3",
+      "rev": "a079ebb1cc9a",
+      "bytes": 79700
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/berlin-wall-falls.mp3",
+      "rev": "58e4533a2b01",
+      "bytes": 55892
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/birth-of-jesus.mp3",
+      "rev": "f461f07538cd",
+      "bytes": 52244
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/black-death.mp3",
+      "rev": "12f61c507017",
+      "bytes": 65492
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/buddha-monastic-order.mp3",
+      "rev": "2759cffe2a1e",
+      "bytes": 78740
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/charlemagne.mp3",
+      "rev": "8af930279443",
+      "bytes": 61460
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/columbus-landfall.mp3",
+      "rev": "1f53270c2a49",
+      "bytes": 85844
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/confucius.mp3",
+      "rev": "a232ecc0265e",
+      "bytes": 66260
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/constantinople-falls.mp3",
+      "rev": "e66c3c013533",
+      "bytes": 69716
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/egypt-unifies.mp3",
+      "rev": "67d86e4feed5",
+      "bytes": 61844
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/fall-western-rome.mp3",
+      "rev": "625cece15a3f",
+      "bytes": 86420
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/first-farming.mp3",
+      "rev": "4c9d8744f731",
+      "bytes": 56276
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/first-peoples-australia.mp3",
+      "rev": "88d1d0298702",
+      "bytes": 58388
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/genghis-khan.mp3",
+      "rev": "b8857b9bb2f5",
+      "bytes": 72020
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/ghana-independence.mp3",
+      "rev": "495fb5038278",
+      "bytes": 73556
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/great-pyramid.mp3",
+      "rev": "d4e571fbbe4e",
+      "bytes": 64724
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/hijra.mp3",
+      "rev": "a5ce513ce81a",
+      "bytes": 75860
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/human-rights-declaration.mp3",
+      "rev": "aa1ab7a37fdf",
+      "bytes": 79124
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/india-pakistan-independence.mp3",
+      "rev": "9d4e7a418eef",
+      "bytes": 79508
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/luther-theses.mp3",
+      "rev": "11cb6930d477",
+      "bytes": 70100
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/magna-carta-first.mp3",
+      "rev": "6da8730678b8",
+      "bytes": 66260
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/mandela-president.mp3",
+      "rev": "a301a3ee6e7e",
+      "bytes": 79124
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/mansa-musa.mp3",
+      "rev": "7f86788c3081",
+      "bytes": 72404
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/meiji-restoration.mp3",
+      "rev": "d5a9af1c3ac5",
+      "bytes": 73748
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/plato-academy.mp3",
+      "rev": "b477b5ed7571",
+      "bytes": 69524
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/polynesians-aotearoa.mp3",
+      "rev": "ddf16fc47ced",
+      "bytes": 77588
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/qin-unifies-china.mp3",
+      "rev": "7c189c6c9498",
+      "bytes": 65300
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/saint-domingue-uprising.mp3",
+      "rev": "24bae991cdf5",
+      "bytes": 80660
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/tenochtitlan.mp3",
+      "rev": "f26e7f1d78fe",
+      "bytes": 71828
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/united-nations.mp3",
+      "rev": "c194758cafc8",
+      "bytes": 66644
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/us-civil-war-first.mp3",
+      "rev": "a17a7a839411",
+      "bytes": 76628
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/ww1-first.mp3",
+      "rev": "587bc5500fab",
+      "bytes": 70484
+    },
+    {
+      "path": "decks/world-history-first-timeline/narration/ww2-first.mp3",
+      "rev": "1e7913fe6aa3",
+      "bytes": 80660
+    },
+    {
+      "path": "decks/world-literature/deck.js",
+      "rev": "85079bf4a4ab",
+      "bytes": 49776
+    },
+    {
+      "path": "events-data.js",
+      "rev": "5e7eabc768f5",
+      "bytes": 8717
+    },
+    {
+      "path": "fx.js",
+      "rev": "80f17003fc69",
+      "bytes": 32318
+    },
+    {
+      "path": "globe.js",
+      "rev": "cd92ab8b7795",
+      "bytes": 25527
+    },
+    {
+      "path": "icons/apple-touch-icon-180.png",
+      "rev": "bf5846a5e762",
+      "bytes": 1562
+    },
+    {
+      "path": "icons/icon-192.png",
+      "rev": "84e5b8e9fc46",
+      "bytes": 3446
+    },
+    {
+      "path": "icons/icon-512.png",
+      "rev": "e1ba3e86aaa1",
+      "bytes": 9028
+    },
+    {
+      "path": "icons/icon-maskable-512.png",
+      "rev": "bd8975276469",
+      "bytes": 4447
+    },
+    {
+      "path": "index.html",
+      "rev": "1f6a6e7f59da",
+      "bytes": 28484
+    },
+    {
+      "path": "manifest.webmanifest",
+      "rev": "9b0e98f90a22",
+      "bytes": 721
+    },
+    {
+      "path": "narration-recipe.js",
+      "rev": "9079f9777806",
+      "bytes": 21085
+    },
+    {
+      "path": "narration.js",
+      "rev": "58f514686497",
+      "bytes": 12595
+    },
+    {
+      "path": "offline.js",
+      "rev": "8bf5e5626c90",
+      "bytes": 18104
+    },
+    {
+      "path": "styles.css",
+      "rev": "2cc9b760de40",
+      "bytes": 85204
+    },
+    {
+      "path": "timeline.js",
+      "rev": "d045d5660af2",
+      "bytes": 200212
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@timeline-game/offline-smoke",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Author-time browser smoke for the offline layer (installability, offline boot, content updates, storage) in two engines. Never loaded by the game (AGENTS.md rule 1 scope note).",
+  "scripts": {
+    "smoke": "node smoke.mjs",
+    "smoke:webkit": "node webkit.mjs",
+    "browsers": "playwright install --with-deps webkit"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0",
+    "puppeteer": "^25.0.0"
+  }
+}
