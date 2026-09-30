@@ -4,9 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Timeline Game — place history in order</title>
-  <link rel="stylesheet" href="styles.css?v=132" />
+  <link rel="stylesheet" href="styles.css?v=133" />
   <link rel="stylesheet" href="assets/leaflet/leaflet.css" />
   <link rel="stylesheet" href="assets/vendor/vis-timeline-graph2d.min.css" />
+  <!-- Installability (S1a). Icons live in icons/ — assets/ is vendored and
+       never edited (AGENTS.md rule 2). No service worker is needed to be
+       installable; offline is a separate, independently shippable slice. -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <meta name="theme-color" content="#0a0e1a" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png" />
+  <meta name="apple-mobile-web-app-title" content="Timeline Game" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
 </head>
 <body>
   <!-- Shared icon sprite: Phosphor Icons regular weight, MIT License. -->
@@ -41,6 +52,17 @@
 
       <div class="home-hero">
         <img class="logo-img" src="assets/images/title.png" alt="Timeline Game" />
+      </div>
+
+      <!-- Install suggestion. Shown only when the browser reports the app is
+           installable (never on iOS, which has no beforeinstallprompt), and
+           only on this screen — never during a game. -->
+      <div class="install-bar hidden" id="install-bar">
+        <span class="install-bar-text">Install Timeline Game — then it works offline.</span>
+        <span class="install-bar-actions">
+          <button class="btn btn--primary btn--small" id="install-btn" type="button">Install</button>
+          <button class="icon-btn" id="install-dismiss" type="button" aria-label="Not now">&times;</button>
+        </span>
       </div>
 
       <div class="deck-grid" id="deck-grid"></div>
@@ -296,6 +318,16 @@
             <h2 id="stats-name"></h2>
             <button class="mini-btn ghost" id="stats-edit" title="Rename player">✏️</button>
           </div>
+          <div class="stats-band-row">
+            <label class="stats-band-label" for="stats-band">Age band</label>
+            <select id="stats-band" aria-label="Player age band">
+              <option value="">Not set</option>
+              <option value="5-7">5&ndash;7</option>
+              <option value="8-11">8&ndash;11</option>
+              <option value="12-16">12&ndash;16</option>
+              <option value="17+">17+</option>
+            </select>
+          </div>
           <button class="mini-btn" id="stats-playas">Play as</button>
         </div>
         <button class="mini-btn print-btn" id="stats-print" title="Print report">🖨 Print</button>
@@ -419,6 +451,14 @@
                 </div>
                 <p id="decks-status" class="settings-group-note" style="margin-top:10px;"></p>
               </div>
+              <div class="settings-group">
+                <h3 class="settings-group-title">Offline</h3>
+                <p class="settings-group-note" id="offline-status">Offline play is not set up yet.</p>
+                <div class="settings-actions">
+                  <button class="btn btn--ghost" id="offline-clear" type="button">Clear offline data</button>
+                </div>
+                <p class="settings-group-note">Clearing removes the downloaded copies this device keeps for offline play. Your players and progress are kept.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -486,6 +526,7 @@
 <script src="globe.js?v=14"></script>
 <script src="narration-recipe.js?v=10"></script>
 <script src="narration.js?v=22"></script>
-<script src="timeline.js?v=196"></script>
+<script src="offline.js?v=6"></script>
+<script src="timeline.js?v=199"></script>
 </body>
 </html>

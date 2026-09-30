@@ -4,9 +4,16 @@
 > subscription-based, cross-platform application (iOS, Android, macOS, Windows, Linux)
 > with AI-powered features, in-app purchases, and institutional licensing.
 >
-> **Last updated:** 2026-09-29 | **Version:** 2.3.1 (§1 current-state table
+> **Last updated:** 2026-09-30 | **Version:** 2.3.2 (§1 current-state table
 > refreshed; the §19.12 narration retirement is now **executed** in the tree —
 > the runtime worker is deleted and the vendor bundle has left `assets/`)
+>
+> **See also `doc/CLOUDLESS_PLAN.md`** — the parallel track for everything that
+> ships with **no server at all** (PWA/offline, `.timedeck` Tier 2, daily
+> challenge without §10.2's cron, gamification, the §5.1 staging script). This
+> roadmap's Phase 1 is server infrastructure; that track deliberately does not
+> wait for it. The two disagree about phase order on purpose — the decision is
+> recorded there as D-CL2, not resolved here.
 
 ---
 
@@ -46,7 +53,7 @@
 | Interface effects | Complete | `fx.js` (anime.js v4 + WAAPI curtains), reduced-motion parity |
 | 3D globe | Complete | `globe.js` — offline-texture globe dock; one instance per split-screen pane |
 | Offline maps | Complete | Leaflet + Natural Earth vector basemap |
-| Narration | Partial | Pre-rendered MP3s ship with the deck (§19.12); runtime synthesis retired 2026-09-29; generator + gate shipped 2026-09-29 (`tools/narration/`, §19.12.6); **10 of 321 events** have audio — the other 310 fall back to the system voice by design |
+| Narration | Partial | Pre-rendered MP3s ship with the deck (§19.12); runtime synthesis retired 2026-09-29; generator + gate shipped 2026-09-29 (`tools/narration/`, §19.12.6); **40 of 321 events** have audio (all of `world-history-first-timeline`) — the other 281 fall back to the system voice by design |
 | Deck import/export | Complete | `decks-io.js` — client-side JSON (Blob + FileReader), no server |
 | Player profiles | Local only | `localStorage` — no cloud sync |
 | Review log / mastery scheduler | None | Planned: append-only `reviewLog` + FSRS behind `rate(outcome) → nextDue` (AGENTS.md product direction, `doc/GAMIFICATION_BRIEF.md`) |
@@ -2811,7 +2818,7 @@ Per narrated deck:
 valid state: the other 30 fall back to the system voice, which is the whole
 point of §19.12.8. The gate prints the count and `--require-complete` is the
 strict mode for a deck that claims full coverage. Today:
-`world-history-first-timeline` 10/40, other three decks off.
+`world-history-first-timeline` 40/40, other three decks off.
 
 Bundled-media `license` block when required (§19.8) is unchanged: Kokoro output
 needs no third-party media licence, but the engine/model/voice are recorded for
@@ -2829,6 +2836,19 @@ not in the deck (the schema is strict, §19.12.2).
 - **Fallback chain** — decoded buffer → `new Audio(url)` → system voice →
   silence. Sound arriving late beats no sound.
 - No worker, no model load, no warm-up gate, no IDB PCM cache.
+- **When to play — an open pedagogical question, not a settled one.** What is
+  spoken is `title + fact` (
+  §19.12.5) and those are the same two fields the card *displays*, so the shipped
+  clip is a verbatim read-along; it is also autoplayed on every card load, over
+  the moment the player must read the card and decide. For **self-paced** material
+  that is the redundancy configuration the learning-science vault warns about
+  (§6 "spoken narration duplicating written text", §17 conflict rule). The
+  counterweight is real — audio is the accessibility layer for pre-readers — so
+  the recommendation is **move the autoplay to the reveal, keep an on-demand
+  control**, not remove the feature. Rationale, age gates and the pending phase:
+  `doc/GAMIFICATION_BRIEF.md` **A7** + its build-order phase 8. The timing call
+  site is `timeline.js` (`Narrator.speakEvent`, :2475); this changes *when* only —
+  the clip, the recipe and the gate are untouched.
 
 #### 19.12.9 Format & size
 

@@ -1,5 +1,14 @@
 # Evidence base — learning-science validation of our design patterns
 
+> **Scope (added when vendored into this repo, 2026-09-30).** This document was
+> written for the sibling **Montessori grammar-symbol** project — it is not a
+> timeline-game audit. Read it for method and for its **§7 gamification** row
+> (local-only/no-leaderboards is the right call; mastery must outrank the streak)
+> plus the general SDT/feedback/spacing rows. Its grammar-symbol, Montessori-
+> material, `spacedRepetition.ts` and **dyslexia-font** findings describe that
+> project's surfaces and must **not** be acted on from this repo. In-repo
+> consumers: `doc/GAMIFICATION_BRIEF.md` §1 and §4 (A7–A11).
+
 We distilled Duolingo's blog posts into `docs/duolingo-reference/`. This document
 validates (or corrects) those patterns against **independent peer-reviewed research**,
 not vendor marketing. Each pattern gets a rating and real citations.

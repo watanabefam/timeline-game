@@ -32,7 +32,9 @@ interface. Never make features educational-audience-only — everything stays
 playable by casual users. When building the motivational surfaces around the
 mastery core (streak/calendar, leveling, achievements, feedback copy), follow
 the ratified design in `doc/GAMIFICATION_BRIEF.md` (decisions D1–D8, amendments
-A1–A6, age-band gating, derived-state rule).
+A1–A11, age-band gating, derived-state rule). The learning-science evidence
+those amendments rest on is vendored in `doc/references/` — read it before
+designing any learning or motivational surface, and cite it by § number.
 
 ## Hard rules
 
@@ -73,24 +75,30 @@ A1–A6, age-band gating, derived-state rule).
    `events-data.js` → `decks-io.js` → Leaflet → `world-land.js` →
    `liquid-glass.js` → `vis-timeline` → `anime.umd.min.js` →
    `canvas-confetti` → `fx.js` → `globe.js` → `narration-recipe.js` →
-   `narration.js` → `timeline.js`.
+   `narration.js` → `offline.js` → `timeline.js`.
    `fx.js` (defines `window.FX`), `globe.js` (`window.GlobeDock`),
    `narration-recipe.js` (`window.NarrationText`, generated) and
    `narration.js` (`window.Narrator`) must all load before `timeline.js`,
    which uses them. Decks themselves arrive from `decks/index.js` (generated)
    via the `window.registerDeckSource` registry in `events-data.js`.
+   `offline.js` (`window.Offline`) is independent of all of them — it touches
+   only its own DOM hooks — and `sw.js` is never a `<script>` tag at all: the
+   service worker is fetched by the browser from `offline.js`'s registration.
    `<script type="module">` tags are deferred by spec — they run after all
    classic scripts, so a module can rely on `window.FX`/`window.DECKS` being
    present, but classic scripts can never rely on a module.
 5. **Run the content gate after touching deck data:**
    `npm run validate` (Node ≥18) — `validate:index` (generated deck list is
    fresh), `validate:content` (the fact-quality and year-placement rules across
-   every deck in `decks/`), `validate:vendor` (rule 2), `validate:recipe`
-   (the generated browser copy of the narration recipe is fresh),
-   `validate:narration` (every clip's records, hashes, duration and coverage),
-   `validate:backlog` (the pronunciation backlog is current and under its
-   ceiling), `validate:sourcing` (the sourcing backlog is current and under its
-   ceiling).
+   every deck in `decks/`), `validate:vendor` (rule 2), `validate:offline` (the
+   generated precache manifest is fresh and the app icons in `icons/` match),
+   `validate:recipe` (the generated browser copy of the narration recipe is
+   fresh), `validate:narration` (every clip's records, hashes, duration and
+   coverage), `validate:backlog` (the pronunciation backlog is current and
+   under its ceiling), `validate:sourcing` (the sourcing backlog is current and
+   under its ceiling). `validate:offline` sits **before** the known-red
+   `validate:backlog` on purpose: a gate chained after a permanently-red one
+   never runs, so it reports nothing.
 
    **`validate:pipeline` is deliberately NOT in that chain, and `npm run
    validate` exits 0 without it.** The content-pipeline gate is honestly red:
@@ -111,7 +119,9 @@ A1–A6, age-band gating, derived-state rule).
    nothing. Both ratchets hold their ceiling in the generator **script**, not
    in the generated file — an earlier version read the ceiling from disk, so
    hand-editing the JSON raised it and the check still passed. `npm run test` runs the Node
-   tests for the content pipeline and for the narration recipe. The enrichment
+   tests for the offline layer (`scripts/test/offline.test.mjs`, first, so a
+   pre-existing failure in a later suite cannot hide it), then the content
+   pipeline, then narration. The enrichment
    scripts (`npm run enrich`) run the gate too, but the enrichment pass itself
    is stale — see `README.md`.
 6. **Narration is pre-rendered, never synthesized at runtime.** Voice audio
@@ -186,16 +196,25 @@ A1–A6, age-band gating, derived-state rule).
 | `decks-io.js` | Deck JSON import/export → `window.exportDeck` / `exportAllDecks` / `importDeckFromFile` / `loadImportedDecks` (Blob + FileReader, no server) |
 | `events-data.js` | Deck registry (`window.DECKS`, `registerDeck`) + deck *sources* + shared filter helpers. **Holds no event data.** |
 | `decks/index.json` + `index.js` | **Generated** deck list (revision + bytes per package) — never hand-edited; regenerate with `npm run gen:index` |
+| `manifest.webmanifest` + `icons/` | Web app manifest and **generated** app icons (installability, S1a). Icons live here, not in `assets/`, because `assets/` is vendored and never edited (rule 2). Regenerate with `npm run gen:icons` |
+| `offline.js` | Installability affordance + service-worker registration, update timing, storage persistence, offline status → `window.Offline` |
+| `sw.js` | The offline service worker (classic, hand-written, no build step). Fetched by the browser through `offline.js`, never a `<script>` tag |
+| `offline-manifest.json` + `offline-manifest.js` | **Generated** precache list — per-file content revision + generation hash — never hand-edited; regenerate with `npm run gen:offline` |
 | `tools/narration/pronunciation-backlog.json` | **Generated** list of spoken words no dictionary knows, plus the accepted ceiling — never hand-edited; regenerate with `npm run gen:backlog` |
 | `content/sourcing-backlog.json` | **Generated** count of events with no registered source, per deck, plus the accepted ceiling — never hand-edited; regenerate with `npm run gen:sourcing` |
 | `decks/<id>/` | A deck package: `manifest.json` + `deck.json` + generated `deck.js` (+ `narration/*.mp3`) |
-| `scripts/*.mjs` | Node content tooling only (never loaded by the game): deck index + content/vendor/narration gates, the recipe mirror generator |
+| `scripts/*.mjs` | Node content tooling only (never loaded by the game): deck index + content/vendor/narration/offline gates, the recipe mirror and icon generators |
 | `tools/narration/` | Author-time narration generator: the recipe, Kokoro synthesis, ffmpeg post-processing, tests (see its README) |
+| `tools/offline-smoke/` | Author-time browser smoke for the offline layer: `smoke.mjs` (Chromium) and `webkit.mjs` (Safari's engine). Not part of `npm test` — it needs a real browser download, and a check that cannot run must never report clean |
 | `tools/kokoro-authoring/` | Author-time TTS model bundle only, gitignored and **never shipped** (see rule 2) |
 | `THIRD_PARTY_LICENSES.md` | Attribution manifest for everything third-party; enforced by `npm run validate:vendor` |
 | `doc/GAMIFICATION_BRIEF.md` | Ratified spec for the gamification layer over the mastery review log (streaks, leveling, achievements, feedback copy) |
 | `doc/LIBRARY_RESEARCH.md` | Decision record for third-party libraries: stack-fit ratings, licenses, and the traps |
 | `doc/SUCCESS_FACTORS.md` | Evidence-graded external research; subordinate to the brief and `MARKET_COMPARISON.md` |
+| `doc/references/mcg_research_synthesis.md` | Vendored learning-science evidence base (26 fronts; effect sizes, boundary conditions, anti-patterns, cross-front conflict rules). Citable by § number |
+| `doc/references/evidence-base.md` | Per-pattern evidence ratings for the borrowed patterns. Written for the sibling Montessori grammar project — **only its §7 gamification row and general SDT/feedback rows transfer here** |
+| `doc/CROSS_PLATFORM_ROADMAP.md` | Cross-platform, cloud, monetization and packaging plan (§19 deck packages, §19.12 narration) |
+| `doc/CLOUDLESS_PLAN.md` | The **cloud-less track**: working method (research → plan → build → verify), ordered slice queue, and the two decisions it gates on. Start here for any client-side-only feature |
 
 ## FX layer (`fx.js` → `window.FX`)
 
@@ -271,6 +290,20 @@ Additional checks for the surfaces built after this doc was last revised:
 - **Split-screen:** both panes accept input independently (keyboard **and**
   pointer), each header shows its own deck/filters, results show head-to-head.
 - **Deck I/O:** export a deck, re-import it, confirm it replaces by id.
+- **Offline / install:** run the automated smoke first — it drives a real
+  browser, so it is the only check that can be trusted for this surface:
+  `npm run validate:offline`, then `npm --prefix tools/offline-smoke install`,
+  then `npm run smoke:offline` (Chromium, ~30 s) and `npm run smoke:webkit`
+  (Safari's engine, ~5 s, needs `npm --prefix tools/offline-smoke run browsers`
+  once for the WebKit build). Both must be green; they cover installability and
+  the install affordance, offline boot with the server actually stopped,
+  playback from the downloaded clips, a re-rendered clip being heard rather
+  than the cached one, update timing, two tabs, granted and refused storage
+  persistence, an installed/standalone run, a no-worker browser, and a native
+  shell. **What they cannot cover — check by hand on a device:** iOS Safari
+  itself (Add to Home Screen, iOS storage eviction), the browser's own install
+  dialog, and eviction under memory pressure. `sw.js` must also stay **not**
+  registered under `file://`.
 - **Vendored assets:** `npm run validate:vendor` passes (rule 2).
 
 ## Conventions
