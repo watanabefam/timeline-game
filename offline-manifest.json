@@ -1,9 +1,9 @@
 {
   "formatVersion": 1,
-  "hash": "ba327a5444db",
+  "hash": "6241a611eddd",
   "generatedBy": "scripts/gen-offline-manifest.mjs",
   "cacheName": "timeline-offline",
-  "totalBytes": 19157939,
+  "totalBytes": 19158209,
   "files": [
     {
       "path": "assets/audio/alex-morgan-battle-boss-fight-game-music-583276.mp3",
@@ -372,18 +372,18 @@
     },
     {
       "path": "decks/index.js",
-      "rev": "ff7cac85c6cd",
+      "rev": "96473f8ec8d6",
       "bytes": 1346
     },
     {
       "path": "decks/index.json",
-      "rev": "48ca14216e99",
+      "rev": "9c98e61d09ee",
       "bytes": 1254
     },
     {
       "path": "decks/inventions-discoveries/deck.js",
-      "rev": "4b038799d239",
-      "bytes": 61856
+      "rev": "0e6637fa3e9f",
+      "bytes": 62104
     },
     {
       "path": "decks/world-history-first-timeline/deck.js",
@@ -612,22 +612,22 @@
     },
     {
       "path": "icons/apple-touch-icon-180.png",
-      "rev": "4ad81f168047",
-      "bytes": 1563
+      "rev": "bf5846a5e762",
+      "bytes": 1562
     },
     {
       "path": "icons/icon-192.png",
-      "rev": "5d851e2ae711",
-      "bytes": 3436
+      "rev": "84e5b8e9fc46",
+      "bytes": 3446
     },
     {
       "path": "icons/icon-512.png",
-      "rev": "04005918c5c4",
-      "bytes": 9015
+      "rev": "e1ba3e86aaa1",
+      "bytes": 9028
     },
     {
       "path": "icons/icon-maskable-512.png",
-      "rev": "576be76129ad",
+      "rev": "bd8975276469",
       "bytes": 4447
     },
     {

@@ -330,6 +330,7 @@ for (const rec of records) {
 
   // Connections reference other events by id, so the full id set is needed first.
   const eventIds = new Set(deck.events.map((e) => e.id).filter(Boolean));
+  const connTypeCounts = {}; // per-deck type histogram, for the balance check below
 
   for (const ev of deck.events) {
     const id = ev.id || "(no id)";
@@ -383,7 +384,13 @@ for (const rec of records) {
     // Integrity is an error; coverage is a warning. Edges are directed earlier->later
     // and stored on the EARLIER event only; the reverse index is derived at load time,
     // so a missing back-edge is not a defect.
-    const CONN_TYPES = new Set(["cause", "enabling", "influence", "theme"]);
+    // One axis only — causal STRENGTH — plus `echo` for the non-causal parallel.
+    // (The pilot's `cause|enabling|influence|theme` mixed "how strong" with "what
+    // kind", so `enabling` took 69% and the label carried no information. See
+    // doc/CONNECTIONS.md §3.) `via` is an optional SECOND axis — the mechanism —
+    // never the type.
+    const CONN_TYPES = new Set(["necessary", "contributing", "trigger", "echo"]);
+    const CONN_VIA = new Set(["idea", "material"]);
     if (ev.connections != null) {
       if (!Array.isArray(ev.connections)) {
         err(deck.id, id, "connections must be an array");
@@ -422,6 +429,12 @@ for (const rec of records) {
           if (c.contested != null && typeof c.contested !== "boolean") {
             err(deck.id, id, `${at}.contested must be a boolean`);
           }
+          if (c.via != null && !CONN_VIA.has(c.via)) {
+            err(deck.id, id, `${at}.via "${c.via}" is not one of ${[...CONN_VIA].join(" | ")}`);
+          }
+          if (CONN_TYPES.has(c.type)) {
+            connTypeCounts[c.type] = (connTypeCounts[c.type] || 0) + 1;
+          }
         }
       }
     }
@@ -449,6 +462,20 @@ for (const rec of records) {
       "(deck)",
       "no connections at all — see doc/CONNECTIONS.md; author edges before shipping a Connections mode"
     );
+  }
+
+  // Balance guard: one type dominating means the vocabulary is not
+  // discriminating (the pilot's `enabling` at 69% was exactly this) — a single
+  // label that fits almost everything teaches nothing. See doc/CONNECTIONS.md §3.
+  const totalEdges = Object.values(connTypeCounts).reduce((a, b) => a + b, 0);
+  for (const [t, n] of Object.entries(connTypeCounts)) {
+    if (totalEdges && n / totalEdges > 0.5) {
+      warn(
+        deck.id,
+        "(deck)",
+        `connections: "${t}" is ${Math.round((100 * n) / totalEdges)}% of ${totalEdges} edges — a type that dominates the vocabulary teaches nothing (see doc/CONNECTIONS.md §3)`
+      );
+    }
   }
 }
 

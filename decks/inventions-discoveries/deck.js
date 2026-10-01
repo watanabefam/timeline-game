@@ -140,12 +140,12 @@ window.registerDeck({
       "connections": [
         {
           "to": "stockton-darlington",
-          "type": "theme",
+          "type": "echo",
           "rationale": "The railway is not caused by the cart, but both solve one problem: moving mass over land without carrying it. Both then reorganised trade around whatever route they made cheap. Same mechanism, five thousand years apart."
         },
         {
           "to": "benz-motor-car",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "Benz's patent covers an engine on a chassis, and the chassis is the wheeled vehicle. The motor car is five millennia of wheel design plus one new power source."
         }
       ]
@@ -171,12 +171,12 @@ window.registerDeck({
       "connections": [
         {
           "to": "house-of-wisdom",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "The House of Wisdom could only translate a written record because writing existed. Translation is a second-order technology: it operates on texts that writing had already made."
         },
         {
           "to": "www-proposal",
-          "type": "theme",
+          "type": "echo",
           "rationale": "Both extend memory beyond the person. Uruk solved recording; the Web solved retrieval at distance. The underlying problem -- information outliving and out-travelling its holder -- is identical."
         }
       ]
@@ -201,7 +201,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "brahmagupta-zero",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "A standard unit of money creates the accounting problem that zero solves. Debts, balances and profits have to be written down and computed with; Brahmagupta's own summary says his rules were for merchants tracking debt and profit."
         }
       ]
@@ -225,12 +225,12 @@ window.registerDeck({
       "connections": [
         {
           "to": "house-of-wisdom",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "The deck's own summary records the transmission: papermaking arrived at Baghdad from China. A cheap writing surface is what makes a translation industry possible."
         },
         {
           "to": "gutenberg-bible",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "Printing is cheap only if the surface is cheap. Paper reached Europe through the Islamic world; without it the press would have been printing on parchment at a price that kept books scarce."
         }
       ]
@@ -253,7 +253,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "house-of-wisdom",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "The deck's own fact records the route: translators at Baghdad turned Greek geometry, Persian astronomy and Indian numerals into Arabic. Zero travelled India to Baghdad to Europe."
         }
       ]
@@ -277,12 +277,13 @@ window.registerDeck({
       "connections": [
         {
           "to": "gutenberg-bible",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "Without the translation movement there is no body of classical texts for the press to multiply. What we call the Renaissance's classical revival runs through Baghdad first."
         },
         {
           "to": "newton-principia",
-          "type": "influence",
+          "type": "contributing",
+          "via": "idea",
           "rationale": "Newton works in a mathematics -- algebra, positional numerals -- that reached Europe through Arabic transmission. The ideas are his; the notation he thought in was not."
         }
       ]
@@ -306,7 +307,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "goddard-rocket",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "The rocket is a gunpowder-era invention: Chinese weapons used rocket propulsion centuries before Goddard. Liquid fuel is a new fuel for a very old propulsive idea."
         }
       ]
@@ -331,7 +332,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "gutenberg-bible",
-          "type": "theme",
+          "type": "echo",
           "rationale": "Movable type was invented at least twice, independently. Bi Sheng fired clay characters in the 1040s; Gutenberg cast metal ones four centuries later with no plausible line of transmission. The same solution to the same problem: reuse the characters instead of recarving the page."
         }
       ]
@@ -354,32 +355,32 @@ window.registerDeck({
       "connections": [
         {
           "to": "copernicus-revolutions",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "A heliocentric argument published by hand-copying in 1543 stays in a handful of libraries. Copernicus reached readers because he could be printed."
         },
         {
           "to": "newton-principia",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "The Principia existed as a printed object, paid for by Halley. A shared, citable body of scientific literature presupposes print."
         },
         {
           "to": "darwin-origin",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "Darwin needed a distribution mechanism for a controversial book. Print is what turned a private theory into a public argument."
         },
         {
           "to": "timbuktu-scholars",
-          "type": "theme",
+          "type": "echo",
           "rationale": "A contrast worth teaching: the deck records that printing had NOT reached Timbuktu, so scribes still copied by hand and manuscripts sold for more than their weight in gold. Print's absence is what kept that manuscript economy valuable."
         },
         {
           "to": "mendel-heredity",
-          "type": "theme",
+          "type": "echo",
           "rationale": "Mendel published in a printed journal and was ignored for decades; Darwin published and was attacked. Print is necessary for dissemination but not sufficient for attention -- a distinction the deck's own summaries make."
         },
         {
           "to": "www-proposal",
-          "type": "theme",
+          "type": "echo",
           "rationale": "Both cut the cost of copying. Print did it to texts; the Web did it to everything. Both triggered the same argument about who gets to publish."
         }
       ]
@@ -403,7 +404,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "house-of-wisdom",
-          "type": "theme",
+          "type": "echo",
           "rationale": "Both are translation-and-copying centres that kept learning alive where it was not the dominant priority. Timbuktu is the House of Wisdom's later, hand-copied counterpart."
         }
       ]
@@ -426,12 +427,12 @@ window.registerDeck({
       "connections": [
         {
           "to": "newton-principia",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "Newton's system explains the motions Copernicus asserted. Copernicus moved the centre of the universe; Newton supplied the force that holds it there."
         },
         {
           "to": "lippershey-telescope",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "The heliocentric claim created demand for observations that could settle it. The telescope arrived within a lifetime and made the Copernican question empirical rather than philosophical."
         }
       ]
@@ -455,7 +456,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "newton-principia",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "The telescope turned astronomy into a precision science, and Newton's optics is the theory of the instrument. Observation drove the theory and the theory explained the instrument."
         }
       ]
@@ -478,17 +479,18 @@ window.registerDeck({
       "connections": [
         {
           "to": "einstein-relativity",
-          "type": "influence",
+          "type": "contributing",
+          "via": "idea",
           "rationale": "Relativity does not discard Newton; it bounds him. Einstein's paper works by assuming Newtonian mechanics holds in the limit. A theory that can be superseded and still used is a different kind of object from one that is simply wrong."
         },
         {
           "to": "wright-first-flight",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "The Wrights built their own wind tunnel and worked from lift and drag tables. Their edge over rival aviators was that they computed instead of guessed."
         },
         {
           "to": "goddard-rocket",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "Rocketry is Newtonian mechanics applied. Goddard's summary calls him a physicist for a reason -- the trajectory equations come from the Principia."
         }
       ]
@@ -511,7 +513,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "stockton-darlington",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "The railway is a steam engine on rails. Newcomen proved condensed steam could do continuous work; the deck's own summary notes Watt improved the engines and the steam age was under way."
         }
       ]
@@ -535,7 +537,8 @@ window.registerDeck({
       "connections": [
         {
           "to": "volta-battery",
-          "type": "influence",
+          "type": "contributing",
+          "via": "idea",
           "rationale": "Volta's pile settled a dispute about animal electricity, but the field he worked in -- electricity as a substance rather than a parlour trick -- was made by Franklin's argument that lightning and laboratory sparks were the same thing."
         }
       ]
@@ -558,7 +561,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "fleming-penicillin",
-          "type": "theme",
+          "type": "echo",
           "rationale": "Same mechanism family: fight biology with biology. Jenner used a mild virus to prevent a deadly one; Fleming found a mould that killed bacteria."
         }
       ]
@@ -581,17 +584,17 @@ window.registerDeck({
       "connections": [
         {
           "to": "bell-telephone",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "A telephone needs a steady current to carry a varying signal. Static sparks cannot transmit speech; Volta's pile can."
         },
         {
           "to": "edison-light-bulb",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "Edison's system is a filament, a vacuum, and -- crucially -- power lines and meters. Continuous current is the precondition for distributing light."
         },
         {
           "to": "bell-labs-transistor",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "The transistor replaced the vacuum tube, and the vacuum tube was a continuous-current device. The whole electronics lineage starts at the pile."
         }
       ]
@@ -614,7 +617,8 @@ window.registerDeck({
       "connections": [
         {
           "to": "benz-motor-car",
-          "type": "influence",
+          "type": "contributing",
+          "via": "material",
           "rationale": "The railway created the machine-tool base, the engineering trade and the public expectation that land transport could be powered. An ecosystem, not a cause."
         }
       ]
@@ -638,12 +642,12 @@ window.registerDeck({
       "connections": [
         {
           "to": "roentgen-x-rays",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "Rontgen's discovery became a medical tool only because photography could record an invisible image. He made an image of his wife's hand; every early X-ray is on a photographic plate."
         },
         {
           "to": "hd-tv-service",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "Television is photography plus motion plus radio transmission. Niepce's plate is the first fixable image, and without it there is nothing to transmit."
         }
       ]
@@ -666,12 +670,12 @@ window.registerDeck({
       "connections": [
         {
           "to": "mendel-heredity",
-          "type": "theme",
+          "type": "echo",
           "rationale": "A contrast worth teaching: Darwin and Mendel solved different halves of the same problem at the same time. Darwin had the mechanism of change but no mechanism of inheritance; Mendel had inheritance but was ignored. One was read, the other was not."
         },
         {
           "to": "dna-double-helix",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "Darwin's theory needed an inheritance mechanism he could not supply. DNA is that mechanism, found a century later."
         }
       ]
@@ -694,7 +698,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "dna-double-helix",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "Mendel's hidden units of inheritance are genes. The 1953 paper gives those abstract units a physical form."
         }
       ]
@@ -717,7 +721,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "newton-principia",
-          "type": "theme",
+          "type": "echo",
           "rationale": "Both are organising theories, and the shared move is the gaps. Newton reduced motion to a few laws; Mendeleev reduced the elements to a table with blanks and insisted the blanks were real. A theory that predicts what has not been found yet."
         }
       ]
@@ -740,12 +744,12 @@ window.registerDeck({
       "connections": [
         {
           "to": "arpanet-first-message",
-          "type": "theme",
+          "type": "echo",
           "rationale": "Both are networks carrying messages point-to-point over distance, both built by private companies before becoming public infrastructure. The telephone network is the internet's ancestor in topology, not in technology."
         },
         {
           "to": "iphone-launch",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "The iPhone is a telephone. The device category exists because Bell's patent started an industry."
         }
       ]
@@ -768,7 +772,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "bell-labs-transistor",
-          "type": "theme",
+          "type": "echo",
           "rationale": "Both are the moment an electrical curiosity became a consumer product with a supply chain. Edison's real contribution was the system -- filament, vacuum, power lines, meters. Bell Labs' was a device cheap enough to put in everything."
         }
       ]
@@ -791,7 +795,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "wright-first-flight",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "The Wrights could not buy an engine light enough, so they built one. The lightweight petrol engine they needed came out of the automotive industry Benz had started."
         }
       ]
@@ -814,7 +818,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "dna-double-helix",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "The model rested on Rosalind Franklin's X-ray photographs. Photo 51 is an X-ray image, which is why the discovery of X-rays sits upstream of the discovery of DNA's shape."
         }
       ]
@@ -837,12 +841,13 @@ window.registerDeck({
       "connections": [
         {
           "to": "sputnik-1",
-          "type": "theme",
+          "type": "echo",
           "rationale": "Both are the moment humanity left the ground, and both reduce to the same problem: controlling a vehicle in three dimensions with no road under it."
         },
         {
           "to": "apollo-11-moon",
-          "type": "influence",
+          "type": "contributing",
+          "via": "material",
           "rationale": "Aviation built the industry, the pilots and the public appetite that spaceflight inherited. Influence, not cause -- the rockets came from a different lineage."
         }
       ]
@@ -865,7 +870,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "bell-labs-transistor",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "The transistor is a quantum device. Einstein's 1905 papers include the photoelectric effect, one of the founding results of quantum theory."
         }
       ]
@@ -888,17 +893,17 @@ window.registerDeck({
       "connections": [
         {
           "to": "hd-tv-service",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "Broadcasting is wireless transmission plus programming. Marconi showed the ocean could be crossed without a cable; the BBC shows what you can do with that once it is routine."
         },
         {
           "to": "sputnik-1",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "Sputnik's only payload was a radio transmitter, and tracking it required radio amateurs and stations worldwide. A beeping sphere presumes a listening network."
         },
         {
           "to": "apollo-11-moon",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "Talking to a spacecraft at the Moon, and televising it, needed radio links far beyond the cable era."
         }
       ]
@@ -921,12 +926,12 @@ window.registerDeck({
       "connections": [
         {
           "to": "sputnik-1",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "The deck's own summary: liquid-fuel rockets eventually carried people into orbit and to the Moon. Orbital launch requires liquid fuel; Goddard proved it could fly."
         },
         {
           "to": "apollo-11-moon",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "The Saturn V is a liquid-fuel rocket. Goddard's two-second flight is the proof of concept behind it."
         }
       ]
@@ -965,7 +970,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "apollo-11-moon",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "About 600 million people watched the landing on television. Without a broadcast industry that moment is a radio report, not a shared global event."
         }
       ]
@@ -988,17 +993,17 @@ window.registerDeck({
       "connections": [
         {
           "to": "arpanet-first-message",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "Packet switching needs computers, and computers needed the transistor. The deck records that the transistor led to computers, satellites and almost every electronic device today."
         },
         {
           "to": "apollo-11-moon",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "The Apollo guidance computer flew on integrated circuits, a direct descendant of the transistor."
         },
         {
           "to": "iphone-launch",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "A pocket computer with a screen and a radio is a transistor made small and cheap enough to waste."
         }
       ]
@@ -1037,12 +1042,12 @@ window.registerDeck({
       "connections": [
         {
           "to": "apollo-11-moon",
-          "type": "cause",
+          "type": "trigger",
           "rationale": "The deck's own summary: the launch shocked the United States and sparked a space race, leading to new science agencies, bigger rockets and, within a few years, the first people in space."
         },
         {
           "to": "arpanet-first-message",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "ARPANET was funded by ARPA, the agency the United States created in Sputnik's aftermath. The first message ever sent on the network is downstream of a beeping sphere."
         }
       ]
@@ -1081,12 +1086,12 @@ window.registerDeck({
       "connections": [
         {
           "to": "www-proposal",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "The Web is linked documents reached through the internet. Berners-Lee's proposal describes addresses and a transfer method, i.e. it assumes a network that already exists."
         },
         {
           "to": "iphone-launch",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "A phone with a full web browser presumes a network worth browsing. The iPhone shipped twenty years of network growth to a pocket."
         }
       ]
@@ -1110,7 +1115,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "iphone-launch",
-          "type": "enabling",
+          "type": "contributing",
           "rationale": "The Apollo programme consumed a large share of early integrated-circuit production, which drove miniaturisation. Marked contested: the scale of the claim is argued about more than the direction.",
           "contested": true
         }
@@ -1134,7 +1139,7 @@ window.registerDeck({
       "connections": [
         {
           "to": "iphone-launch",
-          "type": "enabling",
+          "type": "necessary",
           "rationale": "A mobile browser needs the Web to browse. The deck's own summary records that the iPhone put a full web browser in people's pockets -- which presumes Berners-Lee's system already existed."
         }
       ]
