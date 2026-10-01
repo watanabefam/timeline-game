@@ -135,7 +135,19 @@
       "summary": "The wheel was not invented all at once. People first rolled heavy loads on logs, then fastened a round disc to an axle so it could turn. By about 3500 BCE, carts with solid wooden wheels were being pulled by oxen in Mesopotamia and nearby lands. Wheels made farming, trade and travel far easier, and later spoke-wheeled chariots changed how wars were fought. Vehicles built on wheels still move most of the goods in the world today.",
       "lat": 34,
       "lng": 44,
-      "area": 5000
+      "area": 5000,
+      "connections": [
+        {
+          "to": "stockton-darlington",
+          "type": "theme",
+          "rationale": "The railway is not caused by the cart, but both solve one problem: moving mass over land without carrying it. Both then reorganised trade around whatever route they made cheap. Same mechanism, five thousand years apart."
+        },
+        {
+          "to": "benz-motor-car",
+          "type": "enabling",
+          "rationale": "Benz's patent covers an engine on a chassis, and the chassis is the wheeled vehicle. The motor car is five millennia of wheel design plus one new power source."
+        }
+      ]
     },
     {
       "id": "writing-uruk",
@@ -154,7 +166,19 @@
       "summary": "The first writing grew out of bookkeeping. In the city of Uruk, officials needed to record how much grain and livestock came in and out of the temple stores, so they scratched simple pictures and counts into soft clay. Over time those marks became the wedge-shaped script called cuneiform. Writing let people keep accounts, send messages and pass laws across time, and it marks the point where prehistory becomes recorded history.",
       "lat": 31.3,
       "lng": 45.6,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "house-of-wisdom",
+          "type": "enabling",
+          "rationale": "The House of Wisdom could only translate a written record because writing existed. Translation is a second-order technology: it operates on texts that writing had already made."
+        },
+        {
+          "to": "www-proposal",
+          "type": "theme",
+          "rationale": "Both extend memory beyond the person. Uruk solved recording; the Web solved retrieval at distance. The underlying problem -- information outliving and out-travelling its holder -- is identical."
+        }
+      ]
     },
     {
       "id": "lydia-coins",
@@ -172,7 +196,14 @@
       "summary": "Before coins, people swapped goods or weighed out lumps of precious metal at every sale. In Lydia, in what is now western Turkey, minters began stamping electrum with a royal symbol so everyone could trust its weight and value. That small change made buying and selling much faster. Coins spread across the Greek world and the Mediterranean, and the idea of a standard unit of money has shaped economies ever since.",
       "lat": 38.5,
       "lng": 28,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "brahmagupta-zero",
+          "type": "enabling",
+          "rationale": "A standard unit of money creates the accounting problem that zero solves. Debts, balances and profits have to be written down and computed with; Brahmagupta's own summary says his rules were for merchants tracking debt and profit."
+        }
+      ]
     },
     {
       "id": "papermaking",
@@ -189,7 +220,19 @@
       "summary": "Before paper, Chinese writers used heavy bamboo strips or costly silk. Around the second century BCE, craftsmen learned to mash plant fibres and rags into a watery pulp and press it flat to dry. The result was light, cheap and easy to write on. Tradition later credited the court official Cai Lun with improving the method. Paper travelled slowly west along trade routes and eventually reached Europe, where it helped make books and learning far more common.",
       "lat": 34.3,
       "lng": 108.9,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "house-of-wisdom",
+          "type": "enabling",
+          "rationale": "The deck's own summary records the transmission: papermaking arrived at Baghdad from China. A cheap writing surface is what makes a translation industry possible."
+        },
+        {
+          "to": "gutenberg-bible",
+          "type": "enabling",
+          "rationale": "Printing is cheap only if the surface is cheap. Paper reached Europe through the Islamic world; without it the press would have been printing on parchment at a price that kept books scarce."
+        }
+      ]
     },
     {
       "id": "brahmagupta-zero",
@@ -205,7 +248,14 @@
       "summary": "The Indian mathematician Brahmagupta wrote a book that explained how to calculate with zero and with negative numbers. Earlier cultures had used a blank space or a dot as a placeholder, but he described zero as a number that could be added, subtracted and multiplied like any other. He also set out the rules for debt and profit. Those ideas passed through the Islamic world to Europe and became the foundation of modern arithmetic.",
       "lat": 24.6,
       "lng": 73.7,
-      "area": 2000
+      "area": 2000,
+      "connections": [
+        {
+          "to": "house-of-wisdom",
+          "type": "enabling",
+          "rationale": "The deck's own fact records the route: translators at Baghdad turned Greek geometry, Persian astronomy and Indian numerals into Arabic. Zero travelled India to Baghdad to Europe."
+        }
+      ]
     },
     {
       "id": "house-of-wisdom",
@@ -222,7 +272,19 @@
       "summary": "In Baghdad, the Abbasid caliphs gathered scholars, translators and scribes into a great library and research centre known as the House of Wisdom. They translated works of Greek, Persian and Indian science into Arabic and then improved on them. Mathematicians there helped develop algebra, astronomers checked the size of the Earth, and papermaking arrived from China. This centre of learning kept ancient knowledge alive and handed it on, much later, to Europe.",
       "lat": 33.3,
       "lng": 44.4,
-      "area": 800
+      "area": 800,
+      "connections": [
+        {
+          "to": "gutenberg-bible",
+          "type": "enabling",
+          "rationale": "Without the translation movement there is no body of classical texts for the press to multiply. What we call the Renaissance's classical revival runs through Baghdad first."
+        },
+        {
+          "to": "newton-principia",
+          "type": "influence",
+          "rationale": "Newton works in a mathematics -- algebra, positional numerals -- that reached Europe through Arabic transmission. The ideas are his; the notation he thought in was not."
+        }
+      ]
     },
     {
       "id": "gunpowder",
@@ -239,7 +301,14 @@
       "summary": "Chinese alchemists searching for a potion of long life instead stumbled on a mixture that caught fire and exploded. The first written recipes appear in a Daoist text, where gunpowder was described as a warning rather than a weapon. Soon it was used in fireworks and in early flame-throwers and bombs. The knowledge spread along trade routes to the Islamic world and Europe, where it transformed both warfare and, later, mining and engineering.",
       "lat": 34.3,
       "lng": 108.9,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "goddard-rocket",
+          "type": "enabling",
+          "rationale": "The rocket is a gunpowder-era invention: Chinese weapons used rocket propulsion centuries before Goddard. Liquid fuel is a new fuel for a very old propulsive idea."
+        }
+      ]
     },
     {
       "id": "bi-sheng-type",
@@ -257,7 +326,14 @@
       "summary": "Printing from carved wooden blocks was already common in China, but every new page meant carving a new block. Bi Sheng, a craftsman of the Song dynasty, carved single characters into clay, fired them hard, and arranged them in an iron frame to make a page. Afterwards the tiles could be pulled apart and reused. The method was later improved with metal and wooden type. Movable type made books quicker to produce and helped ideas travel.",
       "lat": 34.3,
       "lng": 108.9,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "gutenberg-bible",
+          "type": "theme",
+          "rationale": "Movable type was invented at least twice, independently. Bi Sheng fired clay characters in the 1040s; Gutenberg cast metal ones four centuries later with no plausible line of transmission. The same solution to the same problem: reuse the characters instead of recarving the page."
+        }
+      ]
     },
     {
       "id": "gutenberg-bible",
@@ -273,7 +349,39 @@
       "summary": "Johannes Gutenberg combined several existing ideas: movable metal type, oil-based ink and a screw press adapted from wine-making. Around 1455 his workshop in Mainz printed a beautiful Latin Bible, of which about 180 copies were made. Compared with hand copying, the press was fast and its pages were uniform. Cheaper books helped spread literacy, learning and religious debate across Europe, and print became one of the most powerful technologies in history.",
       "lat": 50,
       "lng": 8.3,
-      "area": 400
+      "area": 400,
+      "connections": [
+        {
+          "to": "copernicus-revolutions",
+          "type": "enabling",
+          "rationale": "A heliocentric argument published by hand-copying in 1543 stays in a handful of libraries. Copernicus reached readers because he could be printed."
+        },
+        {
+          "to": "newton-principia",
+          "type": "enabling",
+          "rationale": "The Principia existed as a printed object, paid for by Halley. A shared, citable body of scientific literature presupposes print."
+        },
+        {
+          "to": "darwin-origin",
+          "type": "enabling",
+          "rationale": "Darwin needed a distribution mechanism for a controversial book. Print is what turned a private theory into a public argument."
+        },
+        {
+          "to": "timbuktu-scholars",
+          "type": "theme",
+          "rationale": "A contrast worth teaching: the deck records that printing had NOT reached Timbuktu, so scribes still copied by hand and manuscripts sold for more than their weight in gold. Print's absence is what kept that manuscript economy valuable."
+        },
+        {
+          "to": "mendel-heredity",
+          "type": "theme",
+          "rationale": "Mendel published in a printed journal and was ignored for decades; Darwin published and was attacked. Print is necessary for dissemination but not sufficient for attention -- a distinction the deck's own summaries make."
+        },
+        {
+          "to": "www-proposal",
+          "type": "theme",
+          "rationale": "Both cut the cost of copying. Print did it to texts; the Web did it to everything. Both triggered the same argument about who gets to publish."
+        }
+      ]
     },
     {
       "id": "timbuktu-scholars",
@@ -290,7 +398,14 @@
       "summary": "Under the Songhai Empire, Timbuktu became a wealthy trading city and a famous centre of learning. Scholars gathered at the Sankore mosque and other schools to study law, astronomy, medicine and history. Because printing had not reached the region, scribes copied books by hand, and a busy trade in manuscripts grew up. Many of those handwritten books survived in family libraries and show how deep and widespread learning was in West Africa.",
       "lat": 16.8,
       "lng": -3,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "house-of-wisdom",
+          "type": "theme",
+          "rationale": "Both are translation-and-copying centres that kept learning alive where it was not the dominant priority. Timbuktu is the House of Wisdom's later, hand-copied counterpart."
+        }
+      ]
     },
     {
       "id": "copernicus-revolutions",
@@ -306,7 +421,19 @@
       "summary": "For centuries most people in Europe believed the Earth sat still at the centre of the universe. Nicolaus Copernicus worked out that the motions of the planets made more sense if the Sun were at the centre and the Earth turned on its axis each day. He was cautious about publishing, and the book appeared only as he lay dying. At first it caused little stir, but it later helped Kepler and Galileo reshape astronomy, and it changed how humans saw their place in the cosmos.",
       "lat": 54.4,
       "lng": 19.7,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "newton-principia",
+          "type": "enabling",
+          "rationale": "Newton's system explains the motions Copernicus asserted. Copernicus moved the centre of the universe; Newton supplied the force that holds it there."
+        },
+        {
+          "to": "lippershey-telescope",
+          "type": "enabling",
+          "rationale": "The heliocentric claim created demand for observations that could settle it. The telescope arrived within a lifetime and made the Copernican question empirical rather than philosophical."
+        }
+      ]
     },
     {
       "id": "lippershey-telescope",
@@ -323,7 +450,14 @@
       "summary": "In the Dutch town of Middelburg, the spectacle-maker Hans Lippershey put one lens at each end of a tube and discovered that faraway things appeared much closer. He asked the government for a patent, and word of the device quickly spread. Other makers, including Zacharias Janssen and Jacob Metius, claimed the idea too. Within a year Galileo had built his own and pointed it at the sky, where he saw mountains on the Moon and moons around Jupiter.",
       "lat": 51.5,
       "lng": 3.6,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "newton-principia",
+          "type": "enabling",
+          "rationale": "The telescope turned astronomy into a precision science, and Newton's optics is the theory of the instrument. Observation drove the theory and the theory explained the instrument."
+        }
+      ]
     },
     {
       "id": "newton-principia",
@@ -339,7 +473,24 @@
       "summary": "Isaac Newton's Mathematical Principles of Natural Philosophy set out three laws of motion and the law of universal gravitation. Newton argued that the same force pulling an apple to the ground also keeps the Moon in orbit around the Earth. The book explained the movements of planets with mathematics and made bold predictions that were later checked and confirmed. His friend Edmond Halley paid for its printing. The Principia became the foundation of physics for the next two centuries.",
       "lat": 52.5,
       "lng": -1.5,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "einstein-relativity",
+          "type": "influence",
+          "rationale": "Relativity does not discard Newton; it bounds him. Einstein's paper works by assuming Newtonian mechanics holds in the limit. A theory that can be superseded and still used is a different kind of object from one that is simply wrong."
+        },
+        {
+          "to": "wright-first-flight",
+          "type": "enabling",
+          "rationale": "The Wrights built their own wind tunnel and worked from lift and drag tables. Their edge over rival aviators was that they computed instead of guessed."
+        },
+        {
+          "to": "goddard-rocket",
+          "type": "enabling",
+          "rationale": "Rocketry is Newtonian mechanics applied. Goddard's summary calls him a physicist for a reason -- the trajectory equations come from the Principia."
+        }
+      ]
     },
     {
       "id": "newcomen-engine",
@@ -355,7 +506,14 @@
       "summary": "Coal mines were flooding faster than horses could pump them dry. Thomas Newcomen, an ironmonger, built an engine that filled a cylinder with steam and then cooled it so the steam turned back to water. The sudden drop in pressure let the outside air push the piston down, and that motion worked a pump. His engines were slow and burned a lot of coal, but they worked day and night. James Watt later improved them greatly, and the steam age was under way.",
       "lat": 52.5,
       "lng": -1.5,
-      "area": 400
+      "area": 400,
+      "connections": [
+        {
+          "to": "stockton-darlington",
+          "type": "enabling",
+          "rationale": "The railway is a steam engine on rails. Newcomen proved condensed steam could do continuous work; the deck's own summary notes Watt improved the engines and the steam age was under way."
+        }
+      ]
     },
     {
       "id": "franklin-lightning",
@@ -372,7 +530,14 @@
       "summary": "Benjamin Franklin was fascinated by electricity and suspected that lightning was a giant spark of the same kind. He described experiments to test the idea, and by his own account he later flew a kite in a storm to draw down an electric charge. Whatever exactly happened that day, his writing convinced many people. He also suggested fixing pointed iron rods to buildings to carry lightning harmlessly to the ground, and lightning rods soon spread across Europe and America.",
       "lat": 39.95,
       "lng": -75.17,
-      "area": 400
+      "area": 400,
+      "connections": [
+        {
+          "to": "volta-battery",
+          "type": "influence",
+          "rationale": "Volta's pile settled a dispute about animal electricity, but the field he worked in -- electricity as a substance rather than a parlour trick -- was made by Franklin's argument that lightning and laboratory sparks were the same thing."
+        }
+      ]
     },
     {
       "id": "jenner-vaccination",
@@ -388,7 +553,14 @@
       "summary": "Smallpox was one of the deadliest diseases in the world, killing many of the people it infected and leaving others scarred. Country doctors had noticed that milkmaids who caught the mild disease cowpox rarely got smallpox. Edward Jenner tested the idea by giving a boy cowpox and later exposing him to smallpox, which he did not catch. He published his results, and the safer practice of vaccination slowly spread. Smallpox was finally declared wiped out around the world in 1980.",
       "lat": 51.7,
       "lng": -2.4,
-      "area": 400
+      "area": 400,
+      "connections": [
+        {
+          "to": "fleming-penicillin",
+          "type": "theme",
+          "rationale": "Same mechanism family: fight biology with biology. Jenner used a mild virus to prevent a deadly one; Fleming found a mould that killed bacteria."
+        }
+      ]
     },
     {
       "id": "volta-battery",
@@ -404,7 +576,24 @@
       "summary": "Scientists could make sparks with static electricity, but they had no way to produce a steady flow. The Italian physicist Alessandro Volta built a 'pile' of copper and zinc discs separated by cloth soaked in salt water. Unlike a single spark, the pile pushed a continuous current through a wire. Volta had disagreed with Luigi Galvani about why frog legs twitched, and his pile settled the argument by showing that the electricity came from the metals. It gave chemists a powerful new tool.",
       "lat": 45.5,
       "lng": 9.2,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "bell-telephone",
+          "type": "enabling",
+          "rationale": "A telephone needs a steady current to carry a varying signal. Static sparks cannot transmit speech; Volta's pile can."
+        },
+        {
+          "to": "edison-light-bulb",
+          "type": "enabling",
+          "rationale": "Edison's system is a filament, a vacuum, and -- crucially -- power lines and meters. Continuous current is the precondition for distributing light."
+        },
+        {
+          "to": "bell-labs-transistor",
+          "type": "enabling",
+          "rationale": "The transistor replaced the vacuum tube, and the vacuum tube was a continuous-current device. The whole electronics lineage starts at the pile."
+        }
+      ]
     },
     {
       "id": "stockton-darlington",
@@ -420,7 +609,14 @@
       "summary": "On an autumn day, the Stockton and Darlington Railway opened in the north of England as the first public railway to use steam locomotives. George Stephenson, who had built and driven early engines, helped design the line. On opening day his locomotive, Locomotion No. 1, pulled wagons of coal and a special carriage full of passengers the whole length of the track. The event launched the railway age, which soon tied countries together and changed how people and goods moved.",
       "lat": 54.57,
       "lng": -1.32,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "benz-motor-car",
+          "type": "influence",
+          "rationale": "The railway created the machine-tool base, the engineering trade and the public expectation that land transport could be powered. An ecosystem, not a cause."
+        }
+      ]
     },
     {
       "id": "earliest-photograph",
@@ -437,7 +633,19 @@
       "summary": "Joseph Nicéphore Niépce wanted to fix the images made by a camera. He spread light-sensitive bitumen on a pewter plate and set it in a window of his house for many hours. The bright parts of the view hardened, and when he washed the plate the dimmer parts dissolved, leaving a faint picture of the rooftops outside. It was the earliest photograph to survive. Photography later became faster and cheaper, changing how people remembered their lives and how news was reported.",
       "lat": 46.6,
       "lng": 4,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "roentgen-x-rays",
+          "type": "enabling",
+          "rationale": "Rontgen's discovery became a medical tool only because photography could record an invisible image. He made an image of his wife's hand; every early X-ray is on a photographic plate."
+        },
+        {
+          "to": "hd-tv-service",
+          "type": "enabling",
+          "rationale": "Television is photography plus motion plus radio transmission. Niepce's plate is the first fixable image, and without it there is nothing to transmit."
+        }
+      ]
     },
     {
       "id": "darwin-origin",
@@ -453,7 +661,19 @@
       "summary": "Charles Darwin had spent years studying plants, animals and fossils, including a long voyage aboard the survey ship Beagle. He grew convinced that species change over time and that natural selection drives the change: individuals with useful features tend to have more offspring, so those features become more common. When a young naturalist named Alfred Russel Wallace reached similar conclusions, Darwin hurried to publish. The book caused fierce debate, but it became the foundation of modern biology.",
       "lat": 51.5,
       "lng": 0.1,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "mendel-heredity",
+          "type": "theme",
+          "rationale": "A contrast worth teaching: Darwin and Mendel solved different halves of the same problem at the same time. Darwin had the mechanism of change but no mechanism of inheritance; Mendel had inheritance but was ignored. One was read, the other was not."
+        },
+        {
+          "to": "dna-double-helix",
+          "type": "enabling",
+          "rationale": "Darwin's theory needed an inheritance mechanism he could not supply. DNA is that mechanism, found a century later."
+        }
+      ]
     },
     {
       "id": "mendel-heredity",
@@ -469,7 +689,14 @@
       "summary": "Gregor Mendel, a monk and teacher in Brno, wanted to know how traits pass from parents to young. He carefully bred thousands of pea plants over several years, tracking features such as seed shape and flower colour. Instead of blurring together as many expected, the traits appeared in neat mathematical ratios. Mendel read his work to a local society and published it, but almost nobody noticed at the time. His ideas were rediscovered many years later and became the basis of genetics.",
       "lat": 49.2,
       "lng": 16.6,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "dna-double-helix",
+          "type": "enabling",
+          "rationale": "Mendel's hidden units of inheritance are genes. The 1953 paper gives those abstract units a physical form."
+        }
+      ]
     },
     {
       "id": "mendeleev-periodic-table",
@@ -485,7 +712,14 @@
       "summary": "Chemists in the nineteenth century knew many elements but had no clear way to organise them. Dmitri Mendeleev arranged the known elements in order of atomic weight, starting a new row when properties repeated. He noticed gaps where an element seemed to be missing and boldly predicted the properties of those undiscovered elements. When gallium and germanium were found and matched his predictions, the table's power was clear. It became one of the most useful charts in all of science.",
       "lat": 59.9,
       "lng": 30.3,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "newton-principia",
+          "type": "theme",
+          "rationale": "Both are organising theories, and the shared move is the gaps. Newton reduced motion to a few laws; Mendeleev reduced the elements to a table with blanks and insisted the blanks were real. A theory that predicts what has not been found yet."
+        }
+      ]
     },
     {
       "id": "bell-telephone",
@@ -501,7 +735,19 @@
       "summary": "Alexander Graham Bell, a teacher of the deaf, experimented with sending speech along wires. His patent was filed on the same day as a claim from the inventor Elisha Gray, and an Italian-American named Antonio Meucci had built a telephone-like device earlier but could not afford to keep his claim. Bell demonstrated a working telephone soon after, famously calling his assistant by name. The patent made him famous and rich, and it started the telephone industry.",
       "lat": 42.36,
       "lng": -71.06,
-      "area": 2000
+      "area": 2000,
+      "connections": [
+        {
+          "to": "arpanet-first-message",
+          "type": "theme",
+          "rationale": "Both are networks carrying messages point-to-point over distance, both built by private companies before becoming public infrastructure. The telephone network is the internet's ancestor in topology, not in technology."
+        },
+        {
+          "to": "iphone-launch",
+          "type": "enabling",
+          "rationale": "The iPhone is a telephone. The device category exists because Bell's patent started an industry."
+        }
+      ]
     },
     {
       "id": "edison-light-bulb",
@@ -517,7 +763,14 @@
       "summary": "Many inventors had made electric lights before Thomas Edison. Humphry Davy had used a glowing wire decades earlier, and the British inventor Joseph Swan was working on a similar bulb at the same time. What Edison's team added was careful engineering: a carbon filament inside a sealed vacuum that stayed lit for many hours, plus power lines and meters to supply it. In 1879 they demonstrated a bulb that burned steadily. Electric light then replaced gas lamps in cities.",
       "lat": 40.5,
       "lng": -74.35,
-      "area": 400
+      "area": 400,
+      "connections": [
+        {
+          "to": "bell-labs-transistor",
+          "type": "theme",
+          "rationale": "Both are the moment an electrical curiosity became a consumer product with a supply chain. Edison's real contribution was the system -- filament, vacuum, power lines, meters. Bell Labs' was a device cheap enough to put in everything."
+        }
+      ]
     },
     {
       "id": "benz-motor-car",
@@ -533,7 +786,14 @@
       "summary": "Steam carriages and experimental vehicles already existed, but Karl Benz built a light, practical car powered by an internal-combustion engine and took out a patent on it. His three-wheeled Motorwagen had a single-cylinder petrol engine and wire wheels. In 1888 his wife, Bertha, took it on a long journey without telling him, fixing parts with tools along the way and buying fuel at chemists' shops. The trip proved the car could work, and the motor-car age began.",
       "lat": 49,
       "lng": 8.4,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "wright-first-flight",
+          "type": "enabling",
+          "rationale": "The Wrights could not buy an engine light enough, so they built one. The lightweight petrol engine they needed came out of the automotive industry Benz had started."
+        }
+      ]
     },
     {
       "id": "roentgen-x-rays",
@@ -549,7 +809,14 @@
       "summary": "While experimenting with a cathode-ray tube, Wilhelm Röntgen noticed that a screen across the room glowed even though the tube was covered. He realised some unknown rays were passing through the covering. He called them X-rays and tested them carefully, finding they went through flesh but were blocked by bone. He made an image of his wife's hand, showing the bones inside. Doctors quickly used X-rays to see inside patients, and Röntgen received the first Nobel Prize in Physics.",
       "lat": 49.8,
       "lng": 9.9,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "dna-double-helix",
+          "type": "enabling",
+          "rationale": "The model rested on Rosalind Franklin's X-ray photographs. Photo 51 is an X-ray image, which is why the discovery of X-rays sits upstream of the discovery of DNA's shape."
+        }
+      ]
     },
     {
       "id": "wright-first-flight",
@@ -565,7 +832,19 @@
       "summary": "Wilbur and Orville Wright ran a bicycle shop but spent years testing gliders and building their own wind tunnel. They could not buy a light engine or propeller that suited them, so they made both themselves. On a windy December morning at Kitty Hawk in North Carolina, Orville flew their machine for twelve seconds. The brothers made four flights that day, the longest lasting nearly a minute. Their careful work on steering made sustained powered flight possible.",
       "lat": 36.02,
       "lng": -75.67,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "sputnik-1",
+          "type": "theme",
+          "rationale": "Both are the moment humanity left the ground, and both reduce to the same problem: controlling a vehicle in three dimensions with no road under it."
+        },
+        {
+          "to": "apollo-11-moon",
+          "type": "influence",
+          "rationale": "Aviation built the industry, the pilots and the public appetite that spaceflight inherited. Influence, not cause -- the rockets came from a different lineage."
+        }
+      ]
     },
     {
       "id": "einstein-relativity",
@@ -581,7 +860,14 @@
       "summary": "In 1905, while working in a patent office in Bern, Albert Einstein published several papers that changed physics. One of them, on special relativity, began with a strange fact: the speed of light is always the same, no matter how fast the observer is moving. From that, Einstein concluded that time and space are not fixed but stretch and shrink for moving objects. He also showed that mass and energy are two forms of the same thing, summed up in the famous equation E=mc².",
       "lat": 46.95,
       "lng": 7.45,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "bell-labs-transistor",
+          "type": "enabling",
+          "rationale": "The transistor is a quantum device. Einstein's 1905 papers include the photoelectric effect, one of the founding results of quantum theory."
+        }
+      ]
     },
     {
       "id": "transatlantic-radio",
@@ -597,7 +883,24 @@
       "summary": "Guglielmo Marconi had claimed to send a radio signal across the Atlantic years earlier, but a regular public service was a bigger step. In 1907 his company opened a commercial wireless link between Glace Bay in Canada and Clifden in Ireland. Customers paid by the word to send messages across the ocean without a cable. Radio proved its value in 1912, when operators helped summon rescue ships after the Titanic struck ice. The service showed that wireless could carry news and business around the world.",
       "lat": 48,
       "lng": -30,
-      "area": 4000
+      "area": 4000,
+      "connections": [
+        {
+          "to": "hd-tv-service",
+          "type": "enabling",
+          "rationale": "Broadcasting is wireless transmission plus programming. Marconi showed the ocean could be crossed without a cable; the BBC shows what you can do with that once it is routine."
+        },
+        {
+          "to": "sputnik-1",
+          "type": "enabling",
+          "rationale": "Sputnik's only payload was a radio transmitter, and tracking it required radio amateurs and stations worldwide. A beeping sphere presumes a listening network."
+        },
+        {
+          "to": "apollo-11-moon",
+          "type": "enabling",
+          "rationale": "Talking to a spacecraft at the Moon, and televising it, needed radio links far beyond the cable era."
+        }
+      ]
     },
     {
       "id": "goddard-rocket",
@@ -613,7 +916,19 @@
       "summary": "Robert Goddard, an American physicist, believed rockets could one day reach space. On a farm in Massachusetts he launched the first rocket powered by liquid fuel, using petrol and liquid oxygen. It rose only about a dozen metres and flew for a couple of seconds, but it proved that liquid fuels could work. Many newspapers laughed at his ideas about the Moon, but later engineers built on his research. Liquid-fuel rockets eventually carried people into orbit and to the Moon.",
       "lat": 42.2,
       "lng": -71.8,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "sputnik-1",
+          "type": "enabling",
+          "rationale": "The deck's own summary: liquid-fuel rockets eventually carried people into orbit and to the Moon. Orbital launch requires liquid fuel; Goddard proved it could fly."
+        },
+        {
+          "to": "apollo-11-moon",
+          "type": "enabling",
+          "rationale": "The Saturn V is a liquid-fuel rocket. Goddard's two-second flight is the proof of concept behind it."
+        }
+      ]
     },
     {
       "id": "fleming-penicillin",
@@ -645,7 +960,14 @@
       "summary": "The BBC began the world's first regular high-definition television service from Alexandra Palace in London. At the time, broadcasters were still arguing over which system was best, so the service alternated between two competing methods before settling on one. Only a few thousand homes had sets, and the pictures were black and white. Weeks after the launch, a fire destroyed part of the studios, though the service recovered. Television was suspended during the war and returned in 1946.",
       "lat": 51.59,
       "lng": -0.13,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "apollo-11-moon",
+          "type": "enabling",
+          "rationale": "About 600 million people watched the landing on television. Without a broadcast industry that moment is a radio report, not a shared global event."
+        }
+      ]
     },
     {
       "id": "bell-labs-transistor",
@@ -661,7 +983,24 @@
       "summary": "Early radios and computers used vacuum tubes: glass bulbs that were hot, bulky and easy to break. At Bell Labs in New Jersey, John Bardeen and Walter Brattain built a small device from germanium with two gold contacts. It could switch and amplify electric signals, and it worked instantly with no warm-up. Their colleague William Shockley improved the design. The transistor was smaller, cooler and far more reliable than a tube, and it led to computers, satellites and almost every electronic device today.",
       "lat": 40.68,
       "lng": -74.4,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "arpanet-first-message",
+          "type": "enabling",
+          "rationale": "Packet switching needs computers, and computers needed the transistor. The deck records that the transistor led to computers, satellites and almost every electronic device today."
+        },
+        {
+          "to": "apollo-11-moon",
+          "type": "enabling",
+          "rationale": "The Apollo guidance computer flew on integrated circuits, a direct descendant of the transistor."
+        },
+        {
+          "to": "iphone-launch",
+          "type": "enabling",
+          "rationale": "A pocket computer with a screen and a radio is a transistor made small and cheap enough to waste."
+        }
+      ]
     },
     {
       "id": "dna-double-helix",
@@ -693,7 +1032,19 @@
       "summary": "The Soviet Union launched Sputnik 1, the first human-made object to orbit the Earth. The polished metal sphere was only about the size of a beach ball and carried simple radio transmitters. As it circled the planet, it sent out radio beeps that amateurs everywhere could hear, and people watched it pass overhead at night. The launch shocked the United States and sparked a space race. It led to new science agencies, bigger rockets and, within a few years, the first people in space.",
       "lat": 45.96,
       "lng": 63.31,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "apollo-11-moon",
+          "type": "cause",
+          "rationale": "The deck's own summary: the launch shocked the United States and sparked a space race, leading to new science agencies, bigger rockets and, within a few years, the first people in space."
+        },
+        {
+          "to": "arpanet-first-message",
+          "type": "enabling",
+          "rationale": "ARPANET was funded by ARPA, the agency the United States created in Sputnik's aftermath. The first message ever sent on the network is downstream of a beeping sphere."
+        }
+      ]
     },
     {
       "id": "oral-contraceptive",
@@ -725,7 +1076,19 @@
       "summary": "Researchers at UCLA tried to send a message to a computer at Stanford over a new network called ARPANET. They meant to type the word LOGIN, but the system crashed after the first two letters, so the first message ever sent was simply 'LO'. ARPANET used packet switching, which breaks data into small pieces that can travel different routes. The network grew and eventually became the internet. Its first message was unplanned and incomplete, yet it marked a turning point in how the world communicates.",
       "lat": 34.07,
       "lng": -118.44,
-      "area": 2000
+      "area": 2000,
+      "connections": [
+        {
+          "to": "www-proposal",
+          "type": "enabling",
+          "rationale": "The Web is linked documents reached through the internet. Berners-Lee's proposal describes addresses and a transfer method, i.e. it assumes a network that already exists."
+        },
+        {
+          "to": "iphone-launch",
+          "type": "enabling",
+          "rationale": "A phone with a full web browser presumes a network worth browsing. The iPhone shipped twenty years of network growth to a pocket."
+        }
+      ]
     },
     {
       "id": "apollo-11-moon",
@@ -742,7 +1105,15 @@
       "lat": 0,
       "lng": 0,
       "area": "world",
-      "noMap": true
+      "noMap": true,
+      "connections": [
+        {
+          "to": "iphone-launch",
+          "type": "enabling",
+          "rationale": "The Apollo programme consumed a large share of early integrated-circuit production, which drove miniaturisation. Marked contested: the scale of the claim is argued about more than the direction.",
+          "contested": true
+        }
+      ]
     },
     {
       "id": "www-proposal",
@@ -758,7 +1129,14 @@
       "summary": "At CERN, the particle physics laboratory near Geneva, Tim Berners-Lee was frustrated that information sat on many different computers. He wrote a proposal for a system of linked documents that could be reached through the internet, using addresses, a way to send pages and a simple language for writing them. His manager scribbled 'vague but exciting' on the cover. Berners-Lee then built it, and the first website appeared within a couple of years. He and CERN shared the Web freely so anyone could use it.",
       "lat": 46.23,
       "lng": 6.05,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "iphone-launch",
+          "type": "enabling",
+          "rationale": "A mobile browser needs the Web to browse. The deck's own summary records that the iPhone put a full web browser in people's pockets -- which presumes Berners-Lee's system already existed."
+        }
+      ]
     },
     {
       "id": "iphone-launch",

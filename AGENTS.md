@@ -215,6 +215,8 @@ designing any learning or motivational surface, and cite it by § number.
 | `doc/references/evidence-base.md` | Per-pattern evidence ratings for the borrowed patterns. Written for the sibling Montessori grammar project — **only its §7 gamification row and general SDT/feedback rows transfer here** |
 | `doc/CROSS_PLATFORM_ROADMAP.md` | Cross-platform, cloud, monetization and packaging plan (§19 deck packages, §19.12 narration) |
 | `doc/CLOUDLESS_PLAN.md` | The **cloud-less track**: working method (research → plan → build → verify), ordered slice queue, and the two decisions it gates on. Start here for any client-side-only feature |
+| `doc/STUDY_MODES.md` | Mode catalog (v2). Ratings on a research-alignment rubric, new instruction surfaces, competitive read, and a mandated instruction-before-assessment build order. **v1's catalog and TL;DR are preserved verbatim in §14** with the reason for every change |
+| `doc/CONNECTIONS.md` | The connection/causal edge model: schema, type vocabulary, the filter rule, the logged rejections, and the `inventions-discoveries` pilot (61 authored edges). Read before touching `connections[]` |
 
 ## FX layer (`fx.js` → `window.FX`)
 

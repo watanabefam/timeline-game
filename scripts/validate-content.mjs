@@ -328,6 +328,9 @@ for (const rec of records) {
     continue;
   }
 
+  // Connections reference other events by id, so the full id set is needed first.
+  const eventIds = new Set(deck.events.map((e) => e.id).filter(Boolean));
+
   for (const ev of deck.events) {
     const id = ev.id || "(no id)";
     const title = ev.title || "";
@@ -376,6 +379,53 @@ for (const rec of records) {
       warn(deck.id, id, "no structured fields (who/where/why) — consider adding");
     }
 
+    // CONNECTIONS — see doc/CONNECTIONS.md for the edge model and the filter rule.
+    // Integrity is an error; coverage is a warning. Edges are directed earlier->later
+    // and stored on the EARLIER event only; the reverse index is derived at load time,
+    // so a missing back-edge is not a defect.
+    const CONN_TYPES = new Set(["cause", "enabling", "influence", "theme"]);
+    if (ev.connections != null) {
+      if (!Array.isArray(ev.connections)) {
+        err(deck.id, id, "connections must be an array");
+      } else {
+        const seen = new Set();
+        for (const [ci, c] of ev.connections.entries()) {
+          const at = `connections[${ci}]`;
+          if (!c || typeof c !== "object") {
+            err(deck.id, id, `${at} must be an object`);
+            continue;
+          }
+          if (typeof c.rationale !== "string" || c.rationale.trim().length < 20) {
+            err(
+              deck.id,
+              id,
+              `${at} needs a rationale — an unlabelled link teaches nothing (min 20 chars)`
+            );
+          }
+          if (!CONN_TYPES.has(c.type)) {
+            err(
+              deck.id,
+              id,
+              `${at}.type "${c.type}" is not one of ${[...CONN_TYPES].join(" | ")}`
+            );
+          }
+          if (!eventIds.has(c.to)) {
+            err(deck.id, id, `${at}.to "${c.to}" is not an event in this deck`);
+          }
+          if (c.to === id) {
+            err(deck.id, id, `${at} links the event to itself`);
+          }
+          if (c.to && seen.has(c.to)) {
+            err(deck.id, id, `${at} duplicates a link to "${c.to}"`);
+          }
+          seen.add(c.to);
+          if (c.contested != null && typeof c.contested !== "boolean") {
+            err(deck.id, id, `${at}.contested must be a boolean`);
+          }
+        }
+      }
+    }
+
     // RULE — "Years live only in the year field." Narration reads title+fact
     // aloud, so a year in fact/who/where/why leaks the answer. Legacy decks
     // (LEGACY_DECKS) warn; every other deck fails.
@@ -389,6 +439,16 @@ for (const rec of records) {
       if (LEGACY_DECKS.has(deck.id)) warn(deck.id, id, msg);
       else err(deck.id, id, msg);
     }
+  }
+
+  // Coverage, not correctness: an event may legitimately be a terminus.
+  const linked = deck.events.filter((e) => (e.connections || []).length).length;
+  if (linked === 0) {
+    warn(
+      deck.id,
+      "(deck)",
+      "no connections at all — see doc/CONNECTIONS.md; author edges before shipping a Connections mode"
+    );
   }
 }
 

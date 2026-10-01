@@ -2,10 +2,10 @@
  * The service worker loads this with importScripts() at install time. */
 self.OFFLINE_MANIFEST = {
   "formatVersion": 1,
-  "hash": "b811d5d3a7f2",
+  "hash": "ba327a5444db",
   "generatedBy": "scripts/gen-offline-manifest.mjs",
   "cacheName": "timeline-offline",
-  "totalBytes": 19139741,
+  "totalBytes": 19157939,
   "files": [
     {
       "path": "assets/audio/alex-morgan-battle-boss-fight-game-music-583276.mp3",
@@ -374,18 +374,18 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "decks/index.js",
-      "rev": "1c821831eff3",
+      "rev": "ff7cac85c6cd",
       "bytes": 1346
     },
     {
       "path": "decks/index.json",
-      "rev": "53b4693b4d97",
+      "rev": "48ca14216e99",
       "bytes": 1254
     },
     {
       "path": "decks/inventions-discoveries/deck.js",
-      "rev": "0a6bc231188f",
-      "bytes": 43658
+      "rev": "4b038799d239",
+      "bytes": 61856
     },
     {
       "path": "decks/world-history-first-timeline/deck.js",
