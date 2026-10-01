@@ -8,8 +8,8 @@ window.DECK_INDEX = {
       "dir": "cc-timeline",
       "entry": "deck.json",
       "script": "deck.js",
-      "revision": "f8a59aeace17",
-      "bytes": 85130,
+      "revision": "82e5574cb170",
+      "bytes": 85359,
       "version": "1.0.0",
       "attribution": [],
       "grandfathered": true

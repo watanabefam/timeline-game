@@ -799,7 +799,7 @@ window.registerDeck({
       "id": "cc-034",
       "songOrder": 34,
       "title": "Peloponnesian Wars",
-      "year": -404,
+      "year": -431,
       "circa": false,
       "continent": "europe",
       "week": 5,
@@ -811,7 +811,8 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 39,
       "lng": 22,
-      "area": 300
+      "area": 300,
+      "yearEnd": -404
     },
     {
       "id": "cc-035",
@@ -871,7 +872,7 @@ window.registerDeck({
       "id": "cc-038",
       "songOrder": 38,
       "title": "Punic Wars",
-      "year": -146,
+      "year": -264,
       "circa": false,
       "continent": "europe",
       "week": 6,
@@ -883,7 +884,8 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 35,
       "lng": 18,
-      "area": 2500
+      "area": 2500,
+      "yearEnd": -146
     },
     {
       "id": "cc-039",
@@ -1294,7 +1296,7 @@ window.registerDeck({
       "id": "cc-062",
       "songOrder": 62,
       "title": "Golden Age of Islam",
-      "year": 1258,
+      "year": 750,
       "circa": true,
       "continent": "asia",
       "week": 9,
@@ -1306,7 +1308,8 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 33.3,
       "lng": 44.4,
-      "area": 200
+      "area": 200,
+      "yearEnd": 1258
     },
     {
       "id": "cc-063",
@@ -1437,7 +1440,7 @@ window.registerDeck({
       "id": "cc-070",
       "songOrder": 70,
       "title": "East-West Schism of the Church",
-      "year": 1000,
+      "year": 1054,
       "circa": false,
       "continent": "europe",
       "week": 10,
@@ -1652,7 +1655,7 @@ window.registerDeck({
       "id": "cc-082",
       "songOrder": 82,
       "title": "The Hundred Years' War and Black Death",
-      "year": 1453,
+      "year": 1337,
       "circa": false,
       "continent": "europe",
       "week": 12,
@@ -1664,7 +1667,8 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 50,
       "lng": 12,
-      "area": 3000
+      "area": 3000,
+      "yearEnd": 1453
     },
     {
       "id": "cc-083",
@@ -2047,7 +2051,7 @@ window.registerDeck({
       "id": "cc-104",
       "songOrder": 104,
       "title": "Classical Period of the Arts",
-      "year": 1820,
+      "year": 1750,
       "circa": true,
       "continent": "europe",
       "week": 15,
@@ -2059,13 +2063,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 50,
       "lng": 12,
-      "area": 3000
+      "area": 3000,
+      "yearEnd": 1820
     },
     {
       "id": "cc-105",
       "songOrder": 105,
       "title": "The Seven Years' War",
-      "year": 1763,
+      "year": 1756,
       "circa": false,
       "continent": "europe",
       "week": 15,
@@ -2077,7 +2082,8 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 20,
       "lng": 0,
-      "area": "world"
+      "area": "world",
+      "yearEnd": 1763
     },
     {
       "id": "cc-106",
@@ -2155,7 +2161,7 @@ window.registerDeck({
       "id": "cc-110",
       "songOrder": 110,
       "title": "French Revolution",
-      "year": 1799,
+      "year": 1789,
       "circa": false,
       "continent": "europe",
       "week": 16,
@@ -2167,7 +2173,8 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 46.6,
       "lng": 2.4,
-      "area": 600
+      "area": 600,
+      "yearEnd": 1799
     },
     {
       "id": "cc-111",
@@ -2317,7 +2324,7 @@ window.registerDeck({
       "id": "cc-119",
       "songOrder": 119,
       "title": "Romantic Period of the Arts",
-      "year": 1850,
+      "year": 1800,
       "circa": true,
       "continent": "europe",
       "week": 17,
@@ -2329,7 +2336,8 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 50,
       "lng": 12,
-      "area": 3000
+      "area": 3000,
+      "yearEnd": 1850
     },
     {
       "id": "cc-120",
@@ -2425,7 +2433,7 @@ window.registerDeck({
       "id": "cc-125",
       "songOrder": 125,
       "title": "British Queen Victoria's Rule Over India",
-      "year": 1947,
+      "year": 1858,
       "circa": false,
       "continent": "asia",
       "week": 18,
@@ -2437,7 +2445,8 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 22,
       "lng": 79,
-      "area": 1500
+      "area": 1500,
+      "yearEnd": 1901
     },
     {
       "id": "cc-126",
@@ -2767,7 +2776,7 @@ window.registerDeck({
       "id": "cc-144",
       "songOrder": 144,
       "title": "The Cold War",
-      "year": 1991,
+      "year": 1947,
       "circa": false,
       "continent": "europe",
       "week": 21,
@@ -2779,7 +2788,8 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 20,
       "lng": 0,
-      "area": "world"
+      "area": "world",
+      "yearEnd": 1991
     },
     {
       "id": "cc-145",
