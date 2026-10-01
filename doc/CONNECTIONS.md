@@ -19,7 +19,7 @@ world-history deck (see §5).
 { "id": "gutenberg-bible",
   "connections": [
     { "to": "copernicus-revolutions",
-      "type": "enabling",
+      "type": "contributing",
       "rationale": "A heliocentric argument published by hand-copying in 1543 stays in a handful of libraries. Copernicus reached readers because he could be printed." }
   ]
 }
@@ -48,11 +48,28 @@ unlabelled edge is not a concept map; it is a line. The validator enforces this.
 by many edges; the `rationale` is unique prose per edge. That split is what CXL's separate
 `linking-phrase-list` buys, and it is what makes the type statistically inspectable (§3).
 
-## 3. Type vocabulary — and the pilot's most important finding
+## 3. Type vocabulary — one axis, and the pilot's most important finding
 
-Vocabulary as authored: `cause` | `enabling` | `influence` | `theme`.
+**Adopted 2026-10-01.** `type` is **one axis: causal strength.** The player-facing linking phrase
+is derived from it (age-gated, §3.1):
 
-**Pilot result on 61 edges:**
+| `type` | test (apply in order) | reads to the player as |
+|---|---|---|
+| `necessary` | *Without X, Y would **not** have happened.* A hard material or logical dependency — "could only", "presupposes", "X **is** Y on Z". | *made possible* |
+| `contributing` | *X made Y **more likely** / easier / faster, but it could still have happened.* Distribution, reach, ecosystem, created-need, ideas/lineage. | *helped lead to* |
+| `trigger` | *X **set it off now** — the proximate spark, not the background condition.* | *set off* |
+| `echo` | *Not causal at all* — the same mechanism or problem recurring. | *mirrored* |
+
+**`via` is a second, optional axis — the mechanism, never the type:** `idea` (intellectual
+transmission: notation, theory, a problem-space) | `material` (physical: industry, tooling, an
+ecosystem). It preserves what `influence` used to carry, without polluting the strength scale.
+
+**Why one axis.** The pilot's set — `cause | enabling | influence | theme` — mixed two different
+kinds of label: `necessary`/`contributing` are degrees of *strength*, while `enabling`/`influence`
+are *kinds of mechanism*, and `theme` is not causal at all. A flat list spanning two axes cannot
+answer one question consistently, which is why authoring drifted into the safest word.
+
+**Pilot result on 61 edges (before):**
 
 | type | n | share |
 |---|---|---|
@@ -64,28 +81,49 @@ Vocabulary as authored: `cause` | `enabling` | `influence` | `theme`.
 **One term taking 69% of cases means the vocabulary is not discriminating.** A learner trained on
 these labels learns "almost everything is enabling", which is a worse lesson than no label at all.
 The skew is not random: "X made Y possible" is the *safest* long-range claim and the easiest to
-defend, so authoring drifts to it. "Cause" requires a stronger claim and got used once.
+defend, so authoring drifts to it.
 
-**Proposed fix — replace `enabling` with the historians' distinction:**
+**After re-typing the same 61 edges (2026-10-01):**
 
-- `necessary` — without it, not. (Paper for the press. The transistor for ARPANET.)
-- `contributing` — made it more likely; it could have happened otherwise. (The railway for the car.)
+| type | n | share |
+|---|---|---|
+| `contributing` | 28 | 46% |
+| `necessary` | 19 | 31% |
+| `echo` | 13 | 21% |
+| `trigger` | 1 | 2% |
 
-This is the distinction that *is* the skill. The UvA experimental work found that **explicit teaching
+The modal label is now 46%, down from 69%, and each label is applied by a stated counterfactual
+test rather than by whatever is easiest to defend. `contributing` is legitimately the most common
+real relation in a long-range deck — most causes make things *more likely*, not inevitable — so a
+plurality here is the honest shape of the data, not a fresh skew. `trigger` is rare on purpose: a
+long-range deck has few proximate sparks (`sputnik-1 → apollo-11-moon`, "sparked a space race", is
+the clean case).
+
+**This is the curriculum, not metadata.** The UvA experimental work found that **explicit teaching
 of second-order concepts and causal strategies improves 11th-graders' causal reasoning** — so the
-type is not metadata, it is the curriculum. `cause` disappears into `contributing`; `influence`
-(ideas/lineage, no mechanism) and `theme` (same mechanism, not causal) stay as they are.
+*type* is what the learner is practising. `necessary` vs `contributing` is a counterfactual judgement
+(Seixas: *"historical events are not inevitable"*; *"causes vary in influence and significance"*) —
+exactly the second-order skill history teaching is for.
 
-**Decision needed:** adopt `necessary` / `contributing` / `influence` / `theme` and re-type the 61
-edges, or keep the current set and accept a label that carries no information 69% of the time.
+### 3.1 Decision rule & readable phrases
+
+Run the §4 filter to decide *whether* an edge is causal, then the strength test above to pick
+`necessary` / `contributing` / `trigger`. `echo` is chosen when the §4 test fails but a
+same-mechanism parallel is still worth teaching. The **readable phrase is what the player sees** and
+is age-gated: 5–7 and 8–11 see only the plain phrase (*made possible*, *helped lead to*, *set off*,
+*mirrored*), never the abstract code — consistent with A2/A3. The phrase is also the **retrieval cue**
+(§6, Karpicke & Blunt): ask "What did X make possible?" rather than having the learner draw a line.
+
+**Anti-skew guard.** `scripts/validate-content.mjs` warns when any single `type` exceeds **50%** of a
+deck's edges, so the 69% drift cannot return unnoticed.
 
 ## 4. The filter rule
 
 Every proposed edge gets this test, in order:
 
 1. **Does one event change the probability or possibility of the other?** → causal (`necessary` /
-   `contributing`)
-2. **Does the second exemplify the same transferable mechanism as the first?** → `theme`
+   `contributing` / `trigger`)
+2. **Does the second exemplify the same transferable mechanism as the first?** → `echo`
 3. **Neither** → reject. Two things that happened near each other are a coincidence, and a confident
    spurious causal claim teaches worse than no claim.
 
@@ -107,13 +145,14 @@ logged rejections has not been filtered.
 | `wheeled-vehicles → apollo-11-moon` | The lunar module landed on legs. The rover is not an event in this deck |
 | `jenner-vaccination → dna-double-helix` | 157-year gap, and immunology and genetics are separate lineages here. Proximity plus "both are biology" |
 | `fleming-penicillin → oral-contraceptive` | The archetypal proximity pair: both medicine, 32 years apart, entirely different mechanisms (antibiosis vs hormonal suppression) |
-| `newton-principia → mendeleev-periodic-table` | Rejected *as causal*. Retained only as `theme` (predictive structure / the gaps), which is a same-mechanism claim, not an influence claim |
+| `newton-principia → mendeleev-periodic-table` | Rejected *as causal*. Retained only as `echo` (predictive structure / the gaps), which is a same-mechanism claim, not a causal one |
 | `stockton-darlington → transatlantic-radio` | Two 19th-century networks on two continents. No mechanism |
 
-**Two deliberate downgrades.** `newton-principia → einstein-relativity` is `influence`, not `cause` —
-relativity *revises* Newton, and the revision is the lesson worth teaching. `wright-first-flight →
-sputnik-1` is `theme`, not `cause` — the rockets came from a different lineage (which is exactly why
-`goddard-rocket → sputnik-1` is separately typed `enabling`).
+**Two deliberate downgrades.** `newton-principia → einstein-relativity` is `contributing` (via
+`idea`), not `necessary` — relativity *revises* Newton, and the revision is the lesson worth
+teaching. `wright-first-flight → sputnik-1` is `echo`, not causal — the rockets came from a
+different lineage (which is exactly why `goddard-rocket → sputnik-1` is separately typed
+`necessary`).
 
 ## 6. Research grounding
 
