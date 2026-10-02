@@ -51,7 +51,7 @@
     const GAME_KEYS = new Set([
       "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
       "Home", "End", "Enter", "Space",
-      "KeyW", "KeyA", "KeyS", "KeyD",
+      "KeyW", "KeyA", "KeyS", "KeyD", "KeyE",
     ]);
 
     function onKeyDown(e) {
@@ -187,9 +187,10 @@
     root.addEventListener("keydown", (e) => {
       if (splitCtx && splitCtx.length) return; // split: keys are document-level
       if (!root.contains(document.activeElement)) return;
-      // Both player schemes move in single-player: arrows/WASD.
-      if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "s" || e.key === "S") { move(1); e.preventDefault(); }
-      else if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "w" || e.key === "W") { move(-1); e.preventDefault(); }
+      // Every scheme works in single-player: arrows, left/right (P2) and
+      // W/A/S/D + E/D (P1). Consistent with the split bindings.
+      if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "s" || e.key === "S" || e.key === "d" || e.key === "D") { move(1); e.preventDefault(); }
+      else if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "w" || e.key === "W" || e.key === "e" || e.key === "E") { move(-1); e.preventDefault(); }
       else if (e.key === "Home") { jump(false); e.preventDefault(); }
       else if (e.key === "End") { jump(true); e.preventDefault(); }
     });
@@ -4131,11 +4132,17 @@
       if (ae && (ae.tagName === "BUTTON" || ae.tagName === "A" || ae.tagName === "INPUT" ||
                  ae.tagName === "TEXTAREA" || ae.tagName === "SELECT" || ae.isContentEditable)) return;
       switch (e.code) {
+        // P1: W/S move, A place — E/D mirror W/S.
         case "KeyW": splitMove(0, -1); e.preventDefault(); break;
+        case "KeyE": splitMove(0, -1); e.preventDefault(); break;
         case "KeyS": splitMove(0, 1); e.preventDefault(); break;
+        case "KeyD": splitMove(0, 1); e.preventDefault(); break;
         case "KeyA": splitPlace(0); e.preventDefault(); break;
+        // P2: Up/Down move, Enter place — Left/Right mirror Up/Down.
         case "ArrowUp": splitMove(1, -1); e.preventDefault(); break;
+        case "ArrowLeft": splitMove(1, -1); e.preventDefault(); break;
         case "ArrowDown": splitMove(1, 1); e.preventDefault(); break;
+        case "ArrowRight": splitMove(1, 1); e.preventDefault(); break;
         case "Enter": splitPlace(1); e.preventDefault(); break;
       }
     });
