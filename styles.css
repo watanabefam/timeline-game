@@ -321,27 +321,6 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
   0%, 100% { border-color: var(--border); box-shadow: none; }
   50%      { border-color: var(--accent); box-shadow: 0 0 14px rgba(110, 168, 254, 0.35); }
 }
-/* A8 pre-reveal prompt: at most one per round, before the reveal. Static by
-   design — it adds no motion of its own, so the reduced-motion floor (D8) is
-   met by there being nothing to reduce. */
-.tl-prompt {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  margin: 10px auto 0; max-width: 420px;
-  background: var(--card-2); border: 1px solid var(--border);
-  border-radius: 12px; padding: 10px 14px; text-align: center;
-}
-.tl-prompt-cue { font-size: 0.9rem; font-weight: 600; color: var(--text); }
-.tl-prompt-q { font-size: 0.78rem; color: var(--muted); }
-.tl-prompt-opts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-.tl-prompt-opt, .tl-prompt-skip {
-  font: inherit; font-size: 0.82rem; cursor: var(--cur-hand);
-  background: rgba(255, 255, 255, 0.06); color: var(--text);
-  border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px;
-}
-.tl-prompt-opt:hover { border-color: var(--accent); }
-.tl-prompt-skip { color: var(--muted); }
-.tl-prompt-skip:hover { border-color: var(--border); }
-
 /* ---------- TIMELINE ---------- */
 .timeline-wrap { margin: 4px 0; }
 /* Split-screen: two independent panes side by side, each its own scroll
@@ -533,9 +512,6 @@ body.dock-active .split-pane { padding-bottom: 106px; }
 .tl-title { font-weight: 600; font-size: 0.98rem; }
 .tl-year { color: var(--muted); font-size: 0.82rem; }
  .tl-fact { color: var(--muted); font-size: 0.82rem; font-style: italic; margin-top: 4px; }
- /* A8 (4a): the moment-of-slip why, alongside the fact. */
- .tl-why { color: var(--text); font-size: 0.82rem; margin-top: 4px; }
- .tl-why-label { display: block; font-size: 0.66rem; letter-spacing: 1px; text-transform: uppercase; color: var(--accent-2); }
  .same-year-note { color: var(--warn); font-size: 0.74rem; margin-top: 2px; }
   /* Placed-card state, shared by the game timeline and the results page.
      Green = first-try clean. Dashed border escalates amber → orange → red
