@@ -208,3 +208,55 @@ Wordle-style daily puzzle*, which is still accurate. The app's own on-screen
 bounce back; `ENDLESS_LIVES` survives only in unreachable loss copy). See
 `SUCCESS_FACTORS.md` §3.
 
+---
+
+## 9. Open-source comparables & seed datasets (added 2026-10-02)
+
+The competitor profiles above are **closed-source** (no repo for Timdle, Chrono,
+Sorting History / History Pinpoint, TimeSort, or TimeToTime). This section catalogues
+the open-source games in the same space and the openly-licensed datasets that could
+seed decks. Licenses verified via the GitHub REST API (license field) + README reads,
+2026-10-02. This repo's vendoring rule is **permissive-only** (`AGENTS.md` rule 2) —
+anything marked ⚠️ is study-only.
+
+### 9.1 Exact-year / "guess the year" repos
+
+| Repo | License | Stack | Mechanic | Notes |
+|---|---|---|---|---|
+| [misty-step/chrondle](https://github.com/misty-step/chrondle) | **MIT** | Next.js/React | Drag a year **range** onto the timeline; Classic + Duel + Order | Best pick: MIT, active (pushed 2026-10), ships three target modes |
+| [kimfrithiof/moments](https://github.com/kimfrithiof/moments) | Code MIT; prose CC BY 4.0; images mixed | React/Vite | Drag card along a continuous timeline "shuttle"; era-scaled tolerance | Best exact-year UX study |
+| [kyletscheer/historicle](https://github.com/kyletscheer/historicle) | **GPL-3.0** ⚠️ | **Vanilla, no build** | Wordle-style date guesser; ~300 Wikipedia-linked events | Only exact-year **no-build** example; read, don't copy |
+| [bananashell/timegame](https://github.com/bananashell/timegame) | None ⚠️ | Next.js | Guess the year, stay chronologically consistent | Reference only |
+| [davjhan/guess-the-year-game](https://github.com/davjhan/guess-the-year-game) | None ⚠️ | Svelte | Type the year; 48★ | Stale 2021; depends on an unpublished pkg (won't build) |
+| [Naught0/inventedle](https://github.com/Naught0/inventedle) | **AGPL-3.0** ⚠️ | Next.js | Guess an invention's year within a range | Copyleft — ideas only |
+| [win-wiz/time-guessr-game](https://github.com/win-wiz/time-guessr-game) | None ⚠️ | Next.js | Guess year **+ location** from photos | Pinpoint + map hybrid |
+| [SachaCarniere/historyguessr](https://github.com/SachaCarniere/historyguessr) | None ⚠️ | PHP | Year from historical images | Abandoned 2020 |
+| [savreline/what-year](https://github.com/savreline/what-year), [PhillipAC/Rydle](https://github.com/PhillipAC/Rydle) | None ⚠️ | MERN / — | Year-guessing trivia | Minor |
+
+### 9.2 Ordering / timeline repos
+
+| Repo | License | Stack | Notes |
+|---|---|---|---|
+| [tom-james-watson/wikitrivia](https://github.com/tom-james-watson/wikitrivia) | **MIT** | Next.js | 598★, most maintained; Timeline-board clone. **Data factory** is the prize: Wikidata SPARQL → plain JSON decks in `public/decks/` |
+| [wimmers/timeliner](https://github.com/wimmers/timeliner) | None ⚠️ | React | Multi-deck JSON (`events/inventions/architecture/climate/fashion`), Survival/Forever |
+| [ValdesDev/Timeline](https://github.com/ValdesDev/Timeline) | None ⚠️ | **Vanilla, no build** | Faithful Timeline-clone skeleton (gap-insertion, 3-strikes) — best no-build structure example |
+| [ondrejsaba/timeline-trivia](https://github.com/ondrejsaba/timeline-trivia) | **MIT** | React | Simple chronological sort |
+| [whatnote/…beforeorafter](https://github.com/whatnote/ms2historybeforeorafter), [Megwana/whatcamefirst](https://github.com/Megwana/whatcamefirst) | None ⚠️ | **Vanilla, no build** | Higher/lower before–after logic |
+| [clemensfiedler/history-quiz](https://github.com/clemensfiedler/history-quiz) | None ⚠️ | React | CSV→JSON pipeline + **era tags** (reusable taxonomy idea) |
+| [ajhenry/chronle.com](https://github.com/ajhenry/chronle.com) | **AGPL-3.0** ⚠️ | Next.js | Daily drag-into-order (already noted §6) |
+| [ethangreeney/when-timeline-game](https://github.com/ethangreeney/when-timeline-game) | None ⚠️ | Next.js | The README's cited inspiration; 902 curated events |
+
+### 9.3 Seed datasets (dated historical events)
+
+| Dataset | License | Notes |
+|---|---|---|
+| [Wikidata](https://www.wikidata.org) facts + [Wikipedia](https://en.wikipedia.org) text | **CC0** facts / **CC BY-SA** text | Dates are free; descriptions/images need attribution |
+| [slashyear.com/data](https://slashyear.com/data) | **CC BY-SA 4.0** | **121,329 dated entries** (79,250 events + 42,079 births/deaths); bulk NDJSON + CORS-open REST + MCP; each row carries a frozen Wikipedia revision ID |
+| [HistoryMap-Data](https://github.com/AdamKmet1997/HistoryMap-Data) | **CC BY-SA 4.0** | JSON per event with `title/year/lat/lng/country/category/sources[]`, 35+ countries — cleanest deck shape (+ coords for a map mode) |
+| [EventKG](https://zenodo.org/records/1205373) | CC BY-SA | Wikidata+DBpedia+YAGO RDF; heavyweight |
+| [vizgr.org Historical Events API](https://vizgr.org/historical-events/) | ⚠️ uncertain | ~192k events; discovery only until the license is confirmed |
+
+**Absences.** No open-source repo/implementation exists for **Timdle, Chrono, Sorting
+History / History Pinpoint, TimeSort, or TimeToTime** — the exact-year mechanic is
+studyable only via the repos above.
+

@@ -10,6 +10,7 @@
  *   replay(logRows)                            -> { [eventId]: EventState }
  *   rate(state, outcome)                       -> { state, nextDue: { dueAfterPlacements } }
  *   dueSet(stateByEvent, deckId, band, opts)   -> string[]   (ordered, age-gated & capped)
+ *   masteryByEvent(logRows, alpha?)            -> { [eventId]: 0-100 } (display mastery)
  *
  *   EventState = { deck, lastSeenPos, attempts, firstTry, streak, intervalK }
  *
@@ -102,6 +103,36 @@
       states[id].lastSeenPos = (n - 1) - lastIndex[id];
     });
     return states;
+  }
+
+  // ---- masteryByEvent: recency-weighted mastery for DISPLAY ---------------
+  // Same log as `replay`, different question: "what's due?" vs "how well do I
+  // know this now?". An exponential moving average over each event's own rows,
+  // seeded with the first observation (one clean attempt reads 100, one slip
+  // reads 0). EMA is the mastery criterion the literature recommends for
+  // progress bars specifically: unlike a last-N window it distinguishes
+  // 1,0,1,0 from 0,0,1,1, and a correct answer always moves the estimate up
+  // (Pelanek & Rihak, "Experimental Analysis of Mastery Learning Criteria";
+  // Pavlik et al., "Move Your Lamp Post" — recent data predicts knowledge
+  // best). `alpha` weights the newest outcome; 0.3 leaves the last 3-5 attempts
+  // carrying most of the signal — the spacing window in
+  // doc/references/mcg_research_synthesis.md §10. Derived on read, never
+  // stored (D3), and pure like the rest of the module.
+  var MASTERY_ALPHA = 0.3;
+  function masteryByEvent(logRows, alpha) {
+    var rows = Array.isArray(logRows) ? logRows : [];
+    var a = (typeof alpha === "number" && alpha > 0 && alpha <= 1) ? alpha : MASTERY_ALPHA;
+    var ema = {};
+    for (var i = 0; i < rows.length; i += 1) {
+      var r = rows[i];
+      if (!r || typeof r !== "object" || r.eventId == null) continue;
+      var id = String(r.eventId);
+      var x = (r.outcome === "firstTry") ? 1 : 0;
+      ema[id] = (ema[id] === undefined) ? x : (a * x + (1 - a) * ema[id]);
+    }
+    var out = {};
+    Object.keys(ema).forEach(function (id) { out[id] = Math.round(ema[id] * 100); });
+    return out;
   }
 
   // ---- rate: apply one outcome, return the next derived due ----------------
@@ -212,11 +243,13 @@
     replay: replay,
     rate: rate,
     dueSet: dueSet,
+    masteryByEvent: masteryByEvent,
     // Exposed so callers and tests can reason about the same numbers.
     K_MIN: K_MIN,
     K_MAX: K_MAX,
     MAX_POW: MAX_POW,
     intervalKFor: intervalKFor,
+    MASTERY_ALPHA: MASTERY_ALPHA,
   };
 
   var g = (typeof globalThis !== "undefined") ? globalThis : this;

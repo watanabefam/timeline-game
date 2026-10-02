@@ -604,6 +604,49 @@
     syncTimezone,
   };
 
+  // ---- recency mastery (display) -------------------------------------------
+  // The setup category bars and the mastery-by-week surfaces read the same
+  // append-only reviewLog the scheduler uses (D3), but ask a different
+  // question: how well does the player know this NOW? review-scheduler.js's
+  // `masteryByEvent` gives a recency-weighted 0-100 per event; this wraps the
+  // lookup and, for history that predates the log, falls back to the lifetime
+  // counter so no progress disappears on upgrade.
+  function reviewMasteryIndex(userId) {
+    const log = window.Gamify.reviewLog(userId);
+    const RS = window.ReviewScheduler;
+    const mastery = (RS && typeof RS.masteryByEvent === "function") ? RS.masteryByEvent(log) : {};
+    const attempts = {};
+    (Array.isArray(log) ? log : []).forEach((r) => {
+      if (r && r.eventId != null) attempts[r.eventId] = (attempts[r.eventId] || 0) + 1;
+    });
+    return { mastery, attempts };
+  }
+
+  // Per-week recency mastery: the mean of each practised event's recency mastery
+  // (equal weight per event) plus the sample count, so the >=3 trust gate still
+  // works. Falls back to the lifetime counter for events the log never saw.
+  function weekMasteryRows(source, lookupEvent, index) {
+    const weeks = {};
+    Object.entries(source || {}).forEach(([id, s]) => {
+      const ev = lookupEvent(id);
+      if (!ev || !ev.week) return;
+      let pct = index.mastery[id];
+      let samples = index.attempts[id];
+      if (pct === undefined) {
+        if (!s || !s.placements) return;
+        pct = Math.round((s.firstTry / s.placements) * 100);
+        samples = s.placements;
+      }
+      const w = weeks[ev.week] || (weeks[ev.week] = { sum: 0, n: 0, attempts: 0 });
+      w.sum += pct; w.n += 1; w.attempts += samples || 0;
+    });
+    return Object.entries(weeks).map(([wk, w]) => ({
+      week: Number(wk),
+      mastery: Math.round(w.sum / w.n),
+      placements: w.attempts,
+    }));
+  }
+
   function mostPlayedDeckId(userId) {
     const p = readUser(userId);
     return Object.keys(p.decks)
@@ -1697,17 +1740,9 @@
     tlSec.appendChild(tlContainer);
     body.appendChild(tlSec);
 
-    // Mastery by week (deck events carry week numbers)
-    const weeks = {};
-    Object.entries(eventsMap).forEach(([id, s]) => {
-      const ev = lookupEvent(id);
-      if (!ev || !ev.week) return;
-      const w = weeks[ev.week] || (weeks[ev.week] = { placements: 0, firstTry: 0 });
-      w.placements += s.placements;
-      w.firstTry += s.firstTry;
-    });
-    const weekRows = Object.entries(weeks)
-      .map(([wk, w]) => ({ week: Number(wk), placements: w.placements, mastery: Math.round((w.firstTry / w.placements) * 100) }))
+    // Mastery by week (deck events carry week numbers), recency-weighted from
+    // the review log so a good recent round moves the bar.
+    const weekRows = weekMasteryRows(eventsMap, lookupEvent, reviewMasteryIndex(u.id))
       .sort((a, b) => a.mastery - b.mastery);
     if (weekRows.length) {
       const sec = document.createElement("div");
@@ -1833,18 +1868,13 @@
     const d = p.decks[deckId];
     const deck = window.DECKS.find((x) => x.id === deckId);
     if (!d || !deck) { host.classList.add("hidden"); return; }
-    // weakest weeks (>= 3 placements for a trustworthy number)
-    const weeks = {};
-    Object.entries(d.events).forEach(([id, s]) => {
-      const ev = deck.events.find((e) => e.id === id);
-      if (!ev || !ev.week) return;
-      const w = weeks[ev.week] || (weeks[ev.week] = { placements: 0, firstTry: 0 });
-      w.placements += s.placements;
-      w.firstTry += s.firstTry;
-    });
-    const weekRows = Object.entries(weeks)
-      .filter(([, w]) => w.placements >= 3)
-      .map(([wk, w]) => ({ week: Number(wk), mastery: Math.round((w.firstTry / w.placements) * 100), placements: w.placements }))
+    // Weakest weeks (>= 3 samples for a trustworthy number), recency-weighted.
+    const weekRows = weekMasteryRows(
+      d.events,
+      (id) => deck.events.find((e) => e.id === id) || null,
+      reviewMasteryIndex(u.id)
+    )
+      .filter((w) => w.placements >= 3)
       .sort((a, b) => a.mastery - b.mastery)
       .slice(0, 3);
     host.classList.remove("hidden");
@@ -1910,11 +1940,10 @@
     { cls: "seg--mid", min: 40  }, // developing
     { cls: "seg--lo",  min: 0   }, // needs work
   ];
-  function optionMastery(deck, filter, value) {
+  function optionMastery(deck, filter, value, index) {
     const u = activeUser();
     if (!u) return null;
     const d = readUser(u.id).decks[deck.id];
-    if (!d || !d.events) return null;
     const members = deck.events.filter((ev) => {
       const got = filter.get(ev);
       return (Array.isArray(got) ? got : [got]).includes(value);
@@ -1923,10 +1952,14 @@
     const counts = MASTERY_BANDS.map(() => 0);
     let practised = 0;
     members.forEach((ev) => {
-      const s = d.events[ev.id];
-      if (!s || !s.placements) return;
+      // Recency first (review log); lifetime counter as the upgrade fallback.
+      let pct = index.mastery[ev.id];
+      if (pct === undefined) {
+        const s = d && d.events && d.events[ev.id];
+        if (!s || !s.placements) return;
+        pct = Math.round((s.firstTry / s.placements) * 100);
+      }
       practised += 1;
-      const pct = Math.round((s.firstTry / s.placements) * 100);
       counts[MASTERY_BANDS.findIndex((b) => pct >= b.min)] += 1;
     });
     if (!practised) return null;
@@ -1941,6 +1974,9 @@
     const filters = deck.filters || [];
     const container = $("setup-filters");
     container.innerHTML = "";
+    // One recency read per render (not per chip): reparsing the log 20x is waste.
+    const setupUser = activeUser();
+    const masteryIndex = setupUser ? reviewMasteryIndex(setupUser.id) : { mastery: {}, attempts: {} };
 
     if (!filters.length) {
       container.innerHTML = `<p class="setup-note">This deck plays as a single set — no filters. Hit Start!</p>`;
@@ -1965,7 +2001,7 @@
         chip.className = "filter-chip" + (picked.includes(opt.value) ? " sel" : "");
         // Stacked mastery bar: one equal slice per category event, grouped by
         // colour band. No practised data → plain label, no bar.
-        const m = optionMastery(ui.deck, f, opt.value);
+        const m = optionMastery(ui.deck, f, opt.value, masteryIndex);
         if (m) {
           chip.innerHTML =
             `<span class="chip-fill" aria-hidden="true">` +

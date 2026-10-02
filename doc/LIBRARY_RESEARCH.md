@@ -546,6 +546,35 @@ reduced by running something on partial data. The pipeline still cannot tell a
 wrong-but-well-cited pronunciation from a right one — only an ear, and a human
 opening the page, can do that.
 
+### 4.8 Open-source reference implementations & seed datasets *(added 2026-10-02)*
+
+Not vendorable *libraries* — apps and datasets to **study** or **seed decks** from.
+The license column governs reuse (repo rule: permissive only, `AGENTS.md` rule 2).
+Licenses verified via the GitHub REST API + README reads, 2026-10-02.
+
+| Repo / dataset | License | Build | Reuse? | Note |
+|---|---|---|---|---|
+| [misty-step/chrondle](https://github.com/misty-step/chrondle) | **MIT** | Next.js | Study ✅ | Exact-year **range** + duel + order modes; active 2026-10 |
+| [tom-james-watson/wikitrivia](https://github.com/tom-james-watson/wikitrivia) | **MIT** | Next.js | **Decks + pipeline ✅** | Wikidata SPARQL → JSON decks; largest open corpus (facts CC0) |
+| [kimfrithiof/moments](https://github.com/kimfrithiof/moments) | Code MIT; content CC BY 4.0 | React | Study ✅ / content w/ attribution | Era-scaled tolerance + "shuttle" UX |
+| [ondrejsaba/timeline-trivia](https://github.com/ondrejsaba/timeline-trivia) | **MIT** | React | Study ✅ | Chronological sort |
+| [kyletscheer/historicle](https://github.com/kyletscheer/historicle) | **GPL-3.0** ⚠️ | **Vanilla, no build** | 🚫 no copy | Only no-build exact-year example; read-only |
+| [ValdesDev/Timeline](https://github.com/ValdesDev/Timeline) | None ⚠️ | **Vanilla, no build** | 🚫 | No-build Timeline-clone skeleton |
+| [wimmers/timeliner](https://github.com/wimmers/timeliner) | None ⚠️ | React | 🚫 | Multi-deck JSON shape |
+| [ajhenry/chronle.com](https://github.com/ajhenry/chronle.com) | **AGPL-3.0** ⚠️ | Next.js | 🚫 | Daily chronology |
+| [ethangreeney/when-timeline-game](https://github.com/ethangreeney/when-timeline-game) | None ⚠️ | Next.js | 🚫 | Cited inspiration; 902 events |
+| [bananashell/timegame](https://github.com/bananashell/timegame) | None ⚠️ | Next.js | 🚫 | Exact-year variant |
+| [slashyear.com/data](https://slashyear.com/data) | **CC BY-SA 4.0** | — | **Seed ✅** (attribution) | 121,329 dated entries, frozen Wikipedia revision IDs |
+| [HistoryMap-Data](https://github.com/AdamKmet1997/HistoryMap-Data) | **CC BY-SA 4.0** | — | **Seed ✅** | JSON per event incl. `lat`/`lng` |
+| [Wikidata](https://www.wikidata.org) / [Wikipedia](https://en.wikipedia.org) | **CC0** / **CC BY-SA** | — | **Seed ✅** | Primary source (wikitrivia's input) |
+| [EventKG](https://zenodo.org/records/1205373) | CC BY-SA | — | Seed (heavy) | Knowledge-graph RDF |
+| [vizgr.org Historical Events API](https://vizgr.org/historical-events/) | ⚠️ uncertain | — | ⏸ verify | ~192k events |
+
+**No open-source repos** exist for Timdle, Chrono, Sorting History / History Pinpoint,
+TimeSort, or TimeToTime (all closed-source).
+
+---
+
 ## 5. License traps (quick reference)
 
 | License | Applies to | Risk |
