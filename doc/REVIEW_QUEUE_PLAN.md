@@ -1,6 +1,6 @@
 # Reach-Back Review Queue — Planning Document (Phases 1–3)
 
-**Status:** planning complete — **awaiting approval before implementation (Phase 4)**
+**Status:** implemented through T6 + the browser smoke (T8); only the manual device pass (T7) remains — see "Implementation status" at the end
 **Date:** 2026-10-01 (FSRS-forward-compat revised 2026-10-02 — L2 placement seam named, L3 forking rejected; see `GAMIFICATION_BRIEF.md` A10)
 **Scope:** the review/retrieval scheduler that re-surfaces previously-placed events behind a `rate(outcome) → nextDue` seam.
 **Companions (source of truth above this doc):** `doc/GAMIFICATION_BRIEF.md` A10 + §11 step 3 + §6 (data model); `doc/CLOUDLESS_PLAN.md` S2; evidence `doc/references/mcg_research_synthesis.md` §10, §11, §20.
@@ -276,4 +276,27 @@ Ordered, dependency-aware, small, reviewable; each task traces to a requirement 
 - **Remains open:** nothing blocking. The `intervalK`/cap constants (T2/T3) are the only tuning knobs and are confirmed by playtest (T7); the surfacing surface is fixed to the reused forced-pool path unless redirected at approval.
 
 ---
-**End of planning document (Phases 1–3). Implementation (Phase 4) is intentionally not started.**
+
+## Implementation status (2026-10-02)
+
+Phase 4 landed on `main`. The pure scheduler is shipped and unit-tested, and the
+Focus panel surfaces it (surfacing decision: **reuse the Focus panel** — a
+"Review round" card — not a separate mode or a distinct button). `ts-fsrs`
+remains unvendored (A10 / §15 item 9).
+
+| Task | Status | Where |
+|---|---|---|
+| **T1** `replay` | ✅ shipped | `review-scheduler.js` |
+| **T2** `rate` + constants | ✅ shipped | `review-scheduler.js` (`K_MIN=3`, `K_MAX=24`, `MAX_POW=3`) |
+| **T3** `dueSet` | ✅ shipped | `review-scheduler.js` (recency, age gate, cap, ≥50% floor) |
+| **T4** wire into `index.html` + `?v=` | ✅ shipped | `index.html` — `review-scheduler.js?v=1`, loaded before `timeline.js`, precached |
+| **T5** surfacing via the Focus panel | ✅ shipped | `timeline.js` — `reviewDueEvents()`, `startReviewRound()`, `startFocusRound()` (fails open to `weakestEvents`) |
+| **T6** J2 empty state | ✅ shipped | `renderFocusPanel()` — the calm "🎉 All caught up" state (never a dead button) |
+| **T7** age-gate + reduced-motion QA | ⚠️ partial | age gate and reduced motion are covered by `tools/offline-smoke/review.mjs`; the manual device/print pass is still open |
+| **T8** Node tests + browser smoke | ✅ shipped | `scripts/test/review-scheduler.test.mjs` (19 checks) and `tools/offline-smoke/review.mjs` (`npm run smoke:review`, 16 checks) |
+
+Still open beyond this document: the FSRS L2 swap (A10) once the log can retrain
+weights, and `confidence?`-aware grading (A8, phase 4).
+
+---
+**End of planning document (Phases 1–3). Phase 4 (T1–T8) implementation is recorded in "Implementation status" above.**

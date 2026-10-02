@@ -327,6 +327,13 @@ appearance, iOS (the same honesty rule as S1).
 *Note:* the one item here that touches a shipped feature is **A7** (narration
 currently autoplays a verbatim read-along over the deciding moment) — it is a
 one-call-site change and it needs its own measurement.
+*Landed 2026-10-02:* **phase 3 (reach-back due-queue, A10)** — the pure
+`review-scheduler.js` (`replay`/`rate`/`dueSet`, the L2 seam) is unit-tested and
+surfaced through the Focus panel ("Review round" + the J2 empty state);
+`npm run smoke:review` covers it in Chromium and `npm run smoke:mastery` still
+covers phase 2. **Next slice:** §11 **phase 4 (A8)** — feedback depth + the
+pre-reveal `confidence` prompt; research and plan are in
+`doc/FEEDBACK_CONFIDENCE_PLAN.md`.
 
 ### S3 — `.timedeck` packages, Tier 2 (roadmap §19.10)
 *Research question:* entrypoint + licence verdict for a ZIP library — `fflate`
