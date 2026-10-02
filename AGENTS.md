@@ -69,17 +69,19 @@ designing any learning or motivational surface, and cite it by § number.
    was **moved out of** `assets/vendor/` — moved, never edited — into the
    gitignored `tools/kokoro-authoring/`. See `doc/LIBRARY_RESEARCH.md` §2.)*
 3. **Cache-busting:** first-party scripts load with `?v=N`
-   (`fx.js?v=26`, `timeline.js?v=196`). Bump `N` whenever you edit that file,
+   (`fx.js?v=26`, `timeline.js?v=202`). Bump `N` whenever you edit that file,
    or returning players get stale code.
 4. **Script load order in `index.html` matters** (classic scripts, sync):
    `events-data.js` → `decks-io.js` → Leaflet → `world-land.js` →
    `liquid-glass.js` → `vis-timeline` → `anime.umd.min.js` →
    `canvas-confetti` → `fx.js` → `globe.js` → `narration-recipe.js` →
-   `narration.js` → `offline.js` → `timeline.js`.
+   `narration.js` → `offline.js` → `review-scheduler.js` → `prompt-plan.js`
+   → `timeline.js`.
    `fx.js` (defines `window.FX`), `globe.js` (`window.GlobeDock`),
-   `narration-recipe.js` (`window.NarrationText`, generated) and
-   `narration.js` (`window.Narrator`) must all load before `timeline.js`,
-   which uses them. Decks themselves arrive from `decks/index.js` (generated)
+   `narration-recipe.js` (`window.NarrationText`, generated),
+   `narration.js` (`window.Narrator`), `review-scheduler.js`
+   (`window.ReviewScheduler`) and `prompt-plan.js` (`window.PromptPlan`) must all
+   load before `timeline.js`, which uses them. Decks themselves arrive from `decks/index.js` (generated)
    via the `window.registerDeckSource` registry in `events-data.js`.
    `offline.js` (`window.Offline`) is independent of all of them — it touches
    only its own DOM hooks — and `sw.js` is never a `<script>` tag at all: the
@@ -195,6 +197,8 @@ designing any learning or motivational surface, and cite it by § number.
 | `narration-recipe.js` | **Generated** browser copy of the spoken-text recipe → `window.NarrationText`; never hand-edited, regenerate with `npm run gen:recipe` |
 | `decks-io.js` | Deck JSON import/export → `window.exportDeck` / `exportAllDecks` / `importDeckFromFile` / `loadImportedDecks` (Blob + FileReader, no server) |
 | `events-data.js` | Deck registry (`window.DECKS`, `registerDeck`) + deck *sources* + shared filter helpers. **Holds no event data.** |
+| `review-scheduler.js` | Pure reach-back review scheduler → `window.ReviewScheduler` (`replay`/`rate`/`dueSet`, the A10 L2 seam). DOM-free classic script; unit-tested under `scripts/test/` |
+| `prompt-plan.js` | Pure, DOM-free pre-reveal prompt plan → `window.PromptPlan` (`promptPlan`/`attachConfidence`/`createLatch`). Owns the A8 age gate and the `confidence` schema guard; unit-tested under `scripts/test/` |
 | `decks/index.json` + `index.js` | **Generated** deck list (revision + bytes per package) — never hand-edited; regenerate with `npm run gen:index` |
 | `manifest.webmanifest` + `icons/` | Web app manifest and **generated** app icons (installability, S1a). Icons live here, not in `assets/`, because `assets/` is vendored and never edited (rule 2). Regenerate with `npm run gen:icons` |
 | `offline.js` | Installability affordance + service-worker registration, update timing, storage persistence, offline status → `window.Offline` |
@@ -205,7 +209,7 @@ designing any learning or motivational surface, and cite it by § number.
 | `decks/<id>/` | A deck package: `manifest.json` + `deck.json` + generated `deck.js` (+ `narration/*.mp3`) |
 | `scripts/*.mjs` | Node content tooling only (never loaded by the game): deck index + content/vendor/narration/offline gates, the recipe mirror and icon generators |
 | `tools/narration/` | Author-time narration generator: the recipe, Kokoro synthesis, ffmpeg post-processing, tests (see its README) |
-| `tools/offline-smoke/` | Author-time browser smokes: the offline layer (`smoke.mjs` in Chromium, `webkit.mjs` in Safari's engine) and the S2 mastery level card (`mastery.mjs`, Chromium). Not part of `npm test` — they need a real browser download, and a check that cannot run must never report clean |
+| `tools/offline-smoke/` | Author-time browser smokes: the offline layer (`smoke.mjs` in Chromium, `webkit.mjs` in Safari's engine), the S2 mastery level card (`mastery.mjs`), the review queue (`review.mjs`) and the A8 feedback/confidence slice (`feedback.mjs`) — all Chromium except `webkit.mjs`. Not part of `npm test` — they need a real browser download, and a check that cannot run must never report clean |
 | `tools/kokoro-authoring/` | Author-time TTS model bundle only, gitignored and **never shipped** (see rule 2) |
 | `THIRD_PARTY_LICENSES.md` | Attribution manifest for everything third-party; enforced by `npm run validate:vendor` |
 | `doc/GAMIFICATION_BRIEF.md` | Ratified spec for the gamification layer over the mastery review log (streaks, leveling, achievements, feedback copy) |
@@ -315,6 +319,19 @@ Additional checks for the surfaces built after this doc was last revised:
   number and turns the weekly rows into a star readout. **What it cannot
   cover:** print output, pixel appearance, and iOS — check those by hand. (The
   stats-screen "Avg score" percentage is not a mastery number and stays.)
+- **Feedback / pre-reveal confidence (S2, phase 4):** run the automated smoke —
+  `npm run smoke:feedback` (Chromium, ~20 s) covers the A8 slice: the prompt
+  renders once on the round's first card **before** any placement, the answer
+  lands as the only `confidence` row in the review log, skipping writes **no**
+  field, 5–7 never sees the prompt, 8–11 gets the simple self-check without the
+  predirected cue, a slipped card's reveal carries its one-line why, the 5–7
+  focus panel shows stars and no percentage (17+ still shows it), and all of it
+  holds under reduced motion. **What it cannot cover:** whether the prompt helps
+  learning (the plan's falsifier is a playtest), scoring/round order, pixels and
+  iOS.
+- **Review queue (S2, phase 3):** `npm run smoke:review` (Chromium) covers the
+  Focus-panel Review round, the derived due count, the fail-open small set, the
+  5–7 era/week cap, the J2 empty state and reduced motion.
 - **Vendored assets:** `npm run validate:vendor` passes (rule 2).
 
 ## Conventions

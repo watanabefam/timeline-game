@@ -498,9 +498,25 @@
   // as the highest one, so no surface is ever hidden behind an age the player
   // never set (§5: "unset behaves as the highest band").
   const AGE_BANDS = ["5-7", "8-11", "12-16", "17+"];
+  // prompt-plan.js loads before this file (index.html rule 4). If that ever
+  // slips, degrade to a no-op plan rather than throw — the prompt is optional.
+  const PROMPT = window.PromptPlan || {
+    promptPlan: () => ({ show: false, kind: "none" }),
+    attachConfidence: (row) => row,
+    isValidConfidence: () => false,
+    createLatch: () => ({ take: () => true, used: () => false, reset: () => {} }),
+  };
   function band(user) {
     const b = user && user.ageBand;
     return AGE_BANDS.includes(b) ? b : "17+";
+  }
+  // The band for a profile ID (game state carries a userId, not the user
+  // object). Any lookup failure falls back to the highest band, as band() does.
+  function bandForUserId(userId) {
+    try {
+      const list = (readUsers() || {}).users || [];
+      return band(list.find((x) => x.id === userId));
+    } catch (_) { return "17+"; }
   }
   // Mastery as a 0–4 star readout for the youngest band: a progress indicator
   // that carries no percentage and no "not enough data" copy (§5, A3).
@@ -1873,13 +1889,25 @@
       rr.addEventListener("click", () => startReviewRound());
       host.appendChild(rr);
     }
+    // §5/A3: a 5–7 profile sees a 0–4 star readout here, never a mastery
+    // percentage — the same gate the stats card applies (:1729–1733). The bar
+    // (a non-numeric progress indicator) stays, as it does on the stats card.
+    const focusBand = band(u);
     weekRows.forEach((w) => {
       const row = document.createElement("button");
       row.className = "focus-card week";
       row.type = "button";
+      let sub;
+      if (focusBand === "5-7") {
+        const stars = masteryStars(w.placements < 3 ? 0 : w.mastery);
+        sub = `${starString(stars)} · ${w.placements} placements`;
+        row.setAttribute("aria-label", `Practice Week ${w.week}, ${stars} of 4 stars`);
+      } else {
+        sub = `Mastery ${w.mastery}% · ${w.placements} placements`;
+      }
       row.innerHTML =
         `<span class="focus-title">Practice Week ${w.week}</span>` +
-        `<span class="focus-sub">Mastery ${w.mastery}% · ${w.placements} placements</span>` +
+        `<span class="focus-sub">${sub}</span>` +
         `<span class="focus-bar"><span style="width:${w.mastery}%"></span></span>`;
       row.addEventListener("click", () => startWeekPractice(deckId, w.week));
       host.appendChild(row);
@@ -2343,6 +2371,14 @@
       rescue: null,
       revealedFacts: opts.revealedFacts || {},
       handicap: opts.handicap || {},
+      // A8 pre-reveal prompt (phase 4): a band-gated plan, a once-per-round
+      // latch, the answer for the current card, and the per-card record only
+      // answered cards carry (never a fabricated default, never in storage).
+      promptPlan: PROMPT.promptPlan(bandForUserId(opts.userId)),
+      promptLatch: PROMPT.createLatch(),
+      promptAnswer: null,
+      promptAnswerFor: null,
+      cardConfidence: {},
     };
   }
 
@@ -2658,12 +2694,67 @@
     }
   }
 
+  // ---- A8 pre-reveal prompt (GAMIFICATION_BRIEF §11 phase 4) --------------
+  // At most one per round, on the first deciding card, before the reveal and
+  // always followed by it (A8, §9/§13). Whether it renders at all is the band
+  // gate in prompt-plan.js — 5–7 never see it. The answer is a confidence
+  // signal that rides the same append-only review-log row (4c).
+  function renderPrompt(ctx) {
+    const state = ctx.state;
+    const root = ctx.root;
+    const host = root.querySelector(".pane-prompt");
+    if (!host) return;
+    const existing = host.querySelector(".tl-prompt");
+    const plan = state.promptPlan || { show: false, kind: "none" };
+    // Only while deciding the round's first card and before the latch is spent.
+    const active =
+      plan.show &&
+      state.status === "playing" &&
+      state.roundIndex === 0 &&
+      !state.promptLatch.used();
+    if (!active) { if (existing) existing.remove(); return; }
+    if (existing) return;
+    const card = currentEvent(state);
+    const el = document.createElement("div");
+    el.className = "tl-prompt";
+    el.setAttribute("role", "group");
+    el.setAttribute("aria-label", "Quick check");
+    // 12+/unset get the predirected cue; 8–11 get the simple self-check (A8/§5).
+    const cue = plan.kind === "predirected"
+      ? `<span class="tl-prompt-cue">Which event comes just before this one?</span>`
+      : "";
+    el.innerHTML =
+      cue +
+      `<span class="tl-prompt-q">How sure are you?</span>` +
+      `<span class="tl-prompt-opts">` +
+        `<button type="button" class="tl-prompt-opt" data-confidence="sure">I'm sure</button>` +
+        `<button type="button" class="tl-prompt-opt" data-confidence="unsure">Not sure</button>` +
+        `<button type="button" class="tl-prompt-skip">Skip</button>` +
+      `</span>`;
+    const latch = state.promptLatch;
+    const finish = (answer) => {
+      if (!latch.take()) return; // once per round
+      if (PROMPT.isValidConfidence(answer) && card) {
+        state.promptAnswer = answer;
+        state.promptAnswerFor = card.id;
+      }
+      el.remove();
+    };
+    el.querySelectorAll(".tl-prompt-opt").forEach((btn) => {
+      btn.addEventListener("click", () => finish(btn.dataset.confidence));
+    });
+    const skip = el.querySelector(".tl-prompt-skip");
+    if (skip) skip.addEventListener("click", () => finish(null));
+    host.appendChild(el);
+  }
+
   // HUD-only update: prompt card, score, lives, narrator. Shared by the full
   // rebuild (renderGame) and the incremental placement path (commitPlacement)
   // so the hot path never rebuilds the timeline list.
   function updateGameHud(ctx) {
     const state = ctx.state;
     const root = ctx.root;
+    renderPrompt(ctx);
     const ev = currentEvent(state);
     // The prompt lives inside each pane (same in single-player and split), so
     // update it within this player's root.
@@ -3266,6 +3357,12 @@
     const li = document.createElement("li");
     li.className = "tl-event " + placedClassFor(state, e);
     const revealed = state.revealedFacts[e.id];
+    // A8 (4a): a slipped card's reveal carries a one-line why (§8/§9), not just
+    // the bare fact — the moment-of-slip explanation is the load-bearing half
+    // of elaborated feedback at low prior knowledge. Falls back to nothing when
+    // the event has no why (the fact already shows).
+    const slipped = revealed && state.cardSlips && (state.cardSlips[e.id] || 0) > 0;
+    const whyLine = slipped && e.why && String(e.why).trim() !== "" ? e.why : "";
     const sameYearNeighbor = state.timeline.some(
       (id, i) => id !== e.id && sortYearOf(eventById(ui.deck, id)) === sortYearOf(e)
     );
@@ -3283,6 +3380,9 @@
       (revealed
         ? (fmtYears(e) ? `<span class="tl-year">${fmtYears(e)}</span>` : "") +
           `<span class="tl-fact">${escapeHtml(revealed)}</span>` +
+          (whyLine
+            ? `<span class="tl-why"><span class="tl-why-label">Why it matters</span> ${escapeHtml(whyLine)}</span>`
+            : "") +
           (sheet
             ? `<button class="fact-toggle" type="button" aria-label="Show fact sheet" aria-expanded="false">❔</button>`
             : "") +
@@ -3449,6 +3549,11 @@
     // Remember how many slips this card needed (0 = clean first try) so the
     // timeline can differentiate it visually.
     state.cardSlips[ev.id] = state.wrongOnCurrent;
+    // A8 (4c): carry the pre-reveal answer onto this card's row — but only if
+    // the player gave one for THIS card. A skipped prompt writes nothing.
+    if (state.promptAnswer && state.promptAnswerFor === ev.id && PROMPT.isValidConfidence(state.promptAnswer)) {
+      state.cardConfidence[ev.id] = state.promptAnswer;
+    }
     // Flat scoring: a card is worth POINTS_PER_CARD; each slip on it costs 1
     // (floor 0) so the final score reflects how cleanly the run was played.
     const value = Math.max(0, POINTS_PER_CARD - state.wrongOnCurrent);
@@ -3747,9 +3852,12 @@
       e.placements += 1;
       e.slips += slips;
       if (slips === 0) e.firstTry += 1;
-      reviewRows.push({ ts: now, deck: ui.deck.id, eventId: id,
-                        outcome: slips === 0 ? "firstTry" : "slip",
-                        mode: state.mode });
+      const reviewRow = { ts: now, deck: ui.deck.id, eventId: id,
+                          outcome: slips === 0 ? "firstTry" : "slip",
+                          mode: state.mode };
+      // A8 (4c): the optional confidence field, added only where the player
+      // answered the pre-reveal prompt (absence is meaningful — §6).
+      reviewRows.push(PROMPT.attachConfidence(reviewRow, state.cardConfidence && state.cardConfidence[id]));
     });
     appendReviewLog(p, reviewRows);
     const wrongs = state.outcomes.filter((o) => o === "wrong").length;

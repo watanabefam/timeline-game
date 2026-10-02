@@ -62,6 +62,7 @@ const SHELL = [
   "narration-recipe.js",
   "narration.js",
   "review-scheduler.js",
+  "prompt-plan.js",
   "timeline.js",
 ];
 const DIRS = [
