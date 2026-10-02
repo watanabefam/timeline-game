@@ -1903,13 +1903,25 @@
       rr.addEventListener("click", () => startReviewRound());
       host.appendChild(rr);
     }
+    // §5/A3: a 5–7 profile sees a 0–4 star readout here, never a mastery
+    // percentage — the same gate the stats card applies (:1729–1733). The bar
+    // (a non-numeric progress indicator) stays, as it does on the stats card.
+    const focusBand = band(u);
     weekRows.forEach((w) => {
       const row = document.createElement("button");
       row.className = "focus-card week";
       row.type = "button";
+      let sub;
+      if (focusBand === "5-7") {
+        const stars = masteryStars(w.placements < 3 ? 0 : w.mastery);
+        sub = `${starString(stars)} · ${w.placements} placements`;
+        row.setAttribute("aria-label", `Practice Week ${w.week}, ${stars} of 4 stars`);
+      } else {
+        sub = `Mastery ${w.mastery}% · ${w.placements} placements`;
+      }
       row.innerHTML =
         `<span class="focus-title">Practice Week ${w.week}</span>` +
-        `<span class="focus-sub">Mastery ${w.mastery}% · ${w.placements} placements</span>` +
+        `<span class="focus-sub">${sub}</span>` +
         `<span class="focus-bar"><span style="width:${w.mastery}%"></span></span>`;
       row.addEventListener("click", () => startWeekPractice(deckId, w.week));
       host.appendChild(row);
@@ -3783,9 +3795,10 @@
       e.placements += 1;
       e.slips += slips;
       if (slips === 0) e.firstTry += 1;
-      reviewRows.push({ ts: now, deck: ui.deck.id, eventId: id,
-                        outcome: slips === 0 ? "firstTry" : "slip",
-                        mode: state.mode });
+      const reviewRow = { ts: now, deck: ui.deck.id, eventId: id,
+                          outcome: slips === 0 ? "firstTry" : "slip",
+                          mode: state.mode };
+      reviewRows.push(reviewRow);
     });
     appendReviewLog(p, reviewRows);
     const wrongs = state.outcomes.filter((o) => o === "wrong").length;

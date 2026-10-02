@@ -1,7 +1,7 @@
 # Next Slice — Feedback Depth + Pre-Reveal Confidence (A8) — Research & Plan
 
-**Status:** research complete, plan ready — **awaiting approval before implementation**
-**Date:** 2026-10-02
+**Status:** ⚠️ **implemented 2026-10-02, then largely retired later the same day** — T1 (4b, 4c) and T2 (4a) were removed; only T5 (4d) survives. See §7 and §7.1.
+**Date:** 2026-10-02 (planned and landed)
 **Scope:** `GAMIFICATION_BRIEF.md` §11 **phase 4** (feedback depth at the moment of the slip + one predirected pre-reveal prompt + the optional `confidence` field, A8), plus the one-line phase-2 age-gap warm-up.
 **Companions (source of truth above this doc):** `doc/GAMIFICATION_BRIEF.md` (A4/A6/A8/A10, §5 age table, §6 data model, §9 copy rules, §11 order, §12 metrics, §15 open decisions); `doc/CLOUDLESS_PLAN.md` §2 (working method) and §3 S2; evidence `doc/references/mcg_research_synthesis.md` §6, §7, §8, §9, §13, §20, §23.
 **Governing rule:** this is a learning *and* motivational surface, so it cites the vendored evidence by § number (AGENTS.md), derives all state from the append-only `reviewLog` (D3), and adds no runtime dependency (rule 1).
@@ -97,24 +97,36 @@ self-explanation; no new schema field beyond `confidence`; no score/XP change
 
 ---
 
-## 3. Live code seams (verified 2026-10-02)
+## 3. Live code seams (re-verified 2026-10-02, post-T5/T6)
+
+> **Why "re-verified":** the first draft's refs were taken *before* the
+> reach-back review round landed (T5/T6, commit `a6e0657`), whose
+> `reviewDueEvents`/`startReviewRound` insertion around `timeline.js:2400`
+> shifted every line in the **second half** of the file by **+62**. So the
+> original `recordRun` ref (`:3687`) pointed at `flashFeedback`, not the
+> outcome row. The refs below are the live ones (also corrected in
+> `GAMIFICATION_BRIEF.md` §7). Early-file refs (`:3446`, `:2779`, `:500`)
+> were unaffected and re-confirmed.
 
 | What | Where | Note |
 |---|---|---|
 | Slip/reveal commit (4a/4b hook) | `timeline.js:3446` — `state.revealedFacts[ev.id] = ev.fact;` | inside `commitPlacement`; the pre-reveal prompt goes immediately before, the reveal immediately after |
 | The rescue/answer callout | `timeline.js:3441` `.rescue-status`, `RESCUE_AFTER` at `:3539` | the guided-completion path a wrong placement reaches (§23) |
 | Fact vs why in the sheet | `timeline.js:2779` `factRow("Why it matters", e.why)` | why exists, but only in the popover today |
-| Outcome row emit | `timeline.js:3687–3692` inside `recordRun()` | where `confidence` is added to the same row |
+| Outcome row emit | `timeline.js:3750–3751` inside `recordRun()` (fn at `:3730`) | where `confidence` is added to the same row; `reviewRows.push(…)` at `:3748`, `appendReviewLog(p, reviewRows)` at `:3753` |
 | Result-cap contract | `review-scheduler.js` (`replay`/`rate`) + `scripts/test/review-scheduler.test.mjs` | unchanged; `confidence` is *data*, not an interface change |
 | Age band helper | `timeline.js:500` `band(user)`; `AGE_BANDS` | reuse, do not re-derive |
-| Focus-panel copy gap (4d) | `renderFocusPanel()` week rows — `Mastery ${w.mastery}%` | prints for every band today |
+| Focus-panel copy gap (4d) | `renderFocusPanel()` week rows — `timeline.js:1881–1882` (`Mastery ${w.mastery}%` + `focus-bar`) | prints for every band today; the stats screen already branches at `:1729–1733` |
 
-### 3.1 Stale citations to correct in `GAMIFICATION_BRIEF.md`
-- **A7** says autoplay is at `timeline.js:2475`; it is actually the per-card
+### 3.1 Stale citations — **corrected in `GAMIFICATION_BRIEF.md` on 2026-10-02**
+- **A7** said autoplay is at `timeline.js:2475`; it is actually the per-card
   narration in `updateGameHud()` at **`timeline.js:2682`**
-  (`window.Narrator.speakEvent(ev, …)`), with `prefetch` at `:2689`. Fix when A7
-  is picked up (it is not this slice).
-- **A9**'s `fx.js:27` (`FX_KEY` / `motionOn()` master gate) is **still correct**.
+  (`window.Narrator.speakEvent(ev, …)`), with `prefetch` at `:2687`.
+- **§7 hook table:** `recordRun` `:3668` → **`:3730`**; `finishGame` `:3713` →
+  **`:3775`**; `showResults` `:3765` → **`:3827`**; `speakEvent` `:2620` →
+  **`:2682`**; `window.Gamify` `:597` → **`:595`**; "How to play" modal
+  `index.html:444` → **`:485`**. The +62 offset is the T5/T6 insertion (above).
+- **A9**'s `fx.js:27` (`FX_KEY` / `motionOn()` master gate) was and remains **correct**.
 
 ---
 
@@ -177,7 +189,7 @@ answers the DOM-free half:
 ### Phase 3 — Tasks
 - **T1 — `promptPlan(band)` + latch (pure).** *Output:* the helper + once-per-round
   latch. *Verify:* Node test — band matrix, latch is once-only, unset = highest.
-- **T2 — 4a the why at the slip reveal.** One reveal site; age-framed copy.
+- **T2 — 4a the why at the slip reveal.** One reveal site (`timeline.js:3446`); age-framed copy.
   *Verify:* browser smoke — the reveal text differs from the bare fact and includes
   the why; 5–7 gets no desirable-difficulty framing.
 - **T3 — 4b the pre-reveal prompt.** Predirected/self-check per band; hidden for
@@ -245,3 +257,72 @@ reverted** — a reversible split, which is why they are separate tasks.
    the field is cheapest to add while the row is being touched.
 3. **Voice/read-aloud of the prompt** (A7 interaction). Out of scope here, but the
    prompt is a new on-screen text at the deciding moment — revisit when A7 lands.
+
+---
+
+## 7. Implementation status (2026-10-02)
+
+> ⚠️ **Read this with §7.1.** All of T1–T7 landed the same day the plan was
+> written, and then **T1, T2, T3 and T4 were removed later the same day**. The
+> table below records what shipped; §7.1 records what was retired and why. Do not
+> read this table as the current state of the repo.
+
+All of T1–T7 landed the same day the plan was written. The slice shipped exactly
+as designed, with no new runtime dependency and no schema field beyond
+`confidence`.
+
+| Task | Where it lives | Verify |
+|---|---|---|
+| **T1** `promptPlan(band)` + latch | **new** `prompt-plan.js` → `window.PromptPlan` (pure, DOM-free) | `scripts/test/prompt-plan.test.mjs` (11 tests) |
+| **T2** 4a why at the slip reveal | `timeline.js` `eventEl` (`.tl-why`, labelled) | `smoke:feedback` phase 5 |
+| **T3** 4b pre-reveal prompt | `timeline.js` `renderPrompt` (first card, before the reveal) | `smoke:feedback` phases 1–4 |
+| **T4** 4c `confidence` on the row | `timeline.js` `commitPlacement` + `recordRun` via `PromptPlan.attachConfidence` | Node (schema guard) + `smoke:feedback` phases 1–2 |
+| **T5** 4d focus-panel 5–7 copy | `timeline.js` `renderFocusPanel` (stars, no %) | `smoke:feedback` phase 6 |
+| **T6** `?v=` bumps + gates | `index.html` `timeline.js?v=202`, `styles.css?v=135`, `prompt-plan.js?v=1`; manifest regen | `npm run validate` green bar the known `validate:backlog` |
+| **T7** verification | new Node tests chained into `npm test`; new `tools/offline-smoke/feedback.mjs` (`npm run smoke:feedback`) | 11/11 Node, 30/30 browser |
+
+**New file:** `prompt-plan.js` is on the `index.html` boot path and in the
+`gen-offline-manifest.mjs` `SHELL` allow-list (manifest now **134 files**,
+generation `c6e37a283a8e`), and it is documented in `AGENTS.md` (rule 4 + file map)
+and in the verification checklist.
+
+**Two design notes worth keeping:**
+- **The prompt rides the round's first card.** That is the deterministic reading
+  of "at most one per round" and it satisfies "before the reveal, always followed
+  by it" literally. It is *not* tied to a slip, so it fires on a clean round too.
+- **`confidence` is recorded, not consumed.** Nothing reads it yet (A10 stays the
+  L2 seam); that is deliberate — the field is cheapest to add while the row is
+  already being touched.
+
+**What is still open (unchanged by this slice):** the 8–11 wording (open
+question 1) shipped as *"How sure are you?"* — a simple self-check that does not
+read as a test, but it is the least-evidenced string here; and the falsifier is
+still a playtest, not a measurement. `4d` is now closed.
+
+### 7.1 Retirement (2026-10-02, later the same day)
+
+Playing the shipped slice surfaced two problems the plan's falsifier could not
+see, because both are design misfits rather than measurements:
+
+| removed | why |
+|---|---|
+| **T3 / 4b** the pre-reveal prompt | It fired on the round's **first deciding card**, where "the event just before this one" is a given anchor — or, for the deck's earliest card, does not exist. Worse, the cue had **no input**: the only controls were *I'm sure / Not sure / Skip*, so the collected signal was purely a self-rating. Structurally it was the two-button self-report `§9` rates weakest (g=0.24), with an unanswerable question above it — and it made the player act twice per decision (answer, then place). |
+| **T4 / 4c** the `confidence` field | Inferring confidence from `outcome` makes it a pure function of `outcome`: identical information, and D3 forbids persisting derived state. That leaves only "ask it", which the row above rejects. It also lost the `Hard`/`Easy` split it existed for. Full reasoning: `doc/CONNECTION_CUE_PLAN.md` §5.5. |
+| **T2 / 4a** the why at the slip reveal | A *significance* line cannot explain a **placement**, and it duplicated the fact-sheet popover's existing `Why it matters` row — so one slipped card showed the why up to three times (rescue callout, inline line, popover). |
+| **T1** `prompt-plan.js` + its 11 Node tests | The band gate and the schema guard for the two removed features; nothing else consumed them. |
+
+**What survives: T5 / 4d** (the 5–7 focus-panel star gate) — untouched, and still
+covered by the smoke.
+
+**Knock-on changes:** `test:prompt` left the `npm test` chain; the `prompt-plan.js`
+boot tag and its `gen-offline-manifest.mjs` `SHELL` entry went with it (manifest
+back to **133 files**, generation `bbcaf47e1d82`); `timeline.js?v=203`,
+`styles.css?v=136`. `tools/offline-smoke/feedback.mjs` was retargeted from
+"assert the prompt works" to "assert the removed surfaces never render" — that
+retargeting is what makes the removal verifiable rather than merely diffed, and
+it keeps the 4d checks.
+
+**Where the slip-moment explanation goes instead:** the connection cue in
+`doc/CONNECTION_CUE_PLAN.md` — built from the already-authored `connections[]`
+edges, which (unlike `why`) are **directional** and can therefore explain a
+placement rather than merely decorate it.

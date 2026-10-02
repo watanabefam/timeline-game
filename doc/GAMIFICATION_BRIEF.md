@@ -119,7 +119,7 @@ streak-experiment data is the only large-scale field evidence and it says the
 - **Spec:** a streak day is earned by completing **one placement round** (a
   round = one run; a loss still counts — learning happened). Score/perfect/XP
   never touch the streak.
-- **Hook:** inside `recordRun()` (timeline.js:3523), after `writeUser`.
+- **Hook:** inside `recordRun()` (timeline.js:3730), after `writeUser`.
 
 ### D2 — Forgiveness is a feature, not a cheat
 - **Evidence:** JCR (Silverman et al. 2023): users who break streaks often quit;
@@ -243,7 +243,7 @@ blueprints and prompt engineering stay out).
 - **Why it lands here.** The clip is generated from `title + fact`
   (`tools/narration/text.mjs` → `spokenText`) and the card *displays* those same
   two fields, so the shipped narration is a verbatim read-along — and
-  `timeline.js:2475` autoplays it on **every card load**, i.e. over the exact
+  `timeline.js:2682` autoplays it on **every card load**, i.e. over the exact
   moment the child must read the card and decide where it goes. That is
   redundancy *plus* split attention (§6, §7) at the retrieval moment, which is
   the one moment this game cannot afford it. Narration also defaults **on**
@@ -257,7 +257,7 @@ blueprints and prompt engineering stay out).
   toggle; change *when* it fires. Autoplay at the **reveal/story moment** (after
   placement) rather than on the deciding card, and always leave an on-demand
   listen control on the card. Per band, §5. One call-site change
-  (`timeline.js:2475`) plus the reveal hook — revisit first if narration is ever
+  (`timeline.js:2682`) plus the reveal hook — revisit first if narration is ever
   retuned.
 
 ### A8 — One predirected micro-prompt before the reveal (✅ strong, tiny cost)
@@ -317,7 +317,10 @@ blueprints and prompt engineering stay out).
   queue is still first and §11 is still not gated on FSRS. Two costs, recorded as
   **inference**: day-fit weights are off-distribution for placement units
   (recoverable later via `generatorParameters`), and only 2 of the 4 `Rating`s
-  are reachable until A8's `confidence` exists. See §15.9.
+  are reachable from `outcome` alone — A8's `confidence` field briefly supplied
+  the other two and was **retired 2026-10-02** (`doc/CONNECTION_CUE_PLAN.md`
+  §5.5), which is a real cost of that retirement and is recorded as such. See
+  §15.9.
 
 ### A11 — Model one placement, once, then get out of the way (✅ cheap, age-gated)
 - **§19 matrix:** for a knowledge course, Worked Examples = **Optional** and
@@ -377,11 +380,12 @@ the profile actually set it** — unset behaves as the highest band.
 
 **Built 2026-09-30 (phase 2):** `band()` lands at `timeline.js:500` and the
 optional band dropdown lives in the stats header (`#stats-band`,
-`index.html` + `renderStats()`). The applied rows are the **Mastery %** row
-(level card and "Mastery by week", stats screen) and the **Narration timing** /
-**Pre-reveal prompt** rows are still pending (phases 8 and 4).
-`renderFocusPanel()` on the home screen is the one known gap — it still prints
-`Mastery NN%` for 5–7.
+`index.html` + `renderStats()`). The applied row is the **Mastery %** row
+(level card, "Mastery by week" on the stats screen, **and the home focus panel
+since phase 4**). The **Pre-reveal prompt** row was built in phase 4 and then
+**retired the same day** — see §11, phase 4, and `doc/CONNECTION_CUE_PLAN.md` §0.
+Only the **Narration timing** row is still pending (phase 8).
+`renderFocusPanel()`'s `Mastery NN%` gap for 5–7 was closed in phase 4 (task 4d).
 
 **Browser-verified:** the level card's DOM contract is asserted end-to-end by
 `tools/offline-smoke/mastery.mjs` (`npm run smoke:mastery`, 18/18 checks in
@@ -410,21 +414,25 @@ written. Existing shapes (timeline.js:333–398) unchanged:
 ```
 
 New (per user, appended inside the existing `writeUser` path) — ✅ **shipped
-2026-09-30** (phase 1), except the `confidence?` field (A8, phase 4):
+2026-09-30** (phase 1):
 
 ```
 "timeline.user.<id>.v1" += {
-  reviewLog: [ { ts, deck, eventId, outcome: "firstTry"|"slip", mode,
-                 confidence? } ],        // append-only, cap 2000, oldest pruned
+  reviewLog: [ { ts, deck, eventId, outcome: "firstTry"|"slip", mode } ],
+                                        // append-only, cap 2000, oldest pruned
   meta: { tz: "Europe/Berlin" }         // IANA only, never fixed offset
 }
 ```
 
-`confidence?` is the **only** sanctioned schema addition (A8): optional, written
-only for rows where the pre-reveal prompt was actually shown, and **never
-backfilled** — older rows stay absent, so every reader must tolerate `undefined`.
-Adding a field to an append-only log is safe *only* because nothing derives
-state from a mutable counter (D3); any future field must meet the same bar.
+The row is `{ ts, deck, eventId, outcome, mode }` and nothing more. Phase 4
+briefly added an optional `confidence` field (A8) and it was **retired
+2026-10-02**: inferring it from `outcome` makes it a pure function of `outcome`
+— identical information, and D3 forbids persisting derived state — so it would
+have had to be *asked*, at the cost of a second interaction at the deciding
+moment (`doc/CONNECTION_CUE_PLAN.md` §5.5). `outcome` is the single accuracy
+signal. Adding a field to an append-only log is safe *only* because nothing
+derives state from a mutable counter (D3); any future field must meet the same
+bar **and** carry information `outcome` does not.
 
 - Streak/calendar/level/achievements = pure functions over `reviewLog` +
   existing `totals`/`events`. Nothing else is written, so cloud-profile sync
@@ -439,25 +447,28 @@ state from a mutable counter (D3); any future field must meet the same bar.
 
 ## 7. Where to hook in the code
 
-Line refs **re-verified 2026-09-30** (`timeline.js` 4,533 lines; `fx.js` 690;
-`index.html` 501; `styles.css` 1,745) — they move between commits, so verify
+Line refs **re-verified 2026-10-02** (`timeline.js` 4,595 lines; `fx.js` 690;
+`index.html` 533; `styles.css` 1,777) — the **second half of `timeline.js`
+drifted +62 lines** when the reach-back review round landed (T5/T6: the
+`reviewDueEvents`/`startReviewRound` insertion around :2400), so every ref past
+that point below was corrected in place. They move between commits, so verify
 again before editing:
 
 | Hook | Location | Use |
 |---|---|---|
-| `recordRun(state)` | timeline.js:3668 | Append one review-log row set; then re-derive streak/level/achievements; call `writeUser` (already here). **Note:** it already writes per-player, so in split-screen each player's outcomes land in their own profile |
-| `finishGame(ctx, won)` | timeline.js:3713 | Queue achievement unlocks + next streak milestone for the results screen |
-| `showResults(ctx, won)` | timeline.js:3765 | Achievement-unlocked modal mounts here (post-curtain); the existing graded confetti is the pattern to extend |
+| `recordRun(state)` | timeline.js:3730 | Append one review-log row set; then re-derive streak/level/achievements; call `writeUser` (already here). **Note:** it already writes per-player, so in split-screen each player's outcomes land in their own profile |
+| `finishGame(ctx, won)` | timeline.js:3775 | Queue achievement unlocks + next streak milestone for the results screen |
+| `showResults(ctx, won)` | timeline.js:3827 | Achievement-unlocked modal mounts here (post-curtain); the existing graded confetti is the pattern to extend |
 | `FX.confetti({tier})` | fx.js:385 | Add rarity tiers ("light" first-run … "epic" mastered-week) |
 | `renderStats()` | timeline.js:1552 | Mastery-level card (phase 2, live) + age-band copy switch (A3); achievement surfaces (phase 6) |
 | `masteryOf(p)` / `band(user)` | timeline.js:549 / :500 | The phase-2 derivations — pure, deck-agnostic; the whole level comes from here |
 | `renderFocusPanel()` → `$("focus-panel")` | timeline.js:1821 (host :1822) | Blocked-mix composition for 5–11 (A2); desirable-difficulty framing line (8–11). **Still shows `Mastery NN%` for 5–7** — §5 gap noted in §11 |
 | Week-mastery calc (`firstTry / placements`) | timeline.js:1709 (stats), :1846 (focus) | The quality signal D4 levels from; `placements < 3` already renders "not enough data yet" |
-| `Narrator.speakEvent(ev, …)` | timeline.js:2620 | Autoplay site — **moves to the reveal per A7**; today it fires on every card load |
-| "How to play" modal | index.html:444 (`#how-btn` :52) | A11: leads with the points economy; needs one modeled *place → why* example |
+| `Narrator.speakEvent(ev, …)` | timeline.js:2682 (prefetch :2687) | Autoplay site — **moves to the reveal per A7**; today it fires on every card load |
+| "How to play" modal | index.html:485 (`#how-btn` :74) | A11: leads with the points economy; needs one modeled *place → why* example |
 | Session log write (`appendReviewLog`) | timeline.js:445 | Cap enforcement (oldest pruned); the only write path for the log |
 | `syncTimezone()` | timeline.js:479 (called from `init()`) | Forward-only tz re-sync |
-| `window.Gamify` | timeline.js:597 | Read-only accessors: `reviewLog`, `activeDays`, `currentStreak`, **`mastery`, `band`**, `timezone` |
+| `window.Gamify` | timeline.js:595 | Read-only accessors: `reviewLog`, `activeDays`, `currentStreak`, **`mastery`, `band`**, `timezone` |
 | Profile create/registry | `newUser()` timeline.js:339 (`USERS_KEY` :333, `readUser`/`writeUser` :394/:398) | Optional `ageBand` field. **Set from the stats screen** (`#stats-band`, index.html) — deliberately not at create time, so §15.2's "Not set" default survives profile creation |
 
 New code ships either appended to the `timeline.js` IIFE as a `Gamify = {…}`
@@ -570,10 +581,11 @@ Phases (each independently shippable):
      line with **no score, no percentage and no bar**, and the "Mastery by week"
      rows swap the percentage and the "not enough data yet" copy for a 0–4 star
      readout.
-   - **Known gap, stated rather than papered over:** §5's mastery-% row is applied
-     to the **stats screen only**. `renderFocusPanel()` (home) still prints
-     `Mastery NN%` for a 5–7 profile. Phase 2 was scoped to the stats screen; the
-     home panel is a one-line follow-up, not an oversight to re-discover.
+   - **Known gap at the time, now closed:** §5's mastery-% row was applied to
+     the **stats screen only**; `renderFocusPanel()` (home) still printed
+     `Mastery NN%` for a 5–7 profile. Phase 2 was scoped to the stats screen and
+     this was a one-line follow-up — **closed in phase 4** (task 4d,
+     2026-10-02).
 3. **Reach-back due-queue** over the review log (A10). `rate(outcome) → nextDue`
    stays the interface; for a history corpus reach-back is the first mastery win,
    ahead of FSRS parameter work or the ts-fsrs vendoring. Age-gated per A2 —
@@ -582,7 +594,10 @@ Phases (each independently shippable):
    the interface is unchanged and the vendored lib is never forked.
 4. **Feedback depth at the moment of the slip** (§8/§9 copy rules, EFE — the only
    feedback type effective for low prior knowledge) **+ one predirected
-   pre-reveal prompt** and the optional `confidence` field (A8).
+   pre-reveal prompt** and the optional `confidence` field (A8). ⚠️ **Partly
+   landed, then largely retired 2026-10-02** — only the 4d warm-up survives; see
+   "what landed" below and `doc/CONNECTION_CUE_PLAN.md` §0. The slip-moment
+   explanation is re-opened as a connection cue there.
 5. **Streak UI:** profile/home chip + calendar (port Trophy UI's Streak Calendar
    *structure* to a plain CSS grid); forgiveness states + copy (D2, A5).
 6. **Achievements:** predicate registry + unlocked modal; new `FX` rarity tiers
@@ -590,11 +605,44 @@ Phases (each independently shippable):
 7. **First-run modeling** (A11): one *place → why* cycle on a finished example,
    skipped once a profile has completed a run.
 8. **Narration timing** (A7) + **quiet retrieval moment** (A9): one call-site
-   change each (`timeline.js:2475`; `fx.js:27`), no schema change.
+   change each (`timeline.js:2682`; `fx.js:27`), no schema change.
 9. **Optional:** family league (D6) once multi-profile usage justifies it.
 
 Phases 2 and 5 are both UI-level and may land in either order — the *pair* is
 what matters; the streak must not ship alone (see the counter-argument in 2).
+
+**What landed (2026-10-02), phase 4 (A8).** Four small parts were built; after
+review **three were retired the same day** and one survives. Full reasoning in
+`doc/CONNECTION_CUE_PLAN.md` §0.
+- **4d — the phase-2 warm-up.** ✅ **Survives.** `renderFocusPanel()` now applies
+  the same 5–7 gate as the stats card: stars, no percentage (the non-numeric bar
+  stays).
+- **4a — the why at the slip reveal.** ❌ **Retired.** A *significance* line
+  cannot explain a **placement**, and it duplicated the fact-sheet popover's
+  existing `Why it matters` row — one slipped card showed the why up to three
+  times (rescue callout, the inline line, the popover).
+  `doc/CONNECTION_CUE_PLAN.md` replaces it with a cue built from the
+  already-authored `connections[]` edges.
+- **4b — the pre-reveal prompt.** ❌ **Retired.** It fired on the round's first
+  card, where "the event just before this one" is a given anchor or does not
+  exist, and its cue had no input — the only controls were *I'm sure / Not sure /
+  Skip*, i.e. the two-button self-report §9 rates weakest (g=0.24) with an
+  unanswerable question above it. Dropping it also removes the second interaction
+  at the deciding moment.
+- **4c — the optional `confidence` field.** ❌ **Retired** — see §6 and
+  `doc/CONNECTION_CUE_PLAN.md` §5.5. The schema is back to
+  `{ ts, deck, eventId, outcome, mode }`.
+- **Also removed:** `prompt-plan.js`, `scripts/test/prompt-plan.test.mjs`, the
+  `test:prompt` chain entry, the `.tl-why*` and `.tl-prompt*` CSS, and the boot
+  `<script>` tag (manifest is back to **133 files**).
+- **Not changed:** score/XP/level (G5), the review-scheduler interface (A10's
+  seam), and the log cap.
+- **Verified:** `npm run smoke:feedback` (Chromium, 24 checks) now proves the
+  absences — no `.tl-prompt`, no `.tl-why`, no `confidence` row, for every band
+  and under reduced motion — and still covers the 4d focus panel.
+- **Falsifier, re-aimed:** whether a slip-moment explanation helps learning was
+  never measured; it becomes a playtest question for the connection cue, which
+  carries its own falsifier (`doc/CONNECTION_CUE_PLAN.md` §3).
 
 Forward-compat: phases 1–9 must not write state a future server cannot re-derive
 from a synced log (roadmap §6.4). Phase 7 of the roadmap (server social) is
@@ -738,8 +786,13 @@ No unit-test framework — extend the existing browser smoke checklist
    is mastery first, but Duolingo's streak-separation data argues the other way.
    Decide before starting either — the *pair* must not ship split (§11 phase 2,
    conflict ledger).
-8. Whether `confidence` (A8) is worth the UI cost outside Focus practice — it is
-   cheapest on the Focus round, where the player already expects a prompt.
+8. ~~Whether `confidence` (A8) is worth the UI cost outside Focus practice.~~
+   **Closed 2026-10-02:** it was not. The field is retired — inferring it from
+   `outcome` carries no information, so it would have to be *asked*, and asking
+   cost a second interaction at the deciding moment. The `Hard`/`Easy` grades it
+   existed for stay unreachable from `outcome` alone; if calibration is wanted it
+   belongs in the predict-then-disclose mode at `doc/STUDY_MODES.md` §3.2. See
+   `doc/CONNECTION_CUE_PLAN.md` §5.5.
 9. **FSRS: day-primary (`repeat(card, rating)`) vs placement-primary (the L2
    seam)?** Deferred until the log is large enough to retrain weights
    (`generatorParameters`). The placement-primary path is the recorded intent

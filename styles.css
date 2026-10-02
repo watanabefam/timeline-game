@@ -321,7 +321,6 @@ html { scroll-padding-top: var(--game-header-h, 0px); }
   0%, 100% { border-color: var(--border); box-shadow: none; }
   50%      { border-color: var(--accent); box-shadow: 0 0 14px rgba(110, 168, 254, 0.35); }
 }
-
 /* ---------- TIMELINE ---------- */
 .timeline-wrap { margin: 4px 0; }
 /* Split-screen: two independent panes side by side, each its own scroll
