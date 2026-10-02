@@ -1846,21 +1846,32 @@
       .map(([wk, w]) => ({ week: Number(wk), mastery: Math.round((w.firstTry / w.placements) * 100), placements: w.placements }))
       .sort((a, b) => a.mastery - b.mastery)
       .slice(0, 3);
-    const practiced = Object.values(d.events).filter((s) => s.placements > 0).length;
     host.classList.remove("hidden");
     host.innerHTML = "";
     const head = document.createElement("p");
     head.className = "focus-head";
     head.textContent = `🎯 Focus for ${u.name} · ${deck.name}`;
     host.appendChild(head);
-    const fr = document.createElement("button");
-    fr.className = "focus-card";
-    fr.type = "button";
-    fr.innerHTML =
-      `<span class="focus-title">Focus round</span>` +
-      `<span class="focus-sub">Practice your ${Math.min(10, practiced)} toughest events</span>`;
-    fr.addEventListener("click", () => startFocusRound());
-    host.appendChild(fr);
+    // Reach-back review: how many previously-seen events the scheduler says are
+    // due. Empty is a real state (J2), not a dead button — say so calmly.
+    const due = reviewDueEvents(deckId, deck);
+    if (!due.length) {
+      const caught = document.createElement("div");
+      caught.className = "focus-card caught-up";
+      caught.innerHTML =
+        `<span class="focus-title">🎉 All caught up</span>` +
+        `<span class="focus-sub">No reviews due right now — finish another round and they'll come back.</span>`;
+      host.appendChild(caught);
+    } else {
+      const rr = document.createElement("button");
+      rr.className = "focus-card";
+      rr.type = "button";
+      rr.innerHTML =
+        `<span class="focus-title">Review round</span>` +
+        `<span class="focus-sub">${due.length} event${due.length === 1 ? "" : "s"} due for review</span>`;
+      rr.addEventListener("click", () => startReviewRound());
+      host.appendChild(rr);
+    }
     weekRows.forEach((w) => {
       const row = document.createElement("button");
       row.className = "focus-card week";
@@ -2414,19 +2425,70 @@
       .filter(Boolean);
   }
 
+  // The due set for a deck, from the pure scheduler (review-scheduler.js) over
+  // the append-only reviewLog. Everything is re-derived on read (D3) — there is
+  // no stored queue. The block the learner last worked in is the "current"
+  // era/week the age gate compares against (A2/§20). Any failure yields an
+  // empty set, so a scheduler problem can never break the Focus panel.
+  function reviewDueEvents(deckId, deck) {
+    const RS = window.ReviewScheduler;
+    const u = activeUser();
+    if (!u || !deck || !RS || typeof RS.replay !== "function" || typeof RS.dueSet !== "function") return [];
+    try {
+      const log = window.Gamify.reviewLog(u.id);
+      const states = RS.replay(log);
+      let currentEra = null;
+      let currentWeek = null;
+      for (let i = log.length - 1; i >= 0; i -= 1) {
+        const r = log[i];
+        if (!r || r.deck !== deckId) continue;
+        const ev = deck.events.find((e) => e.id === r.eventId);
+        if (ev) {
+          currentEra = eraOf(ev.year);
+          currentWeek = ev.week == null ? null : ev.week;
+          break;
+        }
+      }
+      const ids = RS.dueSet(states, deckId, band(u), {
+        events: deck.events.map((e) => ({ id: e.id, era: eraOf(e.year), week: e.week })),
+        cap: 10,
+        recencyK: RS.K_MIN,
+        eraOrder: ERAS.map((er) => er.name),
+        currentEra,
+        currentWeek,
+      });
+      const byId = new Map(deck.events.map((e) => [e.id, e]));
+      return ids.map((id) => byId.get(id)).filter(Boolean);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // The Review-round card's handler. Kept as a named entry point (the card is
+  // "Review round", the pool logic below is shared).
+  function startReviewRound() {
+    startFocusRound();
+  }
+
   function startFocusRound() {
     const u = activeUser();
     const deckId = u ? mostPlayedDeckId(u.id) : null;
     if (!deckId) return;
     const deck = window.DECKS.find((x) => x.id === deckId);
-    let pool = weakestEvents(deckId, 10);
-    if (pool.length < ANCHOR_COUNT + MIN_PLACEMENTS) {
+    if (!deck) return;
+    const need = ANCHOR_COUNT + MIN_PLACEMENTS;
+    // Reach-back first: the scheduler's due set. If too little is due to form a
+    // puzzle, fail open to the old weakest-events logic so practice is never
+    // blocked (FR6 / fail-open).
+    let pool = reviewDueEvents(deckId, deck);
+    if (pool.length < need) pool = weakestEvents(deckId, 10);
+    if (pool.length < need) {
       // Pad with random deck events so a small focus set still forms a puzzle.
       const have = new Set(pool.map((e) => e.id));
       const rest = shuffled(deck.events.filter((e) => !have.has(e.id)), (Math.random() * 1e9) >>> 0);
-      pool = pool.concat(rest.slice(0, ANCHOR_COUNT + MIN_PLACEMENTS - pool.length));
+      pool = pool.concat(rest.slice(0, need - pool.length));
     }
-    if (pool.length < ANCHOR_COUNT + MIN_PLACEMENTS) return;
+    if (pool.length < need) return;
     ui.deck = deck;
     ui.selections = {};
     ui.maxEvents = null;
