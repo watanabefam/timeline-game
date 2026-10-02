@@ -8,7 +8,7 @@
 > *incorporated* from a library — all patterns are hand-ported to this repo's
 > no-build vanilla stack.
 >
-> **Last updated:** 2026-09-30 | **Status:** ratified design; **phase 1 (review-log data layer) and phase 2 (mastery leveling) landed**; build order revised and amendments A7–A11 added after auditing the full vault against this layer. Phases 3–9 pending. Both landed phases are code-complete and gate-green. Phase 1 is data-only (nothing to render); **phase 2's level card is now covered by an automated browser smoke** — `npm run smoke:mastery` (`tools/offline-smoke/mastery.mjs`), which drives the real stats screen in Chromium and asserts the card's DOM against `window.Gamify.mastery()` for all four age bands plus reduced motion. The remaining §13 checklist items still belong to the phases that own them.
+> **Last updated:** 2026-10-02 | **Status:** ratified design; **phase 1 (review-log data layer) and phase 2 (mastery leveling) landed**; build order revised and amendments A7–A11 added after auditing the full vault against this layer. Phases 3–9 pending. **A10 amended 2026-10-02** to name *how* FSRS may land later (the L2 placement seam; L3 forking rejected) — the build order is unchanged. Both landed phases are code-complete and gate-green. Phase 1 is data-only (nothing to render); **phase 2's level card is now covered by an automated browser smoke** — `npm run smoke:mastery` (`tools/offline-smoke/mastery.mjs`), which drives the real stats screen in Chromium and asserts the card's DOM against `window.Gamify.mastery()` for all four age bands plus reduced motion. The remaining §13 checklist items still belong to the phases that own them.
 
 ---
 
@@ -305,6 +305,19 @@ blueprints and prompt engineering stay out).
   parameter tuning and *not* the ts-fsrs vendoring. **Do not gate any phase in
   §11 on FSRS landing.** For the 5–11 bands this stays *blocked* per A2 — reach
   back within the same era/week, never across it.
+- **How FSRS is allowed to land later** (added 2026-10-02; a project *decision*,
+  not an evidence finding): when FSRS is adopted it lands at the **L2 seam** —
+  placements are fed as `elapsedDays` through `next_state`/`next_interval` and
+  the returned day-count is converted back to `dueAfterPlacements`. FSRS supplies
+  only a per-card *ranking* behind the existing `rate(outcome) → nextDue`
+  interface; it never replaces the interface. **Forking the vendored source (L3)
+  is rejected** — rule 2 forbids editing `assets/`, and `validate:vendor`
+  (`scripts/check-vendored.mjs`) is header-based, not provenance-based, so a fork
+  would ship unguarded. This changes *how* FSRS lands, not *when*: the reach-back
+  queue is still first and §11 is still not gated on FSRS. Two costs, recorded as
+  **inference**: day-fit weights are off-distribution for placement units
+  (recoverable later via `generatorParameters`), and only 2 of the 4 `Rating`s
+  are reachable until A8's `confidence` exists. See §15.9.
 
 ### A11 — Model one placement, once, then get out of the way (✅ cheap, age-gated)
 - **§19 matrix:** for a knowledge course, Worked Examples = **Optional** and
@@ -564,7 +577,9 @@ Phases (each independently shippable):
 3. **Reach-back due-queue** over the review log (A10). `rate(outcome) → nextDue`
    stays the interface; for a history corpus reach-back is the first mastery win,
    ahead of FSRS parameter work or the ts-fsrs vendoring. Age-gated per A2 —
-   within the block for 5–11.
+   within the block for 5–11. The algorithm behind the interface is **swappable at
+   A10's L2 seam**: a future FSRS swap changes the `replay`/`rate` bodies only —
+   the interface is unchanged and the vendored lib is never forked.
 4. **Feedback depth at the moment of the slip** (§8/§9 copy rules, EFE — the only
    feedback type effective for low prior knowledge) **+ one predirected
    pre-reveal prompt** and the optional `confidence` field (A8).
@@ -725,3 +740,8 @@ No unit-test framework — extend the existing browser smoke checklist
    conflict ledger).
 8. Whether `confidence` (A8) is worth the UI cost outside Focus practice — it is
    cheapest on the Focus round, where the player already expects a prompt.
+9. **FSRS: day-primary (`repeat(card, rating)`) vs placement-primary (the L2
+   seam)?** Deferred until the log is large enough to retrain weights
+   (`generatorParameters`). The placement-primary path is the recorded intent
+   (A10); day-primary stays the fallback if placement units prove unusable. The
+   5–11 band stays blocked per A2 either way.
