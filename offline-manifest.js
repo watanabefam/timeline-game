@@ -2,10 +2,10 @@
  * The service worker loads this with importScripts() at install time. */
 self.OFFLINE_MANIFEST = {
   "formatVersion": 1,
-  "hash": "e511aa13acc4",
+  "hash": "00429edf8509",
   "generatedBy": "scripts/gen-offline-manifest.mjs",
   "cacheName": "timeline-offline",
-  "totalBytes": 19174835,
+  "totalBytes": 19174813,
   "files": [
     {
       "path": "assets/audio/alex-morgan-battle-boss-fight-game-music-583276.mp3",
@@ -614,22 +614,22 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "icons/apple-touch-icon-180.png",
-      "rev": "bf5846a5e762",
-      "bytes": 1562
+      "rev": "4ad81f168047",
+      "bytes": 1563
     },
     {
       "path": "icons/icon-192.png",
-      "rev": "84e5b8e9fc46",
-      "bytes": 3446
+      "rev": "5d851e2ae711",
+      "bytes": 3436
     },
     {
       "path": "icons/icon-512.png",
-      "rev": "e1ba3e86aaa1",
-      "bytes": 9028
+      "rev": "04005918c5c4",
+      "bytes": 9015
     },
     {
       "path": "icons/icon-maskable-512.png",
-      "rev": "bd8975276469",
+      "rev": "576be76129ad",
       "bytes": 4447
     },
     {
