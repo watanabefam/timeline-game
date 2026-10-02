@@ -178,6 +178,9 @@ const readPanel = (page) =>
 /** Click the Review round card and read the titles rendered in the game timeline. */
 async function startReviewAndRead(browser, base, opts) {
   const { context, page, errs } = await openHome(browser, base, opts);
+  // AC5: starting a review must not move score/XP/level (G5). Read the derived
+  // level before the round and again after it opens.
+  const masteryBefore = await page.evaluate((id) => JSON.stringify(window.Gamify.mastery(id)), USER_ID);
   const clickable = await page.evaluate(() =>
     !!([...document.querySelectorAll("#focus-panel button.focus-card")].find((b) => /Review round/.test(b.textContent)))
   );
@@ -193,8 +196,14 @@ async function startReviewAndRead(browser, base, opts) {
     await page.waitForSelector("#pane-1 .tl-title", { timeout: 15000 });
   } catch (e) { /* recorded by the caller */ }
   const titles = await page.evaluate(() => [...document.querySelectorAll("#pane-1 .tl-title")].map((el) => el.textContent));
+  const masteryAfter = await page.evaluate((id) => JSON.stringify(window.Gamify.mastery(id)), USER_ID);
   await context.close();
-  return { clickable, gameVisible, titles, errs };
+  return {
+    clickable, gameVisible, titles,
+    masteryUnchanged: masteryBefore === masteryAfter,
+    masteryBefore,
+    errs,
+  };
 }
 
 /* ------------------------------------------------------------- main */
@@ -234,6 +243,8 @@ async function main() {
     check("every event in play comes from the scheduled due set",
       b.titles.length > 0 && b.titles.every((t) => dueTitles.has(t)),
       `offenders=${JSON.stringify(b.titles.filter((t) => !dueTitles.has(t)))}`);
+    check("starting a review does not move score/XP/level (AC5 / G5)",
+      b.masteryUnchanged, `before=${b.masteryBefore.slice(0, 60)}…`);
 
     /* ---- 3. a too-small due set fails open, it does not block ---- */
     phase("3 · too few due — the panel fails open to the old pool");
@@ -288,6 +299,8 @@ async function main() {
 
     /* ---- 8. not covered here ---- */
     phase("8 · explicitly not covered by this run");
+    note("in-round scoring is NOT verified here",
+      "AC5 is checked by the derived level being untouched when the round opens; it does not prove placement scoring itself");
     note("the ORDER of a review round is NOT verified here",
       "only that every event in play is drawn from the due set");
     note("how the panel LOOKS is NOT verified here",

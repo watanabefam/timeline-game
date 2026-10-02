@@ -254,6 +254,93 @@ test("an empty log yields an empty due set with no error (AC4)", () => {
   assert.deepEqual(RS.dueSet(RS.replay([]), "d1", "17+", null), []);
 });
 
+/* ------------------------------------------------------------- audit pass */
+// Findings from the 2026-10-02 audit of the shipped module: invariants that
+// were assumed but not asserted. Each one pins behaviour a future change could
+// silently break.
+const mkState = (lastSeenPos, attempts = 1, firstTry = 1, deck = "d1") => ({
+  deck, lastSeenPos, attempts, firstTry, streak: firstTry, intervalK: 3,
+});
+
+test("audit: replay never mutates the review log (D3 — append-only is sacred)", () => {
+  const log = [
+    { ts: 1, deck: "d1", eventId: "a", outcome: "firstTry", mode: "free" },
+    { ts: 2, deck: "d1", eventId: "b", outcome: "slip", mode: "free" },
+  ];
+  const before = JSON.stringify(log);
+  RS.replay(log);
+  assert.equal(JSON.stringify(log), before, "replay wrote to the persisted log");
+});
+
+test("audit: dueSet does not mutate its inputs", () => {
+  const states = { a: mkState(6), b: mkState(4, 2, 1) };
+  const opts = { events: [{ id: "a", era: "modern", week: 1 }], recencyK: 0 };
+  const statesBefore = JSON.stringify(states);
+  const optsBefore = JSON.stringify(opts);
+  RS.dueSet(states, "d1", "17+", opts);
+  RS.dueSet(states, "d1", "5-7", opts);
+  assert.equal(JSON.stringify(states), statesBefore, "dueSet rewrote the derived state");
+  assert.equal(JSON.stringify(opts), optsBefore, "dueSet rewrote the options");
+});
+
+test("audit: equal scores break ties deterministically — recency first, then id", () => {
+  // Ordering only, so hold the recency threshold open and let the sort decide.
+  const opts = { recencyK: 0 };
+  // Identical everything -> id ascending.
+  const even = { x: mkState(5), y: mkState(5), z: mkState(5) };
+  assert.deepEqual(RS.dueSet(even, "d1", "17+", opts), ["x", "y", "z"]);
+  // A real score tie (7 vs 7) built from different recency/struggle mixes
+  // (7+0 and 3+4) -> the most overdue wins.
+  const rec = { z: mkState(7, 1, 1), x: mkState(3, 1, 0) };
+  assert.deepEqual(RS.dueSet(rec, "d1", "17+", opts), ["z", "x"]);
+  // Same tie with the letters swapped -> order follows the numbers, not a name.
+  const rev = { y: mkState(3, 1, 0), w: mkState(7, 1, 1) };
+  assert.deepEqual(RS.dueSet(rev, "d1", "17+", opts), ["w", "y"]);
+});
+
+test("audit: the success floor keeps the MOST overdue of two equally-hard cards", () => {
+  // Regression for the audited defect: among equal (zero) success the trim used
+  // to drop index 0 — the most overdue — trading away the oldest memory to make
+  // the mean look gentler. It must drop the least overdue instead.
+  const log = [
+    row("hardA", "slip"), row("hardA", "slip"),
+    row("hardB", "slip"),
+    row("easy", "firstTry"), row("easy", "firstTry"), row("easy", "firstTry"), row("easy", "firstTry"),
+  ];
+  const s = RS.replay(log); // hardA is 5 back, hardB 4 back
+  const set = RS.dueSet(s, "d1", "17+", { recencyK: 0 });
+  assert.ok(set.includes("hardA"), `expected the more-overdue hardA, got ${JSON.stringify(set)}`);
+  assert.ok(!set.includes("hardB"), `hardB is the less-overdue one and should be trimmed, got ${JSON.stringify(set)}`);
+  assert.equal(set.length, 2);
+});
+
+test("audit: an event id shared by two decks resolves to the LAST deck seen", () => {
+  // 0 shared ids across the 4 shipped decks (checked 2026-10-02), so this is
+  // latent, not active. The harm direction matters: a collision HIDES the event
+  // from the earlier deck's review set (derived state, self-healing) — it can
+  // never leak another deck's card into a round, because dueSet filters on deck.
+  const s = RS.replay([row("shared", "firstTry", "d1"), row("shared", "firstTry", "d2")]);
+  assert.equal(s.shared.deck, "d2");
+  assert.deepEqual(RS.dueSet(s, "d1", "17+", { recencyK: 0 }), []);
+  assert.deepEqual(RS.dueSet(s, "d2", "17+", { recencyK: 0 }), ["shared"]);
+});
+
+test("audit: pruning the log derives from what remains, never assumes history", () => {
+  const full = [row("old", "firstTry"), row("a", "firstTry"), row("b", "firstTry"), row("c", "firstTry"), row("d", "firstTry")];
+  const tail = full.slice(1); // what REVIEW_LOG_CAP's splice(0, n-cap) would leave
+  const s = RS.replay(tail);
+  assert.ok(!("old" in s), "an event whose rows were pruned must not survive");
+  assert.deepEqual(Object.keys(s).sort(), ["a", "b", "c", "d"]);
+  assert.equal(s.a.lastSeenPos, 3); // positions are recomputed against the tail
+});
+
+test("audit: a non-array log (undefined/string) degrades instead of throwing", () => {
+  assert.deepEqual(RS.replay("not-a-log"), {});
+  assert.deepEqual(RS.replay(42), {});
+  assert.deepEqual(RS.replay({ rows: [] }), {});
+  assert.deepEqual(RS.dueSet(RS.replay("x"), "d1", "8-11", { events: [] }), []);
+});
+
 /* ---------------------------------------------------------------- helpers */
 
 function logEvents(n, deck = "d1") {

@@ -194,9 +194,13 @@
     while (selected.length > 1) {
       var mean = selected.reduce(function (t, c) { return t + c.success; }, 0) / selected.length;
       if (mean >= floor) break;
+      // Among equally hard cards, drop the LEAST overdue (the later one):
+      // selection is most-overdue-first, so keeping the earliest preserves the
+      // card that has waited longest — a reach-back queue must not trade away
+      // its own oldest memory to make the numbers look gentler.
       var worst = 0;
       for (var j = 1; j < selected.length; j += 1) {
-        if (selected[j].success < selected[worst].success) worst = j;
+        if (selected[j].success <= selected[worst].success) worst = j;
       }
       selected.splice(worst, 1);
     }
