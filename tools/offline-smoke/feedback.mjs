@@ -2,33 +2,30 @@
 /*
  * tools/offline-smoke/feedback.mjs
  * ------------------------------------------------------------------
- * The A8 feedback + pre-reveal confidence slice (GAMIFICATION_BRIEF §11 phase 4,
- * doc/FEEDBACK_CONFIDENCE_PLAN.md) — 4a (a one-line why at the slip reveal),
- * 4b (one predirected pre-reveal prompt per round), 4c (the optional
- * `confidence` field on the append-only row) and 4d (no mastery % on the focus
- * panel for 5–7). Run with:
+ * The A8 feedback surface, AFTER the phase-4 prompt and why-line were removed
+ * (doc/CONNECTION_CUE_PLAN.md §0; doc/FEEDBACK_CONFIDENCE_PLAN.md §7). What
+ * remains of A8 is the phase-2 warm-up that was folded in as 4d: a 5–7 profile
+ * never sees a mastery percentage on the focus panel.
  *
+ * So this smoke is now mostly a REGRESSION test — it proves the removed things
+ * really are gone, in a real browser, rather than trusting a diff:
+ *
+ *   1. no band ever renders the pre-reveal prompt (.tl-prompt)
+ *   2. no revealed card ever renders the "why it matters" line (.tl-why)
+ *   3. no review-log row ever carries a `confidence` field
+ *   4. 4d: a 5–7 focus panel shows stars and no percentage; 17+ shows the
+ *      percentage
+ *   5. all of it holds under reduced motion
+ *   6. no page or console errors along the way
+ *
+ * Why it still exists at all: checks 1–3 are DOM + storage contracts that have
+ * no Node-testable half. The pure module that used to back them
+ * (prompt-plan.js, with scripts/test/prompt-plan.test.mjs) was deleted with the
+ * feature, so this is the only place the absence is actually observed.
+ *
+ * Run with:
  *   npm --prefix tools/offline-smoke install   # once (downloads Chrome)
  *   node tools/offline-smoke/feedback.mjs
- *
- * Why it exists: the band gate, the prompt DOM, the reveal copy and the field
- * written to localStorage are a copy + DOM + persistence contract with no
- * Node-testable half (the pure half — promptPlan / attachConfidence / the latch
- * — is covered by scripts/test/prompt-plan.test.mjs), so it needs a browser.
- *
- * What it exercises, in a real Chromium, against a real read-only HTTP server:
- *   1. 17+: the prompt renders on the round's first card, BEFORE any placement
- *      (only the anchors are on the timeline), with the predirected cue
- *   2. answering writes EXACTLY ONE `confidence` row, and it is the answer given
- *   3. skipping writes NO `confidence` field at all (absence is meaningful, §6)
- *   4. 5–7: the prompt never renders, and no confidence row is written
- *   5. 8–11: the prompt renders, but as the simple self-check (no predirected cue)
- *   6. 4a: a card that took a slip carries a `.tl-why` at its reveal, whose text
- *      is the event's `why`
- *   7. 4d: a 5–7 profile's focus-panel week rows show stars and no percentage,
- *      while 17+ still shows the percentage
- *   8. reduced motion: the prompt still renders and is answerable
- *   9. no page or console errors along the way
  *
  * The round is played by clicking the first gap repeatedly — a wrong slot loops
  * until the rescue reveals the answer, then the next click places it — so the
@@ -43,8 +40,8 @@
  * deliberately NOT part of `npm test` (it needs a browser download).
  *
  * NOT covered here, and never claimed: iOS Safari, how any of it LOOKS (this is
- * a DOM/state check), the direction the prompt's wording helps learning (that is
- * a playtest question — the plan carries the falsifier), and print output.
+ * a DOM/state check), print output, and whether the connection cue that is
+ * planned to replace the why-line behaves (it does not exist yet).
  */
 import { createServer } from "node:http";
 import { existsSync, readFileSync, statSync } from "node:fs";
@@ -108,12 +105,10 @@ const closeServer = () =>
 /* ------------------------------------------------- seeded profile */
 const DECK_ID = "cc-timeline";
 const USER_ID = "smoke-feedback";
-const deck = JSON.parse(readFileSync(join(root, "decks", DECK_ID, "deck.json"), "utf8"));
-const whyOf = new Map(deck.events.map((e) => [e.id, e.why || ""]));
 
-// A log engineered so the reach-back scheduler serves a due set for both the
-// ungated bands and the 5–7 era/week block (the same shape review.mjs uses), so
-// every band can actually start a Review round and reach the prompt.
+// A log engineered so the reach-back scheduler serves a due set for the 5–7
+// era/week block as well as the ungated bands (the same shape review.mjs uses),
+// so every band can actually start a Review round.
 const row = (eventId) => ({ ts: 1700000000000, deck: DECK_ID, eventId, outcome: "firstTry", mode: "free" });
 const DUE_LOG = [
   "cc-001", "cc-004", "cc-005", "cc-006", "cc-007", "cc-008",
@@ -184,51 +179,47 @@ async function startReview(page) {
   return { clickable, gameVisible };
 }
 
-/** Read the pre-reveal prompt plus the reveal state, scoped to pane 1. */
-const readPrompt = (page) =>
+/**
+ * The removed surfaces, as observed in the live DOM.
+ *
+ * `.tl-prompt` and `.tl-why` must never appear; `tl-why` is polled during play
+ * as well, because a revealed card is only in the DOM for part of a round.
+ */
+const readRemovedSurfaces = (page) =>
   page.evaluate(() => {
     const pane = document.getElementById("pane-1");
-    const p = pane.querySelector(".tl-prompt");
-    const q = (sel) => (p ? p.querySelector(sel) : null);
+    const doc = document;
     return {
-      present: !!p,
-      cue: q(".tl-prompt-cue") ? q(".tl-prompt-cue").textContent.trim() : null,
-      q: q(".tl-prompt-q") ? q(".tl-prompt-q").textContent.trim() : null,
-      opts: p ? [...p.querySelectorAll(".tl-prompt-opt")].map((b) => b.dataset.confidence) : [],
-      hasSkip: !!(p && p.querySelector(".tl-prompt-skip")),
-      readyState: p ? p.getAttribute("role") : null,
-      placedCards: pane.querySelectorAll(".tl-event").length,
+      promptsInPane: pane.querySelectorAll(".tl-prompt").length,
+      promptsInDoc: doc.querySelectorAll(".tl-prompt").length,
+      whyInPane: pane.querySelectorAll(".tl-why").length,
+      whyInDoc: doc.querySelectorAll(".tl-why").length,
+      // The A8 CSS should be gone too: a stray rule would mean a half-revert.
+      promptRule: !!([...doc.styleSheets].some((s) => {
+        try { return [...s.cssRules].some((r) => r.selectorText && /tl-prompt/.test(r.selectorText)); }
+        catch (e) { return false; }
+      })),
     };
   });
 
-async function answerPrompt(page, confidence) {
-  await page.evaluate((c) => {
-    const b = document.querySelector(`#pane-1 .tl-prompt-opt[data-confidence="${c}"]`);
-    if (b) b.click();
-  }, confidence);
-  await new Promise((r) => setTimeout(r, 60));
-}
-
-async function skipPrompt(page) {
-  await page.evaluate(() => {
-    const b = document.querySelector("#pane-1 .tl-prompt-skip");
-    if (b) b.click();
-  });
-  await new Promise((r) => setTimeout(r, 60));
-}
-
 /** Click the first gap until the results screen appears. Wrong slots loop. */
 async function playRound(page, { maxClicks = 80 } = {}) {
+  const seen = { prompts: 0, why: 0 };
   for (let i = 0; i < maxClicks; i++) {
     const done = await page.evaluate(() => !document.getElementById("results").classList.contains("hidden"));
-    if (done) return i;
+    if (done) return { clicks: i, seen };
+    // Sample the removed surfaces mid-play: a revealed slipped card lives in the
+    // DOM only until the next placement replaces it.
+    const now = await readRemovedSurfaces(page);
+    seen.prompts += now.promptsInDoc;
+    seen.why += now.whyInDoc;
     await page.evaluate(() => {
       const gaps = document.querySelectorAll("#pane-1 .timeline .gap");
       if (gaps.length) gaps[0].click();
     });
     await new Promise((r) => setTimeout(r, 35));
   }
-  return -1;
+  return { clicks: -1, seen };
 }
 
 const readLog = (page) =>
@@ -238,34 +229,24 @@ const readLog = (page) =>
     const log = Array.isArray(p.reviewLog) ? p.reviewLog : [];
     return {
       count: log.length,
-      withConfidence: log.filter((r) => r && Object.prototype.hasOwnProperty.call(r, "confidence")),
-      confidenceValues: log.filter((r) => r && "confidence" in r).map((r) => r.confidence),
+      withConfidence: log.filter((r) => r && Object.prototype.hasOwnProperty.call(r, "confidence")).length,
       outcomes: log.map((r) => r.outcome),
     };
   }, USER_ID);
 
-/** A completed round, returning the pieces the checks need. */
-async function runRound(browser, base, opts, answerAction) {
+/** A completed round, returning the pieces the absence checks need. */
+async function runRound(browser, base, opts) {
   const { context, page, errs, reduced } = await openHome(browser, base, opts);
   const started = await startReview(page);
-  const prompt = await readPrompt(page);
-  const slippedWhy = [];
-  if (answerAction === "sure") await answerPrompt(page, "sure");
-  else if (answerAction === "skip") await skipPrompt(page);
-  // Collect the reveal why-lines that appear during play (4a).
-  const collect = setInterval(async () => {
-    try {
-      const lines = await page.$$eval("#pane-1 .tl-why", (els) => els.map((x) => x.textContent.trim()));
-      lines.forEach((l) => { if (!slippedWhy.includes(l)) slippedWhy.push(l); });
-    } catch (e) {}
-  }, 60);
-  const clicks = await playRound(page);
-  clearInterval(collect);
-  const promptGone = !(await readPrompt(page)).present;
+  const before = await readRemovedSurfaces(page);
+  const { clicks, seen } = await playRound(page);
+  const after = await readRemovedSurfaces(page);
   const log = await readLog(page);
   const atResults = await page.evaluate(() => !document.getElementById("results").classList.contains("hidden"));
   await context.close();
-  return { started, prompt, promptGone, clicks, log, atResults, slippedWhy, errs, reduced };
+  const prompts = before.promptsInDoc + after.promptsInDoc + seen.prompts;
+  const why = before.whyInDoc + after.whyInDoc + seen.why;
+  return { started, clicks, log, atResults, prompts, why, styleRule: before.promptRule || after.promptRule, errs, reduced };
 }
 
 /* ------------------------------------------------------------- main */
@@ -285,73 +266,36 @@ async function main() {
   });
 
   const allErrors = [];
+  const rounds = {};
   try {
-    /* ---- 1 & 2. 17+: prompt before the reveal; answer is stored once ---- */
-    phase("1 · age band 17+ — the prompt fires before the reveal, and the answer is stored");
-    const a = await runRound(browser, base, { band: "17+", reviewLog: DUE_LOG, eventIds: DUE_LOG.map((r) => r.eventId) }, "sure");
-    allErrors.push(...a.errs);
-    check("clicking Review round opened the game", a.started.clickable && a.started.gameVisible);
-    check("the prompt renders on the first card", a.prompt.present, JSON.stringify(a.prompt));
-    check("it renders BEFORE any placement — only the anchors are on the timeline",
-      a.prompt.placedCards === 2, `placedCards=${a.prompt.placedCards}`);
-    check("12+ gets the predirected cue and the confidence question",
-      /before this one/i.test(a.prompt.cue || "") && /how sure/i.test(a.prompt.q || ""),
-      `cue=<${a.prompt.cue}>, q=<${a.prompt.q}>`);
-    check("it offers the two confidence answers and a skip",
-      a.prompt.opts.join(",") === "sure,unsure" && a.prompt.hasSkip,
-      `opts=${a.prompt.opts}, skip=${a.prompt.hasSkip}`);
-    check("it is a labelled group for assistive tech", a.prompt.readyState === "group", `role=${a.prompt.readyState}`);
-    check("the round reached the results screen (the log is written there)", a.atResults, `clicks=${a.clicks}`);
-    check("exactly one row gained a confidence value", a.log.withConfidence.length === 1,
-      `rows=${a.log.count}, withConfidence=${a.log.withConfidence.length}`);
-    check("the stored answer is the one the player gave", a.log.confidenceValues[0] === "sure",
-      JSON.stringify(a.log.confidenceValues));
-    check("no other row was given a fabricated confidence value",
-      a.log.confidenceValues.length === 1 && a.log.confidenceValues.every((v) => v === "sure"),
-      JSON.stringify(a.log.confidenceValues));
-    check("the prompt is gone after it is answered", a.promptGone);
+    /* ---- 1–3. every band: the removed surfaces never render ---- */
+    for (const band of ["17+", "8-11", "5-7"]) {
+      phase(`${band} — the removed prompt/why surfaces must never render`);
+      const r = await runRound(browser, base, {
+        band, reviewLog: DUE_LOG, eventIds: DUE_LOG.map((x) => x.eventId),
+      });
+      rounds[band] = r;
+      allErrors.push(...r.errs);
+      check(`a round started and completed for ${band}`, r.started.gameVisible && r.atResults, `clicks=${r.clicks}`);
+      check(`no .tl-prompt anywhere in the document (${band})`, r.prompts === 0, `sightings=${r.prompts}`);
+      check(`no .tl-why anywhere in the document (${band})`, r.why === 0, `sightings=${r.why}`);
+      check(`no row carries a confidence field (${band})`,
+        r.log.withConfidence === 0, `rows=${r.log.count}, withConfidence=${r.log.withConfidence}`);
+    }
 
-    /* ---- 3. skipping writes no field ---- */
-    phase("2 · skipping the prompt writes NO confidence field (§6)");
-    const b = await runRound(browser, base, { band: "17+", reviewLog: DUE_LOG, eventIds: DUE_LOG.map((r) => r.eventId) }, "skip");
-    allErrors.push(...b.errs);
-    check("the prompt rendered before the skip", b.prompt.present);
-    check("the round still completed after skipping", b.atResults, `clicks=${b.clicks}`);
-    check("no row carries a confidence field at all",
-      b.log.withConfidence.length === 0, JSON.stringify(b.log.confidenceValues));
+    phase("the A8 prompt CSS is gone (a stray rule would mean a half-revert)");
+    check("no stylesheet rule matches .tl-prompt",
+      !rounds["17+"].styleRule, `ruleFound=${rounds["17+"].styleRule}`);
 
-    /* ---- 4. 5–7 never sees the prompt ---- */
-    phase("3 · age band 5–7 — the prompt must not render");
-    const c = await runRound(browser, base, { band: "5-7", reviewLog: DUE_LOG, eventIds: DUE_LOG.map((r) => r.eventId) }, null);
-    allErrors.push(...c.errs);
-    check("a round still started for the youngest band", c.started.gameVisible);
-    check("no prompt element exists anywhere in the pane", !c.prompt.present, JSON.stringify(c.prompt));
-    check("and no row could carry a confidence value", c.log.withConfidence.length === 0);
+    phase("the review log is still written, and unchanged in shape");
+    check("the round wrote outcome rows at all", rounds["17+"].log.count > 0,
+      `rows=${rounds["17+"].log.count}`);
+    check("every row's outcome is one of the two documented values",
+      rounds["17+"].log.outcomes.every((o) => o === "firstTry" || o === "slip"),
+      JSON.stringify(rounds["17+"].log.outcomes.slice(0, 6)));
 
-    /* ---- 5. 8–11 gets the simple self-check ---- */
-    phase("4 · age band 8–11 — the simple self-check, no predirected cue");
-    const d = await runRound(browser, base, { band: "8-11", reviewLog: DUE_LOG, eventIds: DUE_LOG.map((r) => r.eventId) }, "sure");
-    allErrors.push(...d.errs);
-    check("the prompt renders for 8–11", d.prompt.present);
-    check("it drops the predirected cue but keeps the question",
-      d.prompt.cue == null && /how sure/i.test(d.prompt.q || ""),
-      `cue=<${d.prompt.cue}>, q=<${d.prompt.q}>`);
-
-    /* ---- 6. 4a — the why at the slip reveal ---- */
-    phase("5 · 4a — a slipped card's reveal carries its one-line why");
-    const e = await runRound(browser, base, { band: "17+", reviewLog: DUE_LOG, eventIds: DUE_LOG.map((r) => r.eventId) }, "skip");
-    allErrors.push(...e.errs);
-    check("at least one card took a slip and revealed a why line",
-      e.slippedWhy.length > 0, `whyLines=${JSON.stringify(e.slippedWhy.slice(0, 2))}`);
-    const klines = [...new Set(deck.events.map((x) => x.why).filter(Boolean))];
-    check("every why line shown is a real event's why (not the fact, not invented)",
-      e.slippedWhy.length > 0 && e.slippedWhy.every((l) => klines.some((w) => l.includes(w))),
-      `checked ${e.slippedWhy.length} line(s)`);
-    check("the why line is labelled for readers", e.slippedWhy.every((l) => /^Why it matters/i.test(l)),
-      JSON.stringify(e.slippedWhy.slice(0, 2)));
-
-    /* ---- 7. 4d — the focus panel's week rows ---- */
-    phase("6 · 4d — the focus panel honours the 5–7 mastery-% gate");
+    /* ---- 4d — the focus panel's week rows (kept from phase 4) ---- */
+    phase("4d — the focus panel honours the 5–7 mastery-% gate");
     const weekRow = (page) =>
       page.evaluate(() => {
         const row = document.querySelector("#focus-panel .focus-card.week");
@@ -376,36 +320,37 @@ async function main() {
       !!w17 && /Mastery \d+%/.test(w17.sub || ""), `sub=<${w17 && w17.sub}>`);
     await g.context.close();
 
-    /* ---- 8. reduced motion ---- */
-    phase("7 · reduced motion — the prompt still renders and is answerable");
-    const h = await runRound(browser, base, { band: "17+", reviewLog: DUE_LOG, eventIds: DUE_LOG.map((r) => r.eventId), reducedMotion: true }, "sure");
+    /* ---- reduced motion ---- */
+    phase("reduced motion — the same absences hold");
+    const h = await runRound(browser, base, {
+      band: "17+", reviewLog: DUE_LOG, eventIds: DUE_LOG.map((x) => x.eventId), reducedMotion: true,
+    });
     allErrors.push(...h.errs);
     check("the browser reports reduced motion is on", h.reduced === true, `matchMedia=${h.reduced}`);
-    check("the prompt still renders", h.prompt.present, JSON.stringify(h.prompt));
-    check("and the round still completes with the answer stored", h.atResults && h.log.withConfidence.length === 1,
-      `atResults=${h.atResults}, withConfidence=${h.log.withConfidence.length}`);
+    check("no prompt rendered under reduced motion", h.prompts === 0, `sightings=${h.prompts}`);
+    check("no why line rendered under reduced motion", h.why === 0, `sightings=${h.why}`);
+    check("and the round still completes", h.atResults, `clicks=${h.clicks}`);
 
-    /* ---- 9. no errors ---- */
-    phase("8 · no page errors or console errors");
+    /* ---- no errors ---- */
+    phase("no page errors or console errors");
     // Known environment noise, not game errors:
     //  - favicon / network probes (offline-style misses, as in the other smokes)
     //  - the globe's three.js WebGLRenderer, which cannot get a GPU context in
     //    headless Chromium. This smoke plays several full rounds, so it creates
     //    and tears down more WebGL contexts than the other smokes and surfaces
-    //    it. It is filtered by CLASS (only THREE.WebGLRenderer lines), so any
-    //    other console error still fails this check.
+    //    it. It is filtered by CLASS (only WebGL lines), so any other console
+    //    error still fails this check.
     const noise = /favicon|ERR_CONNECTION_REFUSED|ERR_INTERNET_DISCONNECTED|ERR_NAME_NOT_RESOLVED|gibs\.earthdata\.nasa\.gov|THREE\.WebGLRenderer|A WebGL context could not be created|Error creating WebGL context/i;
     const real = allErrors.filter((x) => !noise.test(x));
     const webglNoise = allErrors.filter((x) => /WebGL/i.test(x)).length;
     check("no page errors or console errors during the run (headless-WebGL noise excluded)",
       real.length === 0, real.slice(0, 3).join(" | "));
     if (webglNoise) note(`${webglNoise} headless-WebGL console line(s) were filtered as environment noise`,
-      "the globe's three.js renderer has no GPU in this container; it is unrelated to this slice");
+      "the globe's three.js renderer has no GPU in this container; it is unrelated to this surface");
 
-    /* ---- 10. not covered ---- */
-    phase("9 · explicitly not covered by this run");
-    note("whether the prompt HELPS learning is NOT verified here",
-      "the falsifier is a playtest (skip rate, slips/run) — this only proves the mechanics and the data contract");
+    /* ---- not covered ---- */
+    phase("explicitly not covered by this run");
+    note("the connection cue is NOT tested here", "it does not exist yet — see doc/CONNECTION_CUE_PLAN.md");
     note("scoring and the exact round order are NOT verified here",
       "the round is played by clicking the first gap until it ends");
     note("how any of it LOOKS is NOT verified here", "this asserts DOM text, roles and stored values, not pixels");
@@ -421,7 +366,7 @@ main()
   .finally(() => {
     const failed = results.filter((r) => !r.ok);
     console.log(`\n${"─".repeat(60)}`);
-    console.log(`Feedback/confidence smoke: ${results.length - failed.length}/${results.length} checks passed`);
+    console.log(`Feedback/removal smoke: ${results.length - failed.length}/${results.length} checks passed`);
     if (failed.length) {
       console.log("FAILED:");
       for (const f of failed) console.log(`  ✗ ${f.name}`);

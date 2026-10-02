@@ -317,7 +317,10 @@ blueprints and prompt engineering stay out).
   queue is still first and §11 is still not gated on FSRS. Two costs, recorded as
   **inference**: day-fit weights are off-distribution for placement units
   (recoverable later via `generatorParameters`), and only 2 of the 4 `Rating`s
-  are reachable until A8's `confidence` exists. See §15.9.
+  are reachable from `outcome` alone — A8's `confidence` field briefly supplied
+  the other two and was **retired 2026-10-02** (`doc/CONNECTION_CUE_PLAN.md`
+  §5.5), which is a real cost of that retirement and is recorded as such. See
+  §15.9.
 
 ### A11 — Model one placement, once, then get out of the way (✅ cheap, age-gated)
 - **§19 matrix:** for a knowledge course, Worked Examples = **Optional** and
@@ -377,10 +380,11 @@ the profile actually set it** — unset behaves as the highest band.
 
 **Built 2026-09-30 (phase 2):** `band()` lands at `timeline.js:500` and the
 optional band dropdown lives in the stats header (`#stats-band`,
-`index.html` + `renderStats()`). The applied rows are the **Mastery %** row
+`index.html` + `renderStats()`). The applied row is the **Mastery %** row
 (level card, "Mastery by week" on the stats screen, **and the home focus panel
-since phase 4**) and the **Pre-reveal prompt** row (phase 4, band gate in
-`prompt-plan.js`). Only the **Narration timing** row is still pending (phase 8).
+since phase 4**). The **Pre-reveal prompt** row was built in phase 4 and then
+**retired the same day** — see §11, phase 4, and `doc/CONNECTION_CUE_PLAN.md` §0.
+Only the **Narration timing** row is still pending (phase 8).
 `renderFocusPanel()`'s `Mastery NN%` gap for 5–7 was closed in phase 4 (task 4d).
 
 **Browser-verified:** the level card's DOM contract is asserted end-to-end by
@@ -410,22 +414,25 @@ written. Existing shapes (timeline.js:333–398) unchanged:
 ```
 
 New (per user, appended inside the existing `writeUser` path) — ✅ **shipped
-2026-09-30** (phase 1); the `confidence?` field shipped with **phase 4**
-(2026-10-02, A8):
+2026-09-30** (phase 1):
 
 ```
 "timeline.user.<id>.v1" += {
-  reviewLog: [ { ts, deck, eventId, outcome: "firstTry"|"slip", mode,
-                 confidence? } ],        // append-only, cap 2000, oldest pruned
+  reviewLog: [ { ts, deck, eventId, outcome: "firstTry"|"slip", mode } ],
+                                        // append-only, cap 2000, oldest pruned
   meta: { tz: "Europe/Berlin" }         // IANA only, never fixed offset
 }
 ```
 
-`confidence?` is the **only** sanctioned schema addition (A8): optional, written
-only for rows where the pre-reveal prompt was actually shown, and **never
-backfilled** — older rows stay absent, so every reader must tolerate `undefined`.
-Adding a field to an append-only log is safe *only* because nothing derives
-state from a mutable counter (D3); any future field must meet the same bar.
+The row is `{ ts, deck, eventId, outcome, mode }` and nothing more. Phase 4
+briefly added an optional `confidence` field (A8) and it was **retired
+2026-10-02**: inferring it from `outcome` makes it a pure function of `outcome`
+— identical information, and D3 forbids persisting derived state — so it would
+have had to be *asked*, at the cost of a second interaction at the deciding
+moment (`doc/CONNECTION_CUE_PLAN.md` §5.5). `outcome` is the single accuracy
+signal. Adding a field to an append-only log is safe *only* because nothing
+derives state from a mutable counter (D3); any future field must meet the same
+bar **and** carry information `outcome` does not.
 
 - Streak/calendar/level/achievements = pure functions over `reviewLog` +
   existing `totals`/`events`. Nothing else is written, so cloud-profile sync
@@ -587,8 +594,10 @@ Phases (each independently shippable):
    the interface is unchanged and the vendored lib is never forked.
 4. **Feedback depth at the moment of the slip** (§8/§9 copy rules, EFE — the only
    feedback type effective for low prior knowledge) **+ one predirected
-   pre-reveal prompt** and the optional `confidence` field (A8). ✅ **Landed
-   2026-10-02** — see "what landed" below.
+   pre-reveal prompt** and the optional `confidence` field (A8). ⚠️ **Partly
+   landed, then largely retired 2026-10-02** — only the 4d warm-up survives; see
+   "what landed" below and `doc/CONNECTION_CUE_PLAN.md` §0. The slip-moment
+   explanation is re-opened as a connection cue there.
 5. **Streak UI:** profile/home chip + calendar (port Trophy UI's Streak Calendar
    *structure* to a plain CSS grid); forgiveness states + copy (D2, A5).
 6. **Achievements:** predicate registry + unlocked modal; new `FX` rarity tiers
@@ -602,32 +611,38 @@ Phases (each independently shippable):
 Phases 2 and 5 are both UI-level and may land in either order — the *pair* is
 what matters; the streak must not ship alone (see the counter-argument in 2).
 
-**What landed (2026-10-02), phase 4 (A8).** Four small parts, all client-side and
-with no new dependency:
-- **4a — the why at the slip reveal.** A slipped card's reveal now carries a
-  labelled one-line `why` (`.tl-why`, `timeline.js` `eventEl`), alongside the
-  fact, not only on the results screen (§8/§9).
-- **4b — one predirected pre-reveal prompt per round.** Rendered on the round's
-  **first deciding card**, before any placement and always followed by the
-  reveal. Band-gated by the pure `prompt-plan.js`: 5–7 **none**; 8–11 a simple
-  self-check; 12+/unset the predirected form (A8, §20/§5). Answering or skipping
-  spends a once-per-round latch on the in-memory round state (never storage).
-- **4c — the optional `confidence` field.** The answer is written to the **same
-  append-only row** when the player actually answered, and **never backfilled**
-  (§6). A skip leaves the row untouched — absence is the signal. This is what
-  makes `outcome` two-signal and unlocks the FSRS `Hard`/`Easy` grades later
-  (A10); it is recorded now and consumed later.
-- **4d — the phase-2 warm-up.** `renderFocusPanel()` now applies the same 5–7
-  gate as the stats card: stars, no percentage (the non-numeric bar stays).
+**What landed (2026-10-02), phase 4 (A8).** Four small parts were built; after
+review **three were retired the same day** and one survives. Full reasoning in
+`doc/CONNECTION_CUE_PLAN.md` §0.
+- **4d — the phase-2 warm-up.** ✅ **Survives.** `renderFocusPanel()` now applies
+  the same 5–7 gate as the stats card: stars, no percentage (the non-numeric bar
+  stays).
+- **4a — the why at the slip reveal.** ❌ **Retired.** A *significance* line
+  cannot explain a **placement**, and it duplicated the fact-sheet popover's
+  existing `Why it matters` row — one slipped card showed the why up to three
+  times (rescue callout, the inline line, the popover).
+  `doc/CONNECTION_CUE_PLAN.md` replaces it with a cue built from the
+  already-authored `connections[]` edges.
+- **4b — the pre-reveal prompt.** ❌ **Retired.** It fired on the round's first
+  card, where "the event just before this one" is a given anchor or does not
+  exist, and its cue had no input — the only controls were *I'm sure / Not sure /
+  Skip*, i.e. the two-button self-report §9 rates weakest (g=0.24) with an
+  unanswerable question above it. Dropping it also removes the second interaction
+  at the deciding moment.
+- **4c — the optional `confidence` field.** ❌ **Retired** — see §6 and
+  `doc/CONNECTION_CUE_PLAN.md` §5.5. The schema is back to
+  `{ ts, deck, eventId, outcome, mode }`.
+- **Also removed:** `prompt-plan.js`, `scripts/test/prompt-plan.test.mjs`, the
+  `test:prompt` chain entry, the `.tl-why*` and `.tl-prompt*` CSS, and the boot
+  `<script>` tag (manifest is back to **133 files**).
 - **Not changed:** score/XP/level (G5), the review-scheduler interface (A10's
-  seam), and the log cap. `confidence?` is the only schema addition (D3/§6).
-- **Verified:** `scripts/test/prompt-plan.test.mjs` (11 Node tests, chained into
-  `npm test`) covers the band matrix, the schema guard and the latch; the new
-  browser smoke `npm run smoke:feedback` (~20 s, Chromium, 30 checks) covers the
-  DOM order (prompt before the reveal), the stored field, the skip, the 5–7
-  gate, the 8–11 wording, the 4a why, the 4d focus panel and reduced motion.
-- **Falsifier still live:** if a playtest shows players skip the prompt more than
-  ~half the time, keep 4a and revert 4b/4c — they are separate tasks on purpose.
+  seam), and the log cap.
+- **Verified:** `npm run smoke:feedback` (Chromium, 24 checks) now proves the
+  absences — no `.tl-prompt`, no `.tl-why`, no `confidence` row, for every band
+  and under reduced motion — and still covers the 4d focus panel.
+- **Falsifier, re-aimed:** whether a slip-moment explanation helps learning was
+  never measured; it becomes a playtest question for the connection cue, which
+  carries its own falsifier (`doc/CONNECTION_CUE_PLAN.md` §3).
 
 Forward-compat: phases 1–9 must not write state a future server cannot re-derive
 from a synced log (roadmap §6.4). Phase 7 of the roadmap (server social) is
@@ -771,8 +786,13 @@ No unit-test framework — extend the existing browser smoke checklist
    is mastery first, but Duolingo's streak-separation data argues the other way.
    Decide before starting either — the *pair* must not ship split (§11 phase 2,
    conflict ledger).
-8. Whether `confidence` (A8) is worth the UI cost outside Focus practice — it is
-   cheapest on the Focus round, where the player already expects a prompt.
+8. ~~Whether `confidence` (A8) is worth the UI cost outside Focus practice.~~
+   **Closed 2026-10-02:** it was not. The field is retired — inferring it from
+   `outcome` carries no information, so it would have to be *asked*, and asking
+   cost a second interaction at the deciding moment. The `Hard`/`Easy` grades it
+   existed for stay unreachable from `outcome` alone; if calibration is wanted it
+   belongs in the predict-then-disclose mode at `doc/STUDY_MODES.md` §3.2. See
+   `doc/CONNECTION_CUE_PLAN.md` §5.5.
 9. **FSRS: day-primary (`repeat(card, rating)`) vs placement-primary (the L2
    seam)?** Deferred until the log is large enough to retrain weights
    (`generatorParameters`). The placement-primary path is the recorded intent

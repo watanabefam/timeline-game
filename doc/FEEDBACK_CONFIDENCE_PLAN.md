@@ -1,6 +1,6 @@
 # Next Slice — Feedback Depth + Pre-Reveal Confidence (A8) — Research & Plan
 
-**Status:** ✅ **implemented 2026-10-02** — see §7 Implementation status
+**Status:** ⚠️ **implemented 2026-10-02, then largely retired later the same day** — T1 (4b, 4c) and T2 (4a) were removed; only T5 (4d) survives. See §7 and §7.1.
 **Date:** 2026-10-02 (planned and landed)
 **Scope:** `GAMIFICATION_BRIEF.md` §11 **phase 4** (feedback depth at the moment of the slip + one predirected pre-reveal prompt + the optional `confidence` field, A8), plus the one-line phase-2 age-gap warm-up.
 **Companions (source of truth above this doc):** `doc/GAMIFICATION_BRIEF.md` (A4/A6/A8/A10, §5 age table, §6 data model, §9 copy rules, §11 order, §12 metrics, §15 open decisions); `doc/CLOUDLESS_PLAN.md` §2 (working method) and §3 S2; evidence `doc/references/mcg_research_synthesis.md` §6, §7, §8, §9, §13, §20, §23.
@@ -262,6 +262,11 @@ reverted** — a reversible split, which is why they are separate tasks.
 
 ## 7. Implementation status (2026-10-02)
 
+> ⚠️ **Read this with §7.1.** All of T1–T7 landed the same day the plan was
+> written, and then **T1, T2, T3 and T4 were removed later the same day**. The
+> table below records what shipped; §7.1 records what was retired and why. Do not
+> read this table as the current state of the repo.
+
 All of T1–T7 landed the same day the plan was written. The slice shipped exactly
 as designed, with no new runtime dependency and no schema field beyond
 `confidence`.
@@ -293,3 +298,31 @@ and in the verification checklist.
 question 1) shipped as *"How sure are you?"* — a simple self-check that does not
 read as a test, but it is the least-evidenced string here; and the falsifier is
 still a playtest, not a measurement. `4d` is now closed.
+
+### 7.1 Retirement (2026-10-02, later the same day)
+
+Playing the shipped slice surfaced two problems the plan's falsifier could not
+see, because both are design misfits rather than measurements:
+
+| removed | why |
+|---|---|
+| **T3 / 4b** the pre-reveal prompt | It fired on the round's **first deciding card**, where "the event just before this one" is a given anchor — or, for the deck's earliest card, does not exist. Worse, the cue had **no input**: the only controls were *I'm sure / Not sure / Skip*, so the collected signal was purely a self-rating. Structurally it was the two-button self-report `§9` rates weakest (g=0.24), with an unanswerable question above it — and it made the player act twice per decision (answer, then place). |
+| **T4 / 4c** the `confidence` field | Inferring confidence from `outcome` makes it a pure function of `outcome`: identical information, and D3 forbids persisting derived state. That leaves only "ask it", which the row above rejects. It also lost the `Hard`/`Easy` split it existed for. Full reasoning: `doc/CONNECTION_CUE_PLAN.md` §5.5. |
+| **T2 / 4a** the why at the slip reveal | A *significance* line cannot explain a **placement**, and it duplicated the fact-sheet popover's existing `Why it matters` row — so one slipped card showed the why up to three times (rescue callout, inline line, popover). |
+| **T1** `prompt-plan.js` + its 11 Node tests | The band gate and the schema guard for the two removed features; nothing else consumed them. |
+
+**What survives: T5 / 4d** (the 5–7 focus-panel star gate) — untouched, and still
+covered by the smoke.
+
+**Knock-on changes:** `test:prompt` left the `npm test` chain; the `prompt-plan.js`
+boot tag and its `gen-offline-manifest.mjs` `SHELL` entry went with it (manifest
+back to **133 files**, generation `bbcaf47e1d82`); `timeline.js?v=203`,
+`styles.css?v=136`. `tools/offline-smoke/feedback.mjs` was retargeted from
+"assert the prompt works" to "assert the removed surfaces never render" — that
+retargeting is what makes the removal verifiable rather than merely diffed, and
+it keeps the 4d checks.
+
+**Where the slip-moment explanation goes instead:** the connection cue in
+`doc/CONNECTION_CUE_PLAN.md` — built from the already-authored `connections[]`
+edges, which (unlike `why`) are **directional** and can therefore explain a
+placement rather than merely decorate it.
