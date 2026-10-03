@@ -258,10 +258,23 @@ that decides the rest: scaled to `cc-timeline`'s 161 events it is ~250 edges, an
 |---|---|---|---|
 | `cc-timeline` | 161 | 113 | **162** |
 | `world-history-first-timeline` | 40 | 31 | **38** |
-| `world-literature` | 80 | 0 | **0** |
+| `world-literature` | 80 | 3 | **3** (starter set, 2026-10-03) |
 
-Both authored decks pass `validate:content` (the year-order rule included). `world-literature` is the
-only deck with no edges, and it is now the connection smoke's "renders nothing" control.
+Both authored decks pass `validate:content` (the year-order rule included).
+
+**`world-literature` is no longer the edge-free deck.** A deliberate starter set of three balanced
+edges was authored for it (`iliad → odyssey`, `iliad → aeneid`, `aeneid → divine-comedy`), so the
+deck stops being edge-free. Its `sortYear` situation was checked first: none of its 80 events carries
+a `sortYear`, so RULE 1 is evaluated against `year` on this deck. The starter set is intentionally
+small — three uncontroversial edges, each with a drafted rationale — rather than broad coverage:
+a large *unverified* edge set is worse than a small reviewable one, and `validate:content` enforces
+structure, never truth.
+
+Because `world-literature` now has edges, the connections smoke's "renders nothing" control moved to
+a deck that is edge-free **by construction**: a synthetic deck registered at runtime through the real
+`window.registerDeck` API (`smoke-bare-deck` in `tools/offline-smoke/connections.mjs`). The zero is
+therefore structural rather than incidental — no shipped deck can silently become edge-free and
+weaken the check again.
 
 **`cc-timeline` sorted by `sortYear`, not `year`.** Every event in that deck carries a hidden
 `sortYear` sequence index (cc-001 = −161 … cc-161 = 0), and the storage rule is evaluated against
@@ -275,7 +288,115 @@ reversal and dropped where it did not. **Any future authoring on this deck must 
 1. **Vocabulary imbalance.** `contributing` is 85% of `cc-timeline`'s 162 edges and 92% of
    `world-history`'s 38 (vs 46% in the pilot). `validate:content` warns that a type dominating the
    vocabulary teaches nothing; the fix is an editorial pass re-deriving the hard dependencies as
-   `necessary`, the parallel recurrences as `echo`, and the proximate sparks as `trigger`.
+   `necessary`, the parallel recurrences as `echo`, and the proximate sparks as `trigger`. §10 is the
+   instrument for that pass — it measures the agreement, it does not perform the re-typing.
 2. **Edgeless events are findings, not defects.** 48 `cc-timeline` events and 9 `world-history`
    events have no outgoing edge; several are genuine termini, but the count is higher than the pilot's
    and wants a review pass.
+
+---
+
+## 10. The instrument — `npm run audit:connections` (2026-10-03)
+
+### 10.1 Why an agent does not re-type these edges
+
+Two rules converge on the same answer. Repo rule 6 states that an LLM is never the source of a
+`reference` — a reading resting on an assistant's say-so is a `decision` or a `measurement`, never a
+citation. And Phase 0 rejected an automated classifier for edge typing outright. An agent silently
+re-typing 162 edges would be that rejected classifier wearing a different hat, and it would
+launder 162 unsourced editorial judgements into the corpus as though they had been made by someone
+able to defend them. So this ships the **instrument and the measurement**; the re-typing stays human
+work and is declared as such.
+
+What ships instead is everything that makes a human pass faster, cheaper and auditable:
+
+1. **The distribution**, per deck and per type, with §3's 50% anti-skew guard marked. The guard is
+   mirrored from `scripts/validate-content.mjs` (change one, change both).
+2. **A counterfactual screen**: every edge whose own authored `rationale` contradicts its own `type`,
+   using the §3 tests reduced to vocabulary. Finding codes are `THIN_RATIONALE` (too few words for
+   the test to apply to), `ECHO_CAUSAL` (typed *not causal at all*, prose asserts causation),
+   `CAUSAL_PARALLEL` (typed causal, prose claims only a parallel/recurrence — i.e. `echo`),
+   `NECESSARY_HEDGED` (typed *would not have happened*, prose hedges),
+   `CONTRIBUTING_ABSOLUTE` (typed *could still have happened*, prose asserts a hard dependency) and
+   `TRIGGER_FAR` (`set it off now` across more than a 15-year gap).
+3. **The sampling worksheet** and the **κ scoring**, below.
+
+The audit reads the graph through the shipped `connections.js` `indexEdges()`, so it describes exactly
+what the game serves — including the RULE 1 drops — not the raw JSON.
+
+### 10.2 The screen is a screen, never a verdict
+
+It reads **English words, not history**. A flagged edge may still be correctly typed
+(`gutenberg-bible → www-proposal` is flagged `ECHO_CAUSAL` only because a comparison sentence says
+"both triggered the same argument", which is not a causal claim about the edge), and an unflagged
+edge is not thereby correct. Its whole value is that it is cheap, reproducible, and points a human at
+the rows most worth their attention. Anything that reads like a verdict — especially anything derived
+from κ — is capped in §10.5.
+
+### 10.3 Current measurement (2026-10-03, `npm run audit:connections`)
+
+264 served edges across four decks; 4 flagged; nothing dropped by `indexEdges`.
+
+| deck | edges | distribution | modal | screen |
+|---|---|---|---|---|
+| `cc-timeline` | 162 | contributing 138 (85%), necessary 20, echo 4 | **over guard** | 2 (`cc-088 → cc-101` `CONTRIBUTING_ABSOLUTE`; `cc-094 → cc-096` `THIN_RATIONALE`) |
+| `world-history-first-timeline` | 38 | contributing 35 (92%), necessary 2, echo 1 | **over guard** | 0 |
+| `inventions-discoveries` | 61 | contributing 28 (46%), necessary 19, echo 13, trigger 1 | within guard | 2 (both `ECHO_CAUSAL`) |
+| `world-literature` | 3 | necessary 2, contributing 1 | over guard (n=3) | 0 |
+
+Read the last row honestly: a 67% modal share on **three** edges is arithmetic, not a finding, and the
+screen will say so until the deck has enough edges for the shape to mean anything.
+
+The headline is the two large decks. `contributing` at 85% and 92% is the §3 drift returning in a new
+corpus — "X made Y more likely" is the safest long-range claim and the easiest to defend, which is
+exactly why authoring falls into it. That is the case for the pass below.
+
+### 10.4 The sampling protocol — 30 edges, two passes, Cohen's κ
+
+**Why 30.** Bujang & Baharum's review puts a workable κ study at **11–28 items**; 30 sits just above
+that range, which is the right side to err on. It is also bounded enough that two independent passes
+are actually obtainable.
+
+1. `npm run audit:connections -- --sample 30 --blind --out kappa-sample.csv`
+   Stratified by **deck × type**, allocated by largest remainder, one seat per non-empty stratum so
+   no type can vanish from the sample, and trimmed out of the largest stratum if the floor overshoots
+   the budget. The shuffle is seeded from a fixed string, so the same corpus yields the same 30 rows on
+   every machine — two passes that cannot be compared to each other would be worthless.
+2. `--blind` blanks `stored_type`. A coder who can see the stored label anchors on it, and two
+   anchored coders agree for the wrong reason. The rationale stays: it is the evidence the §3 test
+   applies to.
+3. **Two independent passes.** Each coder fills one `coder_*_type` column, alone, applying §3 in order:
+   run the §4 filter for *whether* the edge is causal, then the §3 strength test for the label. Record
+   `echo` when the filter fails but the parallel is still worth teaching. No discussion between passes
+   until both are filled in.
+4. `npm run audit:connections -- --kappa passA.csv passB.csv` prints n, `po`, `pe`, κ, and the band.
+
+### 10.5 Interpreting κ — and the limit that must not be dropped
+
+| κ | reading |
+|---|---|
+| ≥ 0.80 | strong |
+| ≥ 0.60 | acceptable |
+| 0.40–0.60 | fair |
+| 0.20–0.40 | slight |
+| < 0.20 | poor |
+
+**At n = 30 this is a screening figure, not a verdict on the instrument.** Small-sample κ is known to
+be unstable and biased (McHugh, PMC3900052; the ICQE caveat on interpreting chance-corrected
+agreement at low n). So: κ can justify a decision — *re-type `cc-timeline`, because the two coders
+disagreed about a third of the sample* — and it can never license a claim that the codebook is valid.
+The script prints that caveat with every run for the same reason the backlog gate holds its ceiling in
+the generator rather than in the generated file: a caveat that lives only in prose is a caveat that
+gets dropped the first time someone is in a hurry.
+
+### 10.6 What is still open
+
+- The 162 `cc-timeline` edges and 38 `world-history` edges still carry their original types. The
+  instrument says the vocabulary is skewed and points at 4 rows; **it does not fix 200 editorial
+  calls, and this document does not pretend otherwise.**
+- Every authored `rationale`, including the three `world-literature` starters, is a **draft claim**,
+  not a verified one. `validate:content` enforces structure, never truth.
+- No κ run has happened yet. Two human passes are still owed before any of the bands above describe
+  this corpus.
+- Whether a correctly-typed edge *helps anyone place an event better* is a learning-effect question
+  this instrument cannot touch, and it stays unclaimed.
