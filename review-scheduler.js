@@ -14,6 +14,13 @@
  *
  *   EventState = { deck, lastSeenPos, attempts, firstTry, streak, intervalK }
  *
+ * This is the SCHEDULER half of the pair the content-aware-SR literature
+ * separates: `replay`/`rate`/`masteryByEvent` are the memory model (how well
+ * the card is known), and `dueSet` is the scheduler (which cards today). The
+ * cue-aware term added 2026-10-03 (doc/MVP_PLAN.md S1) therefore lives here and
+ * NOWHERE in the memory model — which is what keeps A10's L2 seam clean: an FSRS
+ * swap replaces `replay`/`rate` and inherits this selection behaviour unchanged.
+ *
  * Design notes (all traceable to the plan / evidence base):
  *   - "Round" = one logged placement. Reach-back uses LOG-TAIL recency
  *     (`lastSeenPos` = placements since last seen), never wall-clock, so it is
@@ -47,6 +54,11 @@
   var EARLIER_W = 2;   // older eras are preferred by this much per step
   var DEFAULT_SUCCESS_FLOOR = 0.5;
   var GATED_BANDS = ["5-7", "8-11"];
+  // A promoted card is ordered ascending by this key when `opts.order` is
+  // absent, so a caller that supplies an orderless set still gets a stable
+  // answer. `cueFirst` is deliberately just above the plain score's reach: the
+  // partition below is what promotes, not this number.
+  var CUE_ORDER_MISSING = Number.MAX_SAFE_INTEGER;
 
   function clamp(n, lo, hi) { return n < lo ? lo : (n > hi ? hi : n); }
 
@@ -180,6 +192,19 @@
     var gated = isGatedBand(band);
     var eraOrder = Array.isArray(o.eraOrder) ? o.eraOrder : [];
     var currentEraIdx = eraOrder.indexOf(o.currentEra);
+    // ---- cue capability (doc/MVP_PLAN.md S1) ------------------------------
+    // A SUPPLIED id set, never a graph: this module has no deck, no years and
+    // no edges. The graph lives in connections.js and the index in timeline.js,
+    // so passing ids keeps every RULE 1-4 decision in the one place that
+    // already owns it and keeps this function pure and testable.
+    //
+    // Absent ⇒ `cueSet` is null ⇒ the partition below is skipped entirely, so
+    // the output is byte-identical to the pre-cue implementation for the same
+    // inputs (AC1). That is a property of the code path, not a promise.
+    var cueSet = null;
+    if (o.cue instanceof Set) cueSet = o.cue;
+    else if (Array.isArray(o.cue)) cueSet = new Set(o.cue);
+    var orderMap = (o.order && typeof o.order === "object") ? o.order : null;
 
     var candidates = [];
     Object.keys(states).forEach(function (id) {
@@ -216,6 +241,36 @@
       if (b.recency !== a.recency) return b.recency - a.recency;
       return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
     });
+
+    // ---- cue promotion (FR2/FR3/FR5) --------------------------------------
+    // A stable PARTITION, not a score bonus. It runs after every filter
+    // (deck scope, recencyK, age gate) and before the cap and the success
+    // floor, so a cue can never resurrect a card that is not due, never cross
+    // the age gate, and never soften the floor — FR2 holds by construction.
+    //
+    // `opts.order` exists because RULE 2 only fires when the partner is
+    // ALREADY on the board: a promoted pair is only useful if the earlier
+    // endpoint is asked first, so the caller supplies each id's dependency
+    // position and the promoted group is sorted ascending by it.
+    if (cueSet) {
+      var promoted = [];
+      var rest = [];
+      for (var ci = 0; ci < candidates.length; ci += 1) {
+        if (cueSet.has(candidates[ci].id)) promoted.push(candidates[ci]);
+        else rest.push(candidates[ci]);
+      }
+      if (orderMap) {
+        promoted.sort(function (a, b) {
+          var oa = typeof orderMap[a.id] === "number" ? orderMap[a.id] : CUE_ORDER_MISSING;
+          var ob = typeof orderMap[b.id] === "number" ? orderMap[b.id] : CUE_ORDER_MISSING;
+          if (oa !== ob) return oa - ob;
+          if (b.score !== a.score) return b.score - a.score;
+          if (b.recency !== a.recency) return b.recency - a.recency;
+          return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
+        });
+      }
+      candidates = promoted.concat(rest);
+    }
 
     var cap = typeof o.cap === "number" && o.cap >= 0 ? o.cap : candidates.length;
     var selected = candidates.slice(0, cap);
