@@ -8,8 +8,8 @@ window.DECK_INDEX = {
       "dir": "cc-timeline",
       "entry": "deck.json",
       "script": "deck.js",
-      "revision": "82e5574cb170",
-      "bytes": 85359,
+      "revision": "5311cdb14598",
+      "bytes": 118289,
       "version": "1.0.0",
       "attribution": [],
       "grandfathered": true
@@ -32,8 +32,8 @@ window.DECK_INDEX = {
       "dir": "world-history-first-timeline",
       "entry": "deck.json",
       "script": "deck.js",
-      "revision": "55744f431aa8",
-      "bytes": 2908605,
+      "revision": "3a82e9282496",
+      "bytes": 2918559,
       "version": "1.0.0",
       "license": "CC-BY-SA-4.0",
       "attribution": []

@@ -106,12 +106,18 @@ const closeServer = () =>
 /* ------------------------------------------------- seeded profile */
 const USER_ID = "smoke-connections";
 
-// A deck with 61 authored edges (the cue's home) and a deck with none (the
+// A deck with authored edges (the cue's home) and a deck with none (the
 // vacuity check). Both are named here so a rename fails loudly.
 const CUE_DECK = "inventions-discoveries";
 const CUE_DECK_NAME = "Inventions & Discoveries";
-const BARE_DECK = "cc-timeline";
-const BARE_DECK_NAME = "Classical Conversations";
+// world-literature is the last deck with no connections[] — cc-timeline and
+// world-history-first-timeline gained edges on 2026-10-03, so the vacuity check
+// moved here (a deck with no edges must still render nothing).
+const BARE_DECK = "world-literature";
+const BARE_DECK_NAME = "World Literature";
+// A deck authored after the pilot (2026-10-03) — proves the new graph renders
+// through the same path, so "the edges exist" is not merely JSON on disk.
+const NEW_DECK_NAME = "World History: A First Timeline";
 
 const seed = (band) => {
   const user = { id: USER_ID, name: "Smoke Connections", createdAt: 1700000000000, hue: 200 };
@@ -373,6 +379,23 @@ async function main() {
     check("no .gap-callout__link is rendered anywhere", bare.links.size === 0, `rescue cue lines=${bare.links.size}`);
     check("the rescue surface WAS exercised (so the zero above is not vacuous)",
       bare.statuses.size > 0, `rescue-status sightings=${bare.statuses.size}`);
+
+    /* ---- a newly authored deck renders cues too (2026-10-03) ---- */
+    phase(`${NEW_DECK_NAME} — a newly authored deck renders cues through the same path`);
+    const fresh = await runDeck(browser, base, { deckName: NEW_DECK_NAME, band: "17+" });
+    allErrors.push(...fresh.errs);
+    check("the newly authored round started and completed",
+      fresh.startedDeck.gameVisible && fresh.done, `clicks=${fresh.clicks}`);
+    check("it produced cues (the authored graph reaches the board)",
+      fresh.conns.size + fresh.links.size > 0,
+      `reveal lines=${fresh.conns.size}, rescue cue lines=${fresh.links.size}`);
+    let freshBad = [];
+    for (const c of fresh.conns.values()) {
+      const r = partnerOnBoard(c.text, c.owner, fresh.board);
+      if (!r.ok) freshBad.push({ text: c.text, owner: c.owner, matched: r.matched });
+    }
+    check("every cue on the newly authored deck names a partner on the board",
+      freshBad.length === 0, JSON.stringify(freshBad.slice(0, 3)));
 
     /* ---- D8: reduced motion changes nothing about the cue ---- */
     phase("reduced motion — the cue still resolves against the board");

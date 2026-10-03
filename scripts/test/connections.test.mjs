@@ -365,3 +365,47 @@ test("the real deck indexes forward and reverse, and names every partner by titl
   for (const list of idx.in.values()) back += list.length;
   assert.equal(back, edges);
 });
+
+// The decks authored after the pilot (2026-10-03). cc-timeline is a trap for a
+// calendar-driven author: it sorts by a hidden `sortYear` sequence index, so an
+// edge must point forward in CURRICULUM order. These assertions are what keeps
+// the authored graph a usable cue rather than merely-present JSON: every edge
+// must survive `indexEdges` (no RULE 1 / unknown-type / missing-year drops) and
+// resolve from both endpoints.
+for (const deckId of ["cc-timeline", "world-history-first-timeline"]) {
+  test(`${deckId} keeps every authored edge through the runtime index`, () => {
+    const events = JSON.parse(
+      readFileSync(join(root, "decks", deckId, "deck.json"), "utf8")
+    ).events;
+    let authored = 0;
+    for (const e of events) authored += Array.isArray(e.connections) ? e.connections.length : 0;
+    assert.ok(authored > 0, "the deck has authored edges");
+
+    // The storage rule holds, so nothing is dropped at load (FR7 / RULE 1).
+    assert.deepEqual(C.storageRuleViolations(events), []);
+
+    const idx = C.indexEdges(events);
+    let keptOut = 0;
+    for (const list of idx.out.values()) keptOut += list.length;
+    assert.equal(keptOut, authored, "every authored edge is present in the forward index");
+
+    let keptIn = 0;
+    for (const list of idx.in.values()) keptIn += list.length;
+    assert.equal(keptIn, authored, "every authored edge has a reverse-index entry");
+
+    // Every edge is cue-able from both of its endpoints once its partner is on
+    // the board, and the partner is named by title, not id.
+    for (const [from, list] of idx.out) {
+      const fromEvent = events.find((e) => e.id === from);
+      for (const edge of list) {
+        const toEvent = events.find((e) => e.id === edge.to);
+        assert.ok(toEvent, `${from} -> ${edge.to} resolves to an event`);
+        const cue = C.cueFor(fromEvent, idx, [edge.to]);
+        assert.ok(cue, `${from} -> ${edge.to} yields a cue from the source endpoint`);
+        assert.equal(cue.partnerId, edge.to);
+        assert.equal(cue.partnerTitle, toEvent.title, "the cue names the partner by title");
+        assert.match(C.cueText(cue), /\.$/);
+      }
+    }
+  });
+}

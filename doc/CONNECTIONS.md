@@ -251,3 +251,31 @@ re-introducing the reversed `mendeleev → newton` edge (one error, exit 1) befo
 that decides the rest: scaled to `cc-timeline`'s 161 events it is ~250 edges, and `cc-timeline` has
 0% `category` and 0% `summary`, so every rationale is written from scratch with nothing to work from.
 **The flagship deck is the most expensive place to do this, not the cheapest.**
+
+## 9.1 Authored later — `cc-timeline` and `world-history-first-timeline` (2026-10-03)
+
+| deck | events | events with ≥1 outgoing edge | edges |
+|---|---|---|---|
+| `cc-timeline` | 161 | 113 | **162** |
+| `world-history-first-timeline` | 40 | 31 | **38** |
+| `world-literature` | 80 | 0 | **0** |
+
+Both authored decks pass `validate:content` (the year-order rule included). `world-literature` is the
+only deck with no edges, and it is now the connection smoke's "renders nothing" control.
+
+**`cc-timeline` sorted by `sortYear`, not `year`.** Every event in that deck carries a hidden
+`sortYear` sequence index (cc-001 = −161 … cc-161 = 0), and the storage rule is evaluated against
+*that* order, because the deck follows the curriculum, not the calendar. An edge may only point
+forward in the sequence. A first pass authored against `year` produced 11 RULE 1 violations, all of
+which the authoring check caught before writing; they were flipped where the claim survived the
+reversal and dropped where it did not. **Any future authoring on this deck must sort by `sortYear`.**
+
+**Two open quality items, both reported by the validator as warnings:**
+
+1. **Vocabulary imbalance.** `contributing` is 85% of `cc-timeline`'s 162 edges and 92% of
+   `world-history`'s 38 (vs 46% in the pilot). `validate:content` warns that a type dominating the
+   vocabulary teaches nothing; the fix is an editorial pass re-deriving the hard dependencies as
+   `necessary`, the parallel recurrences as `echo`, and the proximate sparks as `trigger`.
+2. **Edgeless events are findings, not defects.** 48 `cc-timeline` events and 9 `world-history`
+   events have no outgoing edge; several are genuine termini, but the count is higher than the pilot's
+   and wants a review pass.

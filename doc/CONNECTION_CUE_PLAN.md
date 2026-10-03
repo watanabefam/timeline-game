@@ -99,6 +99,16 @@ So the cue is a **progressive enhancement on 12% of the corpus.** `cc-timeline` 
 the deck `smoke:feedback` drives — has none. This is the single biggest constraint in the plan and
 it is why §4.6 makes "show nothing" a first-class, tested behaviour rather than an edge case.
 
+**Update (2026-10-03) — two more decks authored.** `world-history-first-timeline` gained **38** edges
+(31 of 40 events) and `cc-timeline` **162** edges (113 of 161 events), both passing `validate:content`.
+`world-literature` is now the only deck with no `connections[]`, so the smoke's "renders nothing"
+control moved there. The authoring is a curriculum-order (not calendar-order) graph for `cc-timeline`:
+the deck sorts by a `sortYear` sequence, and an edge may only point forward in that sequence, so a
+date-driven authoring pass would have produced RULE 1 violations. **Open quality item:** `contributing`
+is 85% of the `cc-timeline` edges and 92% of the `world-history` edges, which the validator reports as
+a warning ("a type that dominates the vocabulary teaches nothing", §3 of `doc/CONNECTIONS.md`) — a
+follow-up editorial pass should re-derive some edges as `necessary`/`echo`/`trigger`.
+
 Edge types on the pilot: `contributing` 28 (46%), `necessary` 19 (31%), `echo` 13 (21%),
 `trigger` 1 (2%). One edge is `contested`. The gate's >50% balance warning does not fire.
 
@@ -454,7 +464,7 @@ changes in the same edit as the first render change.
   printed one error naming the edge and exited 1; removing it returned the gate to 0 errors.
 - `npm run smoke:connections` (new, Chromium, §T7) — 18/18. Drives an `inventions-discoveries` round:
   25 reveal lines and 25 rescue cue lines, each naming a partner on the board; a rescue callout's
-  `data-announce` carries its cue exactly once; `cc-timeline` renders neither surface while its rescue
+  `data-announce` carries its cue exactly once; `world-literature` (no edges) renders neither surface while its rescue
   still fires; the 5–7 fact sheet never restates the cue; all of it holds under reduced motion.
 - Regression: `npm run smoke:feedback` 24/24, `smoke:mastery` 18/18, `smoke:review` 17/17,
   `smoke:offline` 48/48, `smoke:webkit` 20/20 — the render changes did not disturb the retired
