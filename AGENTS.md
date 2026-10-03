@@ -90,9 +90,12 @@ designing any learning or motivational surface, and cite it by § number.
    classic scripts, so a module can rely on `window.FX`/`window.DECKS` being
    present, but classic scripts can never rely on a module.
 5. **Run the content gate after touching deck data:**
-   `npm run validate` (Node ≥18) — `validate:index` (generated deck list is
-   fresh), `validate:content` (the fact-quality and year-placement rules across
-   every deck in `decks/`), `validate:vendor` (rule 2), `validate:offline` (the
+   `npm run validate` (Node ≥18) —   `validate:index` (generated deck list is
+   fresh), `validate:content` (the fact-quality, year-placement **and
+   deck-integrity** rules across every deck in `decks/` — see
+   `doc/DECK_VALIDATION.md`; it also *prints* per-deck readability and coverage
+   measurements that are counted nowhere, so a coverage number never trains
+   anyone to ignore the warnings), `validate:vendor` (rule 2), `validate:offline` (the
    generated precache manifest is fresh and the app icons in `icons/` match),
    `validate:recipe` (the generated browser copy of the narration recipe is
    fresh), `validate:narration` (every clip's records, hashes, duration and
@@ -207,9 +210,10 @@ designing any learning or motivational surface, and cite it by § number.
 | `tools/narration/pronunciation-backlog.json` | **Generated** list of spoken words no dictionary knows, plus the accepted ceiling — never hand-edited; regenerate with `npm run gen:backlog` |
 | `content/sourcing-backlog.json` | **Generated** count of events with no registered source, per deck, plus the accepted ceiling — never hand-edited; regenerate with `npm run gen:sourcing` |
 | `decks/<id>/` | A deck package: `manifest.json` + `deck.json` + generated `deck.js` (+ `narration/*.mp3`) |
-| `scripts/*.mjs` | Node content tooling only (never loaded by the game): deck index + content/vendor/narration/offline gates, the recipe mirror and icon generators |
+| `scripts/*.mjs` | Node content tooling only (never loaded by the game): deck index + content/vendor/narration/offline gates, the recipe mirror and icon generators, `validate-content.mjs` (the deck-integrity gate) and `audit-connections.mjs` (the C2 edge-quality instrument) |
+| `doc/DECK_VALIDATION.md` | The rules behind `validate:content` beyond “one event at a time”: id integrity, the filter contract, declared era ranges, ordering determinacy, relative-order cues, readability and coverage — with the evidence and the corpus numbers. Read before adding or loosening a deck rule |
 | `tools/narration/` | Author-time narration generator: the recipe, Kokoro synthesis, ffmpeg post-processing, tests (see its README) |
-| `tools/offline-smoke/` | Author-time browser smokes: the offline layer (`smoke.mjs` in Chromium, `webkit.mjs` in Safari's engine), the S2 mastery level card (`mastery.mjs`), the review queue (`review.mjs`), the retired A8 feedback surface (`feedback.mjs`) and the connection cue (`connections.mjs`) — all Chromium except `webkit.mjs`. Not part of `npm test` — they need a real browser download, and a check that cannot run must never report clean |
+| `tools/offline-smoke/` | Author-time browser smokes: the offline layer (`smoke.mjs` in Chromium, `webkit.mjs` in Safari's engine), the S2 mastery level card (`mastery.mjs`), the review queue (`review.mjs`), the retired A8 feedback surface (`feedback.mjs`), the connection cue (`connections.mjs`) and the streak surface (`streak.mjs`) — all Chromium except `webkit.mjs`. Not part of `npm test` — they need a real browser download, and a check that cannot run must never report clean |
 | `tools/kokoro-authoring/` | Author-time TTS model bundle only, gitignored and **never shipped** (see rule 2) |
 | `THIRD_PARTY_LICENSES.md` | Attribution manifest for everything third-party; enforced by `npm run validate:vendor` |
 | `doc/GAMIFICATION_BRIEF.md` | Ratified spec for the gamification layer over the mastery review log (streaks, leveling, achievements, feedback copy) |
@@ -222,7 +226,7 @@ designing any learning or motivational surface, and cite it by § number.
 | `doc/CLOUDLESS_PLAN.md` | The **cloud-less track**: working method (research → plan → build → verify), ordered slice queue, and the two decisions it gates on. Start here for any client-side-only feature |
 | `doc/CONTENT_BACKLOG_PLAN.md` | Plan for the two content backlogs the gates cannot close alone: the pronunciation backlog gate (`validate:backlog`) and the 321 unsourced events. Evidence-graded research + sequenced slices with falsifiers |
 | `doc/STUDY_MODES.md` | Mode catalog (v2). Ratings on a research-alignment rubric, new instruction surfaces, competitive read, and a mandated instruction-before-assessment build order. **v1's catalog and TL;DR are preserved verbatim in §14** with the reason for every change |
-| `doc/CONNECTIONS.md` | The connection/causal edge model: schema, type vocabulary, the filter rule, the logged rejections, and the authored edges (`inventions-discoveries` 61, `cc-timeline` 162, `world-history-first-timeline` 38). Read before touching `connections[]` |
+| `doc/CONNECTIONS.md` | The connection/causal edge model: schema, type vocabulary, the filter rule, the logged rejections, the authored edges (`inventions-discoveries` 61, `cc-timeline` 162, `world-history-first-timeline` 38, `world-literature` 3), and §10's audit instrument + 30-edge two-pass κ protocol. Read before touching `connections[]` |
 
 ## FX layer (`fx.js` → `window.FX`)
 
@@ -346,6 +350,20 @@ Additional checks for the surfaces built after this doc was last revised:
 - **Review queue (S2, phase 3):** `npm run smoke:review` (Chromium) covers the
   Focus-panel Review round, the derived due count, the fail-open small set, the
   5–7 era/week cap, the J2 empty state and reduced motion.
+- **Streak surface:** `npm run smoke:streak` (Chromium, 25 checks) covers the
+  chip and the 35-day calendar: every `data-state` the state model can produce,
+  the forgiven-day walk (a `forgiven` cell must not contradict the count), the
+  best-streak-after-reset case, `aria-label`s, and reduced motion. **What it
+  cannot cover:** pixels and iOS.
+- **Connection-edge quality (C2):** `npm run audit:connections` reports the
+  per-deck/per-type distribution and a **counterfactual screen** — edges whose
+  own `rationale` contradicts their own `type`. It reads the shipped
+  `connections.js` `indexEdges()`, so it describes what the game actually
+  serves. It is advisory (exit 0) and **never a verdict**: it matches English
+  words, not history. `--sample 30 --blind --out f.csv` emits the deterministic,
+  stratified coding sheet and `--kappa a.csv b.csv` scores two human passes.
+  The protocol and its limits live in `doc/CONNECTIONS.md` §10 — read it before
+  proposing to "fix" the vocabulary skew, which is human editorial work.
 - **Vendored assets:** `npm run validate:vendor` passes (rule 2).
 
 ## Conventions
