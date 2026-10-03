@@ -154,7 +154,19 @@
       "summary": "About eleven thousand years ago, people in the Fertile Crescent began planting seeds and herding animals instead of only hunting and gathering. Farming produced more food than foraging, so villages grew and some people took up new crafts. This shift, often called the Neolithic Revolution, spread slowly to other regions and eventually changed how most humans lived.",
       "lat": 33,
       "lng": 36,
-      "area": 700
+      "area": 700,
+      "connections": [
+        {
+          "to": "egypt-unifies",
+          "type": "contributing",
+          "rationale": "Farming produced storable surpluses, and stored food is what lets a valley feed rulers, scribes and soldiers who do not grow their own. Egypt's unification rests on managed Nile agriculture."
+        },
+        {
+          "to": "great-pyramid",
+          "type": "contributing",
+          "rationale": "A workforce building at Giza has to be fed from something other than its own fields; the agricultural surplus is the precondition."
+        }
+      ]
     },
     {
       "id": "egypt-unifies",
@@ -172,7 +184,14 @@
       "summary": "Ancient Egypt had long been two lands: the narrow valley of Upper Egypt and the wide delta of Lower Egypt. Around 3100 BCE a powerful ruler from the south conquered the north and wore a double crown. One king now commanded the whole Nile, its farms and its trade. This unity let Egyptian civilisation flourish for thousands of years.",
       "lat": 26,
       "lng": 31,
-      "area": 800
+      "area": 800,
+      "connections": [
+        {
+          "to": "great-pyramid",
+          "type": "necessary",
+          "rationale": "A pyramid is a state project: it needs a unified kingdom able to levy labour and move stone. Without the pharaonic state there is no Giza."
+        }
+      ]
     },
     {
       "id": "great-pyramid",
@@ -206,7 +225,14 @@
       "summary": "Confucius lived during a time of warring states in China. He travelled and taught that rulers should govern by example and treat people with kindness. After his death, his students collected his sayings in a book called the Analects. For more than two thousand years his ideas shaped education and government across East Asia.",
       "lat": 35.6,
       "lng": 116.9,
-      "area": 400
+      "area": 400,
+      "connections": [
+        {
+          "to": "qin-unifies-china",
+          "type": "contributing",
+          "rationale": "Confucius gave China a shared vocabulary of rule - the trained official, the moral example, the unified order - that the imperial state later claimed to embody."
+        }
+      ]
     },
     {
       "id": "athenian-democracy",
@@ -222,7 +248,14 @@
       "summary": "Before Cleisthenes, Athens was run by a few wealthy families. He reorganised the citizens into new groups and gave an assembly of ordinary men the power to debate and vote on laws. Not everyone could take part — women, enslaved people and foreigners were excluded. Still, the idea of citizens ruling themselves became one of Athens' greatest exports.",
       "lat": 37.98,
       "lng": 23.73,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "plato-academy",
+          "type": "contributing",
+          "rationale": "The Academy grows out of the Athenian polis and its argument culture; Plato's dialogues are set in and argue about the democracy Cleisthenes founded."
+        }
+      ]
     },
     {
       "id": "buddha-monastic-order",
@@ -257,7 +290,14 @@
       "summary": "Plato was a student of Socrates and one of the first thinkers to write philosophy down as lasting books. Around 387 BCE he founded a school called the Academy near Athens, where students studied mathematics, astronomy and politics. It is often called the first university in the western world, and it lasted for centuries.",
       "lat": 37.99,
       "lng": 23.71,
-      "area": 150
+      "area": 150,
+      "connections": [
+        {
+          "to": "alexander-dies",
+          "type": "contributing",
+          "rationale": "Alexander was tutored by Aristotle, a product of Plato's school, so the Academy's project of educating rulers reached its most famous pupil."
+        }
+      ]
     },
     {
       "id": "alexander-dies",
@@ -273,7 +313,14 @@
       "summary": "Alexander of Macedon became king as a young man and never lost a battle. In just over a decade he conquered an empire reaching from Greece to India. He died at Babylon in 323 BCE, before he turned thirty-three. Because he left no strong heir, his generals divided the empire among themselves, beginning the Hellenistic age.",
       "lat": 32.54,
       "lng": 44.42,
-      "area": 400
+      "area": 400,
+      "connections": [
+        {
+          "to": "augustus-principate",
+          "type": "contributing",
+          "rationale": "Augustus's Rome is the power that absorbs the Hellenistic kingdoms; Cleopatra and Antony are the last of Alexander's successor states."
+        }
+      ]
     },
     {
       "id": "qin-unifies-china",
@@ -305,7 +352,19 @@
       "summary": "After the assassination of Julius Caesar, his heir Octavian fought his way to sole power. In 27 BCE the Senate gave him the name Augustus. He kept the old republican offices but controlled the army and the money. Rome still looked like a republic, yet one man now decided almost everything — the arrangement we call the Roman Empire.",
       "lat": 41.9,
       "lng": 12.5,
-      "area": 1200
+      "area": 1200,
+      "connections": [
+        {
+          "to": "birth-of-jesus",
+          "type": "contributing",
+          "rationale": "Jesus is born a Roman provincial subject; the census and the governor in the Gospels are instruments of the Augustan order."
+        },
+        {
+          "to": "fall-western-rome",
+          "type": "contributing",
+          "rationale": "The imperial system Augustus built is the thing that eventually falls; its later crises are the story of the fall."
+        }
+      ]
     },
     {
       "id": "birth-of-jesus",
@@ -323,7 +382,14 @@
       "summary": "Jesus was born in the Roman province of Judaea around the end of the first century BCE. Christians believe he was the son of God and was born in Bethlehem. His life and teaching became the centre of Christianity, today the world's largest religion. The calendar we use was later designed to count years from his birth, though the monk who calculated it was a few years off.",
       "lat": 31.7,
       "lng": 35.2,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "hijra",
+          "type": "contributing",
+          "rationale": "Islam emerges from the monotheism of Israel; Muhammad's community sees itself as the continuation of Abraham's line."
+        }
+      ]
     },
     {
       "id": "fall-western-rome",
@@ -339,7 +405,19 @@
       "summary": "For centuries the Roman Empire had been governed from both Rome and Constantinople. In 476 the general Odoacer removed Romulus Augustulus, the last emperor in the west. The boy was sent into retirement and Odoacer ruled Italy himself. Historians treat this as the end of the Western Roman Empire, though the eastern half survived for another thousand years.",
       "lat": 44.42,
       "lng": 12.2,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "charlemagne",
+          "type": "contributing",
+          "rationale": "Charlemagne's empire presents itself as the restoration of the western Roman order, and the pope crowns him emperor of the Romans."
+        },
+        {
+          "to": "constantinople-falls",
+          "type": "echo",
+          "rationale": "The eastern empire survived the west by a thousand years and then fell the same way - a capital lost to besiegers. 1453 is the same event, deferred."
+        }
+      ]
     },
     {
       "id": "hijra",
@@ -355,7 +433,14 @@
       "summary": "In 622 CE, Muhammad and his followers left Mecca for the city of Medina. This journey is called the Hijra. In Medina the small community of Muslims grew into a religious and political community with its own laws. Muslims count the years of their calendar from this event, which marks the start of the Islamic era.",
       "lat": 24.47,
       "lng": 39.61,
-      "area": 400
+      "area": 400,
+      "connections": [
+        {
+          "to": "mansa-musa",
+          "type": "contributing",
+          "rationale": "Mansa Musa's pilgrimage is a journey inside the Muslim world the hijra founded; his gold and his fame travel on its pilgrimage and trade routes."
+        }
+      ]
     },
     {
       "id": "charlemagne",
@@ -387,7 +472,14 @@
       "summary": "In 1066, William of Normandy claimed the English throne, but Harold Godwinson had already been crowned king. Their armies met near Hastings, and Harold was killed in the fighting. William marched to London and was crowned that winter. Norman rule changed English law, land ownership and language, adding thousands of French words to English.",
       "lat": 50.91,
       "lng": 0.49,
-      "area": 60
+      "area": 60,
+      "connections": [
+        {
+          "to": "magna-carta-first",
+          "type": "contributing",
+          "rationale": "Magna Carta is a baronial reaction to the strong Norman monarchy Hastings established."
+        }
+      ]
     },
     {
       "id": "genghis-khan",
@@ -403,7 +495,14 @@
       "summary": "In 1206, a gathering of Mongol chiefs proclaimed Temujin their universal ruler, giving him the title Genghis Khan. He organised the tribes into a disciplined army and set out to conquer. His successors built the largest land empire in history, stretching from China to eastern Europe. The Mongols also reopened trade routes linking distant civilisations.",
       "lat": 47.9,
       "lng": 106.9,
-      "area": 2000
+      "area": 2000,
+      "connections": [
+        {
+          "to": "babur-mughal",
+          "type": "contributing",
+          "rationale": "Babur claimed descent from Genghis Khan and Timur, and the dynasty he founded named itself Mongol."
+        }
+      ]
     },
     {
       "id": "magna-carta-first",
@@ -419,7 +518,14 @@
       "summary": "Magna Carta was a peace agreement forced on King John by rebel barons. It said that the king had to obey the law and that free men could not be imprisoned without a lawful trial. Most of its clauses dealt with taxes and land, and the pope soon cancelled it. Yet its promise of limited government was remembered and reused for centuries.",
       "lat": 51.44,
       "lng": -0.56,
-      "area": 60
+      "area": 60,
+      "connections": [
+        {
+          "to": "american-revolution",
+          "type": "contributing",
+          "rationale": "Magna Carta is the precedent the American colonists cite for the principle that the king is himself under law."
+        }
+      ]
     },
     {
       "id": "polynesians-aotearoa",
@@ -470,7 +576,14 @@
       "summary": "According to Mexica tradition, their wandering people were guided to an island where they saw an eagle on a cactus. There, in 1325, they founded Tenochtitlan. In the middle of Lake Texcoco they built causeways, temples and floating gardens. The city grew into one of the largest in the world, the capital of the Aztec Empire.",
       "lat": 19.43,
       "lng": -99.13,
-      "area": 100
+      "area": 100,
+      "connections": [
+        {
+          "to": "columbus-landfall",
+          "type": "contributing",
+          "rationale": "Columbus's landfall begins the contact that ends Tenochtitlan; the city's wealth is what draws the Spanish inland."
+        }
+      ]
     },
     {
       "id": "black-death",
@@ -486,7 +599,14 @@
       "summary": "In 1347, ships returning to Messina in Sicily brought a deadly disease. It was probably plague, spread by fleas that lived on rats. The sickness swept along trade routes, and within a few years it killed roughly a third of Europe's people. The disaster shook the old order and changed wages, land and the way Europeans worked.",
       "lat": 38.19,
       "lng": 15.55,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "luther-theses",
+          "type": "contributing",
+          "rationale": "The plague's death toll weakened the feudal order and the church's standing, and the grievances the Reformation mobilises are the ones it left."
+        }
+      ]
     },
     {
       "id": "constantinople-falls",
@@ -502,7 +622,14 @@
       "summary": "Constantinople had been the capital of the Byzantine Empire for over a thousand years. In 1453, Sultan Mehmed II attacked it with a huge army and enormous cannon. The walls that had protected the city for centuries finally broke. Constantinople became the Ottoman capital. Many scholars fled west, carrying ancient Greek books that helped fuel the Renaissance.",
       "lat": 41.01,
       "lng": 28.98,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "columbus-landfall",
+          "type": "contributing",
+          "rationale": "With Constantinople in Ottoman hands the eastern trade ran through a rival, which made a sea route to Asia worth the risk - the argument Lisbon and Castile used."
+        }
+      ]
     },
     {
       "id": "columbus-landfall",
@@ -518,7 +645,19 @@
       "summary": "Columbus sailed west from Spain in 1492 believing he could reach Asia. Instead he landed on islands in the Caribbean where the Taíno people already lived. His voyages began lasting contact between Europe and the Americas. The exchange of crops and animals changed diets worldwide, but European diseases and conquest devastated the peoples already there.",
       "lat": 24.25,
       "lng": -76,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "berlin-conference",
+          "type": "contributing",
+          "rationale": "The overseas empires that the Berlin Conference partitions are the ones Columbus's voyage opened."
+        },
+        {
+          "to": "saint-domingue-uprising",
+          "type": "contributing",
+          "rationale": "Saint-Domingue is a colony built by the plantation economy the Columbian exchange created."
+        }
+      ]
     },
     {
       "id": "luther-theses",
@@ -550,7 +689,14 @@
       "summary": "Babur was a Central Asian prince descended from both Genghis Khan and Tamerlane. Defeated in his homeland, he turned toward India. In 1526 he defeated a much larger army at Panipat using field artillery and gunpowder tactics. He founded the Mughal Empire, which eventually grew into one of the richest empires on earth.",
       "lat": 29.39,
       "lng": 76.97,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "india-pakistan-independence",
+          "type": "contributing",
+          "rationale": "British India is the successor state to the Mughal empire; partition redraws the territory Babur founded."
+        }
+      ]
     },
     {
       "id": "american-revolution",
@@ -566,7 +712,14 @@
       "summary": "For years American colonists had argued with Britain over taxes and representation. In April 1775, British troops marched from Boston to seize stored weapons. At Lexington and Concord the first shots were fired. Colonial militias fought the redcoats back, and a war for independence had begun. It ended with the creation of the United States.",
       "lat": 42.45,
       "lng": -71.23,
-      "area": 100
+      "area": 100,
+      "connections": [
+        {
+          "to": "bastille",
+          "type": "contributing",
+          "rationale": "The French crown's debt from backing the American revolt is one of the fiscal crises that forced the calling of the Estates-General."
+        }
+      ]
     },
     {
       "id": "bastille",
@@ -582,7 +735,14 @@
       "summary": "By 1789 France was deep in debt and its people were angry. On 14 July a Paris crowd stormed the Bastille, a royal fortress and prison, looking for gunpowder. Only a few prisoners were freed, but the fall of the fortress became a symbol that ordinary people could challenge a king. The French Revolution had begun.",
       "lat": 48.85,
       "lng": 2.35,
-      "area": 60
+      "area": 60,
+      "connections": [
+        {
+          "to": "saint-domingue-uprising",
+          "type": "contributing",
+          "rationale": "Saint-Domingue's free people of colour and its enslaved majority took the Rights of Man at their word, and the revolution in France made the colony's order negotiable."
+        }
+      ]
     },
     {
       "id": "saint-domingue-uprising",
@@ -598,7 +758,14 @@
       "summary": "Saint-Domingue was France's richest colony, worked by huge numbers of enslaved Africans. In 1791 they rose in revolt against their enslavers. Led by figures such as Toussaint Louverture, the rebels fought a long and brutal war. In 1804 they won independence as Haiti, the first Black republic in the Americas and the only nation born of a successful uprising of enslaved people.",
       "lat": 18.54,
       "lng": -72.34,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "us-civil-war-first",
+          "type": "contributing",
+          "rationale": "Haiti's revolution is proof that enslaved people could win, and the fear it produced shaped the politics of slavery in the United States."
+        }
+      ]
     },
     {
       "id": "us-civil-war-first",
@@ -614,7 +781,14 @@
       "summary": "America was divided over slavery. When Abraham Lincoln was elected president, southern states left the Union. In April 1861, Confederate forces fired on Fort Sumter in Charleston harbour. The war that followed lasted four years and killed more Americans than any other conflict. It ended slavery, and the former enslaved people were freed but faced a long struggle for equality.",
       "lat": 32.75,
       "lng": -79.87,
-      "area": 100
+      "area": 100,
+      "connections": [
+        {
+          "to": "human-rights-declaration",
+          "type": "contributing",
+          "rationale": "The Thirteenth to Fifteenth Amendments begin the constitutional arc that the Declaration later states as universal rights."
+        }
+      ]
     },
     {
       "id": "meiji-restoration",
@@ -630,7 +804,19 @@
       "summary": "Japan had been ruled by shoguns for centuries and kept mostly closed to the outside world. In 1868 a group of reformers restored the emperor to power and promised sweeping change. The new government built railways and factories, created a modern army and reformed schools. Within a generation, Japan had become an industrial and military power.",
       "lat": 35.01,
       "lng": 135.77,
-      "area": 800
+      "area": 800,
+      "connections": [
+        {
+          "to": "ww1-first",
+          "type": "contributing",
+          "rationale": "A restored, industrialising Japan joins the great-power system and enters the First World War on the Allied side."
+        },
+        {
+          "to": "ww2-first",
+          "type": "contributing",
+          "rationale": "The industrial-military state Meiji built is the one that later expands into Asia and joins the Axis."
+        }
+      ]
     },
     {
       "id": "berlin-conference",
@@ -647,7 +833,19 @@
       "summary": "European countries had begun racing to claim territory in Africa. In 1884, leaders met in Berlin to agree on rules for the scramble. No African rulers were invited. The delegates drew borders across the continent, ignoring existing kingdoms and communities. Those lines divided peoples and set the stage for conflicts that lasted long after independence.",
       "lat": 52.52,
       "lng": 13.4,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "ww1-first",
+          "type": "contributing",
+          "rationale": "The rival colonial claims the conference regulated became a source of great-power friction in 1914."
+        },
+        {
+          "to": "ghana-independence",
+          "type": "contributing",
+          "rationale": "Independence movements in Africa set out to undo the partition the conference drew."
+        }
+      ]
     },
     {
       "id": "ww1-first",
@@ -663,7 +861,14 @@
       "summary": "By 1914 Europe was divided into two armed camps. When a young assassin shot an archduke in Sarajevo, alliances pulled one country after another into war. The fighting lasted four years and used tanks, planes and poison gas for the first time on a huge scale. Empires collapsed, and around seventeen million people died. The peace that followed helped cause another war.",
       "lat": 50,
       "lng": 10,
-      "area": "world"
+      "area": "world",
+      "connections": [
+        {
+          "to": "ww2-first",
+          "type": "contributing",
+          "rationale": "The settlement of 1919 and the grievances it left unresolved are the ground of the second war."
+        }
+      ]
     },
     {
       "id": "ww2-first",
@@ -679,7 +884,19 @@
       "summary": "World War II began when German forces invaded Poland in 1939. It became the deadliest conflict in history, fought across Europe, Asia, Africa and the oceans. Around six million Jewish people were murdered in the Holocaust, along with millions of others. The war ended in 1945 after the first atomic bombs. It changed the map of the world and led to the United Nations.",
       "lat": 52,
       "lng": 20,
-      "area": "world"
+      "area": "world",
+      "connections": [
+        {
+          "to": "united-nations",
+          "type": "contributing",
+          "rationale": "The United Nations is created by the wartime alliance specifically so that there is no third; the charter is signed by the victors."
+        },
+        {
+          "to": "human-rights-declaration",
+          "type": "contributing",
+          "rationale": "The atrocities of the war are the direct occasion for the Declaration."
+        }
+      ]
     },
     {
       "id": "united-nations",
@@ -695,7 +912,14 @@
       "summary": "After two devastating world wars, many countries wanted a body that could help keep the peace. In 1945 delegates met in San Francisco and signed the charter of the United Nations. The new organisation had a General Assembly where every member had a voice. A Security Council of great powers could pass binding decisions — and each of its five members could block them with a veto.",
       "lat": 37.77,
       "lng": -122.42,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "human-rights-declaration",
+          "type": "necessary",
+          "rationale": "The Declaration is drafted and adopted by the UN Commission on Human Rights; the body is the instrument."
+        }
+      ]
     },
     {
       "id": "india-pakistan-independence",
@@ -711,7 +935,14 @@
       "summary": "After years of protest and struggle, Britain agreed to give India independence in 1947. The country was divided into two new states: Hindu-majority India and Muslim-majority Pakistan. Millions of people moved across the new borders in one of the largest migrations in history. The partition brought terrible violence, and its effects are still felt today.",
       "lat": 28.61,
       "lng": 77.21,
-      "area": 1000
+      "area": 1000,
+      "connections": [
+        {
+          "to": "mandela-president",
+          "type": "contributing",
+          "rationale": "India's independence is the model and the morale for the decolonisation that follows."
+        }
+      ]
     },
     {
       "id": "human-rights-declaration",
@@ -727,7 +958,14 @@
       "summary": "After the horrors of World War II, nations wanted to agree on the basic rights that every person should have. In 1948 the United Nations adopted the Universal Declaration of Human Rights. Its thirty articles say that all people are born free and equal, and deserve freedom of thought, fair trials and education. It is now the most translated document in the world.",
       "lat": 48.85,
       "lng": 2.35,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "mandela-president",
+          "type": "contributing",
+          "rationale": "The Declaration's language of equal rights is cited in the struggle against apartheid."
+        }
+      ]
     },
     {
       "id": "ghana-independence",
@@ -743,7 +981,14 @@
       "summary": "In 1957 Ghana became the first country in sub-Saharan Africa to win independence from European colonial rule. Its leader, Kwame Nkrumah, had organised peaceful protests and strikes for years. Ghana's success inspired people across the continent. Within a decade, most African colonies had won their freedom. Nkrumah later became president and helped found the Organisation of African Unity.",
       "lat": 5.56,
       "lng": -0.2,
-      "area": 500
+      "area": 500,
+      "connections": [
+        {
+          "to": "mandela-president",
+          "type": "contributing",
+          "rationale": "Ghana is the first sub-Saharan colony to win independence, and it became a base and an emblem for the African liberation movements."
+        }
+      ]
     },
     {
       "id": "berlin-wall-falls",
@@ -759,7 +1004,14 @@
       "summary": "The Berlin Wall was built in 1961 to stop people escaping from communist East Berlin to the west. For years it cut a city in two. In 1989, peaceful protests and loosening Soviet control led crowds to gather at the crossings. Guards let them through, and people began chipping at the wall with hammers. Within a year Germany was reunited.",
       "lat": 52.52,
       "lng": 13.4,
-      "area": 100
+      "area": 100,
+      "connections": [
+        {
+          "to": "mandela-president",
+          "type": "contributing",
+          "rationale": "The end of the Cold War removes the superpower rivalry that had propped up apartheid's sponsors."
+        }
+      ]
     },
     {
       "id": "mandela-president",

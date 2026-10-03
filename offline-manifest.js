@@ -2,10 +2,10 @@
  * The service worker loads this with importScripts() at install time. */
 self.OFFLINE_MANIFEST = {
   "formatVersion": 1,
-  "hash": "3af8bff4d766",
+  "hash": "e9028f843eb5",
   "generatedBy": "scripts/gen-offline-manifest.mjs",
   "cacheName": "timeline-offline",
-  "totalBytes": 19192384,
+  "totalBytes": 19235873,
   "files": [
     {
       "path": "assets/audio/alex-morgan-battle-boss-fight-game-music-583276.mp3",
@@ -374,18 +374,18 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "decks/cc-timeline/deck.js",
-      "rev": "a51d57c6c4fe",
-      "bytes": 85232
+      "rev": "8ddd9b055a54",
+      "bytes": 118162
     },
     {
       "path": "decks/index.js",
-      "rev": "0aa95bd08e8f",
-      "bytes": 1346
+      "rev": "61a5737b37ab",
+      "bytes": 1347
     },
     {
       "path": "decks/index.json",
-      "rev": "aeab391597a2",
-      "bytes": 1254
+      "rev": "f30315869690",
+      "bytes": 1255
     },
     {
       "path": "decks/inventions-discoveries/deck.js",
@@ -394,8 +394,8 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "decks/world-history-first-timeline/deck.js",
-      "rev": "88cecbd24cb3",
-      "bytes": 53037
+      "rev": "f8764466beaa",
+      "bytes": 62991
     },
     {
       "path": "decks/world-history-first-timeline/narration/alexander-dies.mp3",
@@ -639,7 +639,7 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "index.html",
-      "rev": "a752c6cd40fe",
+      "rev": "20e2c2f8a49c",
       "bytes": 28575
     },
     {
@@ -674,8 +674,8 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "timeline.js",
-      "rev": "57658c7b34ff",
-      "bytes": 209737
+      "rev": "8061f5fd1a64",
+      "bytes": 210340
     }
   ]
 };

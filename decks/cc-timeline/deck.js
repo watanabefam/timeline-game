@@ -221,7 +221,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 30,
       "lng": 50,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "cc-004",
+          "type": "contributing",
+          "rationale": "The first empires are the Sumerian city-states; the deck starts the imperial story there."
+        },
+        {
+          "to": "cc-005",
+          "type": "contributing",
+          "rationale": "Egypt's unification is the second of the ancient empires the age is named for."
+        }
+      ]
     },
     {
       "id": "cc-002",
@@ -275,7 +287,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 33,
       "lng": 44,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-005",
+          "type": "contributing",
+          "rationale": "Writing, the wheel and the city-state first appear in Sumer, and the Nile valley's civilisation develops alongside that precedent."
+        },
+        {
+          "to": "cc-014",
+          "type": "contributing",
+          "rationale": "China's bronze-age state is a river-valley civilisation of the same kind as Sumer's, arrived at independently."
+        }
+      ]
     },
     {
       "id": "cc-005",
@@ -293,7 +317,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 24,
       "lng": 32,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "cc-008",
+          "type": "contributing",
+          "rationale": "The Seven Wonders are Mediterranean and Near Eastern monuments of the world Egypt's civilisation helped define."
+        },
+        {
+          "to": "cc-011",
+          "type": "contributing",
+          "rationale": "Kush sits upriver of Egypt and inherits its gods, its script and eventually its throne."
+        }
+      ]
     },
     {
       "id": "cc-006",
@@ -311,7 +347,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 30,
       "lng": 70,
-      "area": 800
+      "area": 800,
+      "connections": [
+        {
+          "to": "cc-015",
+          "type": "contributing",
+          "rationale": "The Indus cities and the later Vedic religion are the deep background of Indian religious life."
+        }
+      ]
     },
     {
       "id": "cc-007",
@@ -329,7 +372,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 36,
       "lng": 25,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-020",
+          "type": "contributing",
+          "rationale": "The Greek Dark Ages are the collapse of the Mycenaean palace world; the later polis grows out of its ruins."
+        },
+        {
+          "to": "cc-024",
+          "type": "contributing",
+          "rationale": "Homer's epics remember the Mycenaean world - its kings, its sieges and its collapse."
+        }
+      ]
     },
     {
       "id": "cc-008",
@@ -366,7 +421,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 32.5,
       "lng": 35.5,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "cc-018",
+          "type": "contributing",
+          "rationale": "The Exodus narrative continues the story of the patriarchs; the covenant with Abraham is fulfilled in Moses."
+        }
+      ]
     },
     {
       "id": "cc-010",
@@ -384,7 +446,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 39,
       "lng": 33,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-019",
+          "type": "contributing",
+          "rationale": "The Canaanite city-states the great powers contested are the land the Israelites settle."
+        }
+      ]
     },
     {
       "id": "cc-011",
@@ -420,7 +489,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 34,
       "lng": 43,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-027",
+          "type": "contributing",
+          "rationale": "The Assyrian empire's conquests end in its own destruction at Nineveh; Babylon inherits the empire."
+        }
+      ]
     },
     {
       "id": "cc-013",
@@ -437,7 +513,14 @@ window.registerDeck({
       "why": "Gave us one of the earliest written law codes.",
       "emoji": "📜",
       "lat": 32.54,
-      "lng": 44.42
+      "lng": 44.42,
+      "connections": [
+        {
+          "to": "cc-029",
+          "type": "contributing",
+          "rationale": "Babylon is the empire that destroys Judah and the Temple."
+        }
+      ]
     },
     {
       "id": "cc-014",
@@ -455,7 +538,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 34,
       "lng": 108,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-028",
+          "type": "contributing",
+          "rationale": "The Chinese philosophical tradition that Confucius and Lao-Tzu belong to grows out of the Shang-Zhou world."
+        }
+      ]
     },
     {
       "id": "cc-015",
@@ -473,7 +563,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 22,
       "lng": 79,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "cc-028",
+          "type": "contributing",
+          "rationale": "The Buddha arises within the Indian religious world the Vedas shaped."
+        }
+      ]
     },
     {
       "id": "cc-016",
@@ -509,7 +606,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 23.6,
       "lng": -102.5,
-      "area": 1200
+      "area": 1200,
+      "connections": [
+        {
+          "to": "cc-037",
+          "type": "contributing",
+          "rationale": "Maya civilisation inherits the Olmec template - the ball game, the calendar, the sacred centres."
+        }
+      ]
     },
     {
       "id": "cc-018",
@@ -527,7 +631,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 26.8,
       "lng": 30.8,
-      "area": 800
+      "area": 800,
+      "connections": [
+        {
+          "to": "cc-019",
+          "type": "contributing",
+          "rationale": "The conquest narrative follows the desert wandering directly."
+        }
+      ]
     },
     {
       "id": "cc-019",
@@ -545,7 +656,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 32.5,
       "lng": 35.5,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "cc-021",
+          "type": "contributing",
+          "rationale": "The tribes settled under the judges are united under a king."
+        }
+      ]
     },
     {
       "id": "cc-020",
@@ -581,7 +699,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 31.4,
       "lng": 35,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "cc-026",
+          "type": "contributing",
+          "rationale": "The fall of the northern kingdom ends the story of the united monarchy."
+        }
+      ]
     },
     {
       "id": "cc-022",
@@ -617,7 +742,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 32.5,
       "lng": 35.5,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "cc-026",
+          "type": "necessary",
+          "rationale": "The divided northern kingdom is the one Assyria destroys."
+        }
+      ]
     },
     {
       "id": "cc-024",
@@ -653,7 +785,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 42.8,
       "lng": 12.8,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-032",
+          "type": "contributing",
+          "rationale": "The Roman Republic is the political form the city of Romulus and Remus adopts."
+        },
+        {
+          "to": "cc-038",
+          "type": "contributing",
+          "rationale": "The city founded on the Tiber becomes the power that fights Carthage."
+        }
+      ]
     },
     {
       "id": "cc-026",
@@ -671,7 +815,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 32.3,
       "lng": 35.2,
-      "area": 150
+      "area": 150,
+      "connections": [
+        {
+          "to": "cc-027",
+          "type": "contributing",
+          "rationale": "Assyria's own fall follows its conquests, and Babylon inherits the empire."
+        }
+      ]
     },
     {
       "id": "cc-027",
@@ -707,7 +858,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 35,
       "lng": 105,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "cc-033",
+          "type": "echo",
+          "rationale": "Two civilisations independently arrive at ethics-and-philosophy in the same centuries - the Axial Age in parallel."
+        }
+      ]
     },
     {
       "id": "cc-029",
@@ -724,7 +882,14 @@ window.registerDeck({
       "why": "The Babylonian Exile — a defining crisis for Judaism.",
       "emoji": "📜",
       "lat": 31.78,
-      "lng": 35.23
+      "lng": 35.23,
+      "connections": [
+        {
+          "to": "cc-030",
+          "type": "contributing",
+          "rationale": "Persia's conquest ends the Babylonian captivity and the empire that imposed it."
+        }
+      ]
     },
     {
       "id": "cc-030",
@@ -742,7 +907,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 32,
       "lng": 53,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "cc-031",
+          "type": "necessary",
+          "rationale": "Cyrus's decree permits the return and the rebuilding of the Temple."
+        },
+        {
+          "to": "cc-035",
+          "type": "contributing",
+          "rationale": "The Persian empire Alexander conquers is the one Cyrus founded."
+        }
+      ]
     },
     {
       "id": "cc-031",
@@ -759,7 +936,14 @@ window.registerDeck({
       "why": "Restoration of Jewish worship after exile.",
       "emoji": "📜",
       "lat": 31.78,
-      "lng": 35.23
+      "lng": 35.23,
+      "connections": [
+        {
+          "to": "cc-043",
+          "type": "contributing",
+          "rationale": "Second Temple Judaism is the world Jesus is born into."
+        }
+      ]
     },
     {
       "id": "cc-032",
@@ -776,7 +960,14 @@ window.registerDeck({
       "why": "The model later republics (incl. the USA) would echo.",
       "emoji": "📜",
       "lat": 41.9,
-      "lng": 12.5
+      "lng": 12.5,
+      "connections": [
+        {
+          "to": "cc-041",
+          "type": "contributing",
+          "rationale": "The Republic's institutions are what Augustus replaces with the principate."
+        }
+      ]
     },
     {
       "id": "cc-033",
@@ -793,7 +984,14 @@ window.registerDeck({
       "why": "A high point of democracy, art, and thought.",
       "emoji": "📜",
       "lat": 37.98,
-      "lng": 23.73
+      "lng": 23.73,
+      "connections": [
+        {
+          "to": "cc-034",
+          "type": "contributing",
+          "rationale": "The Delian League's power, built in the Persian wars, is the empire the Peloponnesian War is fought over."
+        }
+      ]
     },
     {
       "id": "cc-034",
@@ -830,7 +1028,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 32,
       "lng": 53,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "cc-036",
+          "type": "contributing",
+          "rationale": "Alexander's withdrawal from India leaves the vacuum in which Chandragupta's Mauryan empire rises."
+        },
+        {
+          "to": "cc-039",
+          "type": "contributing",
+          "rationale": "The Hellenistic successor states Alexander left are what Rome eventually absorbs."
+        }
+      ]
     },
     {
       "id": "cc-036",
@@ -848,7 +1058,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 22,
       "lng": 79,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "cc-049",
+          "type": "echo",
+          "rationale": "The Gupta age is a second flowering of the same Indian imperial culture."
+        }
+      ]
     },
     {
       "id": "cc-037",
@@ -866,7 +1083,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 23.6,
       "lng": -102.5,
-      "area": 1200
+      "area": 1200,
+      "connections": [
+        {
+          "to": "cc-074",
+          "type": "contributing",
+          "rationale": "Aztec Mexico inherits the Mesoamerican cities, calendars and gods the Maya shaped."
+        }
+      ]
     },
     {
       "id": "cc-038",
@@ -885,7 +1109,14 @@ window.registerDeck({
       "lat": 35,
       "lng": 18,
       "area": 2500,
-      "yearEnd": -146
+      "yearEnd": -146,
+      "connections": [
+        {
+          "to": "cc-040",
+          "type": "contributing",
+          "rationale": "Victory over Carthage makes Rome a Mediterranean empire, and the empire's crises produce the dictator."
+        }
+      ]
     },
     {
       "id": "cc-039",
@@ -903,7 +1134,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 39,
       "lng": 22,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "cc-040",
+          "type": "contributing",
+          "rationale": "The conquest of Greece brings Greek learning and the wealth that destabilises the Republic."
+        }
+      ]
     },
     {
       "id": "cc-040",
@@ -920,7 +1158,14 @@ window.registerDeck({
       "why": "The Republic's end and the road to empire.",
       "emoji": "📜",
       "lat": 41.9,
-      "lng": 12.5
+      "lng": 12.5,
+      "connections": [
+        {
+          "to": "cc-041",
+          "type": "necessary",
+          "rationale": "Augustus is Caesar's heir; the principate is built directly on Caesar's dictatorship."
+        }
+      ]
     },
     {
       "id": "cc-041",
@@ -937,7 +1182,14 @@ window.registerDeck({
       "why": "The calm peak of the Roman Empire.",
       "emoji": "📜",
       "lat": 41.9,
-      "lng": 12.5
+      "lng": 12.5,
+      "connections": [
+        {
+          "to": "cc-042",
+          "type": "contributing",
+          "rationale": "John preaches in a Roman province under the peace Augustus built."
+        }
+      ]
     },
     {
       "id": "cc-042",
@@ -955,7 +1207,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 31.7,
       "lng": 35,
-      "area": 150
+      "area": 150,
+      "connections": [
+        {
+          "to": "cc-043",
+          "type": "contributing",
+          "rationale": "John baptises Jesus, and the Gospels tie the two ministries directly together."
+        }
+      ]
     },
     {
       "id": "cc-043",
@@ -973,7 +1232,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 31.7,
       "lng": 35,
-      "area": 150
+      "area": 150,
+      "connections": [
+        {
+          "to": "cc-044",
+          "type": "necessary",
+          "rationale": "The early church begins with the resurrection and Pentecost; the movement is Jesus's."
+        },
+        {
+          "to": "cc-046",
+          "type": "contributing",
+          "rationale": "The Gospels are written after 70 and interpret the Temple's destruction; the two are read together."
+        }
+      ]
     },
     {
       "id": "cc-044",
@@ -990,7 +1261,24 @@ window.registerDeck({
       "why": "The traditional birthday of the Christian church.",
       "emoji": "📜",
       "lat": 31.78,
-      "lng": 35.23
+      "lng": 35.23,
+      "connections": [
+        {
+          "to": "cc-045",
+          "type": "contributing",
+          "rationale": "Persecution scatters the church and pushes the message outward."
+        },
+        {
+          "to": "cc-050",
+          "type": "contributing",
+          "rationale": "The councils define the faith the early church professed."
+        },
+        {
+          "to": "cc-052",
+          "type": "contributing",
+          "rationale": "The Vulgate serves the church that Pentecost founded."
+        }
+      ]
     },
     {
       "id": "cc-045",
@@ -1008,7 +1296,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 41.9,
       "lng": 12.5,
-      "area": 2500
+      "area": 2500,
+      "connections": [
+        {
+          "to": "cc-048",
+          "type": "necessary",
+          "rationale": "The persecutions end with the edict of 313; the two are the same turn."
+        }
+      ]
     },
     {
       "id": "cc-046",
@@ -1043,7 +1338,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 41.9,
       "lng": 12.5,
-      "area": 2500
+      "area": 2500,
+      "connections": [
+        {
+          "to": "cc-056",
+          "type": "contributing",
+          "rationale": "The division Diocletian made is the line along which the west eventually falls."
+        }
+      ]
     },
     {
       "id": "cc-048",
@@ -1061,7 +1363,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 41.9,
       "lng": 12.5,
-      "area": 2500
+      "area": 2500,
+      "connections": [
+        {
+          "to": "cc-050",
+          "type": "necessary",
+          "rationale": "Constantine calls the council; the emperor is the instrument."
+        }
+      ]
     },
     {
       "id": "cc-049",
@@ -1079,7 +1388,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 22,
       "lng": 79,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "cc-081",
+          "type": "contributing",
+          "rationale": "The numerals and the zero of the Gupta era reach Europe through the Islamic world."
+        }
+      ]
     },
     {
       "id": "cc-050",
@@ -1096,7 +1412,19 @@ window.registerDeck({
       "why": "Set the foundational statement of Christian belief.",
       "emoji": "📜",
       "lat": 40.43,
-      "lng": 29.72
+      "lng": 29.72,
+      "connections": [
+        {
+          "to": "cc-055",
+          "type": "contributing",
+          "rationale": "Chalcedon continues the creedal work and divides over the same questions."
+        },
+        {
+          "to": "cc-070",
+          "type": "contributing",
+          "rationale": "The creeds and the sees fixed in this period are the fault lines of the later schism."
+        }
+      ]
     },
     {
       "id": "cc-051",
@@ -1114,7 +1442,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 23,
       "lng": 15,
-      "area": 2500
+      "area": 2500,
+      "connections": [
+        {
+          "to": "cc-054",
+          "type": "contributing",
+          "rationale": "Augustine's theology is the intellectual foundation of the western Middle Ages."
+        }
+      ]
     },
     {
       "id": "cc-052",
@@ -1131,7 +1466,14 @@ window.registerDeck({
       "why": "Gave the church a common Bible text.",
       "emoji": "📜",
       "lat": 31.7,
-      "lng": 35.2
+      "lng": 35.2,
+      "connections": [
+        {
+          "to": "cc-083",
+          "type": "contributing",
+          "rationale": "The Vulgate is the text the humanists return to and re-translate."
+        }
+      ]
     },
     {
       "id": "cc-053",
@@ -1148,7 +1490,14 @@ window.registerDeck({
       "why": "A shock that signaled the empire's decline.",
       "emoji": "📜",
       "lat": 41.9,
-      "lng": 12.5
+      "lng": 12.5,
+      "connections": [
+        {
+          "to": "cc-056",
+          "type": "contributing",
+          "rationale": "The sack of 410 is a rehearsal for the end of the western empire."
+        }
+      ]
     },
     {
       "id": "cc-054",
@@ -1167,7 +1516,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 50,
       "lng": 12,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "cc-072",
+          "type": "contributing",
+          "rationale": "The medieval order Augustine helped shape is the world the Crusades are launched from."
+        }
+      ]
     },
     {
       "id": "cc-055",
@@ -1201,7 +1557,24 @@ window.registerDeck({
       "why": "Conventionally marks the end of the ancient world.",
       "emoji": "📜",
       "lat": 41.9,
-      "lng": 12.5
+      "lng": 12.5,
+      "connections": [
+        {
+          "to": "cc-057",
+          "type": "contributing",
+          "rationale": "Justinian claims the whole empire and tries to reconquer the west; the east carries the Roman name."
+        },
+        {
+          "to": "cc-058",
+          "type": "contributing",
+          "rationale": "Monasticism preserves learning and order in the post-Roman west."
+        },
+        {
+          "to": "cc-061",
+          "type": "contributing",
+          "rationale": "The Frankish kingdom that beats the Muslims at Tours is a successor state to Roman Gaul."
+        }
+      ]
     },
     {
       "id": "cc-057",
@@ -1236,7 +1609,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 42.8,
       "lng": 12.8,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-065",
+          "type": "contributing",
+          "rationale": "The monastic network is the educational base Charlemagne's reforms build on."
+        }
+      ]
     },
     {
       "id": "cc-059",
@@ -1254,7 +1634,24 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 23,
       "lng": 45,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "cc-061",
+          "type": "contributing",
+          "rationale": "The Muslim armies the Franks meet at Tours come from the community Muhammad founded."
+        },
+        {
+          "to": "cc-062",
+          "type": "necessary",
+          "rationale": "The caliphate's golden age is the civilisation of the community Muhammad founded."
+        },
+        {
+          "to": "cc-080",
+          "type": "contributing",
+          "rationale": "The Ottoman sultanate claims the caliphate and the mantle of Islamic empire."
+        }
+      ]
     },
     {
       "id": "cc-060",
@@ -1272,7 +1669,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 5,
       "lng": 20,
-      "area": 2500
+      "area": 2500,
+      "connections": [
+        {
+          "to": "cc-073",
+          "type": "contributing",
+          "rationale": "The trans-Saharan trade that makes Ghana and Mali rich is built on routes that earlier Sahelian states opened."
+        }
+      ]
     },
     {
       "id": "cc-061",
@@ -1309,7 +1713,24 @@ window.registerDeck({
       "lat": 33.3,
       "lng": 44.4,
       "area": 200,
-      "yearEnd": 1258
+      "yearEnd": 1258,
+      "connections": [
+        {
+          "to": "cc-072",
+          "type": "contributing",
+          "rationale": "The Crusades come out of a Latin world reacting to a powerful and learned Islamic civilisation."
+        },
+        {
+          "to": "cc-081",
+          "type": "contributing",
+          "rationale": "The Islamic world's trade networks are the roads Marco Polo travels."
+        },
+        {
+          "to": "cc-083",
+          "type": "contributing",
+          "rationale": "Arabic translations of Greek texts are much of what the Renaissance recovers."
+        }
+      ]
     },
     {
       "id": "cc-063",
@@ -1327,7 +1748,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 62,
       "lng": 14,
-      "area": 1000
+      "area": 1000,
+      "connections": [
+        {
+          "to": "cc-066",
+          "type": "contributing",
+          "rationale": "The Norse raids and expansion are the age Alfred's England fights off and partly absorbs."
+        }
+      ]
     },
     {
       "id": "cc-064",
@@ -1345,7 +1773,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 36.2,
       "lng": 138,
-      "area": 500
+      "area": 500,
+      "connections": [
+        {
+          "to": "cc-076",
+          "type": "contributing",
+          "rationale": "The shogunate takes power as the Heian court loses it."
+        }
+      ]
     },
     {
       "id": "cc-065",
@@ -1363,7 +1798,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 41.9,
       "lng": 12.5,
-      "area": 2500
+      "area": 2500,
+      "connections": [
+        {
+          "to": "cc-066",
+          "type": "contributing",
+          "rationale": "Alfred's programme of learning and law is modelled on Charlemagne's."
+        }
+      ]
     },
     {
       "id": "cc-066",
@@ -1417,7 +1859,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 50,
       "lng": 31,
-      "area": 1000
+      "area": 1000,
+      "connections": [
+        {
+          "to": "cc-090",
+          "type": "contributing",
+          "rationale": "Moscow inherits Kiev's Christian and imperial claims."
+        }
+      ]
     },
     {
       "id": "cc-069",
@@ -1452,7 +1901,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 41.9,
       "lng": 12.5,
-      "area": 2500
+      "area": 2500,
+      "connections": [
+        {
+          "to": "cc-072",
+          "type": "contributing",
+          "rationale": "The schism hardens the Latin-Greek divide the Crusades cross."
+        }
+      ]
     },
     {
       "id": "cc-071",
@@ -1470,7 +1926,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 52.5,
       "lng": -1.5,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "cc-079",
+          "type": "contributing",
+          "rationale": "Magna Carta is a baronial reaction to the strong Norman monarchy the Conquest established."
+        }
+      ]
     },
     {
       "id": "cc-072",
@@ -1506,7 +1969,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 5,
       "lng": 25,
-      "area": 3500
+      "area": 3500,
+      "connections": [
+        {
+          "to": "cc-089",
+          "type": "contributing",
+          "rationale": "Songhai succeeds Mali in the same Sahelian trade world."
+        }
+      ]
     },
     {
       "id": "cc-074",
@@ -1542,7 +2012,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 42.8,
       "lng": 12.8,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-083",
+          "type": "contributing",
+          "rationale": "Aquinas's synthesis is part of the intellectual inheritance the Renaissance works from."
+        }
+      ]
     },
     {
       "id": "cc-076",
@@ -1560,7 +2037,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 36.2,
       "lng": 138,
-      "area": 500
+      "area": 500,
+      "connections": [
+        {
+          "to": "cc-099",
+          "type": "contributing",
+          "rationale": "The Tokugawa shogunate that closes Japan descends from the shogunate system."
+        }
+      ]
     },
     {
       "id": "cc-077",
@@ -1596,7 +2080,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 42,
       "lng": 65,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "cc-081",
+          "type": "contributing",
+          "rationale": "The Mongol peace opens the routes Marco Polo travels."
+        },
+        {
+          "to": "cc-084",
+          "type": "contributing",
+          "rationale": "The Ming expel the Mongol Yuan dynasty that Genghis's empire created."
+        }
+      ]
     },
     {
       "id": "cc-079",
@@ -1614,7 +2110,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 52.5,
       "lng": -1.5,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "cc-101",
+          "type": "contributing",
+          "rationale": "The idea that the king is himself under law is what the Enlightenment generalises."
+        }
+      ]
     },
     {
       "id": "cc-080",
@@ -1668,7 +2171,14 @@ window.registerDeck({
       "lat": 50,
       "lng": 12,
       "area": 3000,
-      "yearEnd": 1453
+      "yearEnd": 1453,
+      "connections": [
+        {
+          "to": "cc-083",
+          "type": "contributing",
+          "rationale": "The plague's labour shortage and the war's disruption weaken feudal order and shift wealth to towns and patrons."
+        }
+      ]
     },
     {
       "id": "cc-083",
@@ -1686,7 +2196,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 42.8,
       "lng": 12.8,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-101",
+          "type": "contributing",
+          "rationale": "The Enlightenment is the Renaissance's critical method applied to politics and religion."
+        },
+        {
+          "to": "cc-088",
+          "type": "contributing",
+          "rationale": "The Renaissance's demand for texts is what the press supplies."
+        }
+      ]
     },
     {
       "id": "cc-084",
@@ -1704,7 +2226,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 35,
       "lng": 105,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "cc-147",
+          "type": "contributing",
+          "rationale": "The Chinese imperial tradition the Ming represent is what the communist state replaces."
+        }
+      ]
     },
     {
       "id": "cc-085",
@@ -1722,7 +2251,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 20,
       "lng": 0,
-      "area": "world"
+      "area": "world",
+      "connections": [
+        {
+          "to": "cc-087",
+          "type": "contributing",
+          "rationale": "The Atlantic slave trade is created by the exploration and settlement of the Americas."
+        },
+        {
+          "to": "cc-107",
+          "type": "contributing",
+          "rationale": "Cook's Pacific voyages continue the age of exploration."
+        }
+      ]
     },
     {
       "id": "cc-086",
@@ -1740,7 +2281,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 39.5,
       "lng": -8,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "cc-092",
+          "type": "contributing",
+          "rationale": "The navigation and ship design developed under Henry's patronage make the Atlantic crossings possible."
+        }
+      ]
     },
     {
       "id": "cc-087",
@@ -1758,7 +2306,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 9,
       "lng": -3,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "cc-131",
+          "type": "contributing",
+          "rationale": "The abolition of the slave trade and the later scramble for African resources are connected chapters."
+        }
+      ]
     },
     {
       "id": "cc-088",
@@ -1776,7 +2331,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 51.2,
       "lng": 10.4,
-      "area": 500
+      "area": 500,
+      "connections": [
+        {
+          "to": "cc-094",
+          "type": "necessary",
+          "rationale": "Without the press Luther's protest stays a local dispute; print is the mechanism by which it becomes a movement."
+        },
+        {
+          "to": "cc-101",
+          "type": "contributing",
+          "rationale": "Cheap print creates the public sphere of argument the Enlightenment depends on."
+        }
+      ]
     },
     {
       "id": "cc-089",
@@ -1830,7 +2397,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 40.2,
       "lng": -3.7,
-      "area": 500
+      "area": 500,
+      "connections": [
+        {
+          "to": "cc-092",
+          "type": "contributing",
+          "rationale": "The Inquisition and the expulsion of 1492 are the same crown's centralising policy that licenses Columbus."
+        }
+      ]
     },
     {
       "id": "cc-092",
@@ -1848,7 +2422,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 15,
       "lng": -75,
-      "area": 800
+      "area": 800,
+      "connections": [
+        {
+          "to": "cc-095",
+          "type": "contributing",
+          "rationale": "The conquistadors are the successors of the first landfall."
+        }
+      ]
     },
     {
       "id": "cc-093",
@@ -1866,7 +2447,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 50,
       "lng": 12,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "cc-101",
+          "type": "contributing",
+          "rationale": "Enlightenment political thought is written against the absolute monarchs."
+        }
+      ]
     },
     {
       "id": "cc-094",
@@ -1884,7 +2472,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 51.2,
       "lng": 10.4,
-      "area": 500
+      "area": 500,
+      "connections": [
+        {
+          "to": "cc-096",
+          "type": "necessary",
+          "rationale": "Calvin's Institutes systematise the Reformation."
+        },
+        {
+          "to": "cc-097",
+          "type": "necessary",
+          "rationale": "Trent is the Catholic response; the two define each other."
+        }
+      ]
     },
     {
       "id": "cc-095",
@@ -1919,7 +2519,19 @@ window.registerDeck({
       "why": "Shaped Presbyterianism and many Reformed churches.",
       "emoji": "📜",
       "lat": 46.2,
-      "lng": 6.14
+      "lng": 6.14,
+      "connections": [
+        {
+          "to": "cc-097",
+          "type": "contributing",
+          "rationale": "Trent answers Calvin's system as much as Luther's protest."
+        },
+        {
+          "to": "cc-100",
+          "type": "contributing",
+          "rationale": "Plymouth's settlers are Calvinist; the Puritan migration carries Reformation theology to America."
+        }
+      ]
     },
     {
       "id": "cc-097",
@@ -1936,7 +2548,14 @@ window.registerDeck({
       "why": "Launched the Counter-Reformation.",
       "emoji": "📜",
       "lat": 46.07,
-      "lng": 11.12
+      "lng": 11.12,
+      "connections": [
+        {
+          "to": "cc-098",
+          "type": "contributing",
+          "rationale": "Baroque art is the style the reformed Catholic church commissions."
+        }
+      ]
     },
     {
       "id": "cc-098",
@@ -1973,7 +2592,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 36.2,
       "lng": 138,
-      "area": 500
+      "area": 500,
+      "connections": [
+        {
+          "to": "cc-124",
+          "type": "necessary",
+          "rationale": "Perry's arrival is what ends the isolation policy of 1635."
+        }
+      ]
     },
     {
       "id": "cc-100",
@@ -1991,7 +2617,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 37.5,
       "lng": -79,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "cc-103",
+          "type": "contributing",
+          "rationale": "The colonial religious culture of the 1620s is the ground the Awakening grows in."
+        },
+        {
+          "to": "cc-109",
+          "type": "contributing",
+          "rationale": "The colonial charters and assemblies are the political inheritance of the new states."
+        }
+      ]
     },
     {
       "id": "cc-101",
@@ -2009,7 +2647,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 50,
       "lng": 12,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "cc-122",
+          "type": "contributing",
+          "rationale": "Marx writes within and against Enlightenment ideas of progress and reason."
+        },
+        {
+          "to": "cc-110",
+          "type": "contributing",
+          "rationale": "The Revolution is the Enlightenment's political ideas put into practice."
+        }
+      ]
     },
     {
       "id": "cc-102",
@@ -2027,7 +2677,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 56,
       "lng": -106,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "cc-129",
+          "type": "contributing",
+          "rationale": "The fur trade's territory and the company's charter shape the country Canada becomes."
+        }
+      ]
     },
     {
       "id": "cc-103",
@@ -2045,7 +2702,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 38,
       "lng": -77,
-      "area": 800
+      "area": 800,
+      "connections": [
+        {
+          "to": "cc-111",
+          "type": "echo",
+          "rationale": "The Second Awakening repeats the revival pattern of the first a century later."
+        }
+      ]
     },
     {
       "id": "cc-104",
@@ -2064,7 +2728,14 @@ window.registerDeck({
       "lat": 50,
       "lng": 12,
       "area": 3000,
-      "yearEnd": 1820
+      "yearEnd": 1820,
+      "connections": [
+        {
+          "to": "cc-119",
+          "type": "contributing",
+          "rationale": "Romanticism defines itself against the classical rules."
+        }
+      ]
     },
     {
       "id": "cc-105",
@@ -2083,7 +2754,14 @@ window.registerDeck({
       "lat": 20,
       "lng": 0,
       "area": "world",
-      "yearEnd": 1763
+      "yearEnd": 1763,
+      "connections": [
+        {
+          "to": "cc-108",
+          "type": "contributing",
+          "rationale": "The war's cost drives the taxes the colonies resist, and the removal of France changes their strategic position."
+        }
+      ]
     },
     {
       "id": "cc-106",
@@ -2101,7 +2779,29 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 54,
       "lng": -2,
-      "area": "world"
+      "area": "world",
+      "connections": [
+        {
+          "to": "cc-117",
+          "type": "contributing",
+          "rationale": "Industrial demand is what pulls the immigrants."
+        },
+        {
+          "to": "cc-121",
+          "type": "contributing",
+          "rationale": "Rail and steam make the westward expansion possible."
+        },
+        {
+          "to": "cc-122",
+          "type": "contributing",
+          "rationale": "The industrial working class Marx writes about is the age of industry's product."
+        },
+        {
+          "to": "cc-133",
+          "type": "contributing",
+          "rationale": "Industrialisation produces the conditions the progressive reforms address."
+        }
+      ]
     },
     {
       "id": "cc-107",
@@ -2119,7 +2819,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 0,
       "lng": -160,
-      "area": "world"
+      "area": "world",
+      "connections": [
+        {
+          "to": "cc-134",
+          "type": "contributing",
+          "rationale": "Cook's voyages make Australia a British settler colony."
+        },
+        {
+          "to": "cc-152",
+          "type": "contributing",
+          "rationale": "Cook's circumnavigation of Antarctica opens the continent to the claims the treaty later regulates."
+        }
+      ]
     },
     {
       "id": "cc-108",
@@ -2137,7 +2849,24 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 38,
       "lng": -77,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-109",
+          "type": "contributing",
+          "rationale": "The Constitution is written because the Revolution's first confederation failed."
+        },
+        {
+          "to": "cc-110",
+          "type": "contributing",
+          "rationale": "The American example and the French debt from the war both feed the revolution in France."
+        },
+        {
+          "to": "cc-115",
+          "type": "contributing",
+          "rationale": "Unresolved disputes with Britain after independence lead to the war of 1812."
+        }
+      ]
     },
     {
       "id": "cc-109",
@@ -2155,7 +2884,29 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 39.8,
       "lng": -98.6,
-      "area": 4000
+      "area": 4000,
+      "connections": [
+        {
+          "to": "cc-116",
+          "type": "contributing",
+          "rationale": "The constitutional compromises over slavery are the pattern the Missouri Compromise extends."
+        },
+        {
+          "to": "cc-118",
+          "type": "contributing",
+          "rationale": "The Monroe Doctrine is the new republic's statement of foreign policy."
+        },
+        {
+          "to": "cc-120",
+          "type": "contributing",
+          "rationale": "The constitutional settlement leaves the forced-removal policy that the Trail of Tears carries out."
+        },
+        {
+          "to": "cc-123",
+          "type": "contributing",
+          "rationale": "Dred Scott reads the Constitution the founders wrote."
+        }
+      ]
     },
     {
       "id": "cc-110",
@@ -2174,7 +2925,14 @@ window.registerDeck({
       "lat": 46.6,
       "lng": 2.4,
       "area": 600,
-      "yearEnd": 1799
+      "yearEnd": 1799,
+      "connections": [
+        {
+          "to": "cc-113",
+          "type": "necessary",
+          "rationale": "Napoleon rises from the Revolution's wars."
+        }
+      ]
     },
     {
       "id": "cc-111",
@@ -2210,7 +2968,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 45,
       "lng": -100,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "cc-121",
+          "type": "contributing",
+          "rationale": "The Purchase doubles the territory westward expansion moves into."
+        }
+      ]
     },
     {
       "id": "cc-113",
@@ -2228,7 +2993,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 46.6,
       "lng": 2.4,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-114",
+          "type": "contributing",
+          "rationale": "Napoleon's occupation of Spain and Portugal triggers the independence movements in Latin America."
+        },
+        {
+          "to": "cc-118",
+          "type": "contributing",
+          "rationale": "The doctrine responds to the post-Napoleonic order and the restored monarchies."
+        }
+      ]
     },
     {
       "id": "cc-114",
@@ -2282,7 +3059,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 39.8,
       "lng": -98.6,
-      "area": 4000
+      "area": 4000,
+      "connections": [
+        {
+          "to": "cc-123",
+          "type": "contributing",
+          "rationale": "The compromise of 1850 is a further attempt at the same sectional bargain."
+        }
+      ]
     },
     {
       "id": "cc-117",
@@ -2355,7 +3139,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 33,
       "lng": -84,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-121",
+          "type": "contributing",
+          "rationale": "The forced removals are the policy that clears the land expansion needs."
+        }
+      ]
     },
     {
       "id": "cc-121",
@@ -2391,7 +3182,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 51.2,
       "lng": 10.4,
-      "area": 500
+      "area": 500,
+      "connections": [
+        {
+          "to": "cc-137",
+          "type": "necessary",
+          "rationale": "Lenin reads Marx; Bolshevism is a Marxist project."
+        }
+      ]
     },
     {
       "id": "cc-123",
@@ -2409,7 +3207,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 39.8,
       "lng": -98.6,
-      "area": 4000
+      "area": 4000,
+      "connections": [
+        {
+          "to": "cc-127",
+          "type": "contributing",
+          "rationale": "The decision hardens the sectional crisis that becomes the war."
+        }
+      ]
     },
     {
       "id": "cc-124",
@@ -2482,7 +3287,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 39.8,
       "lng": -98.6,
-      "area": 4000
+      "area": 4000,
+      "connections": [
+        {
+          "to": "cc-128",
+          "type": "necessary",
+          "rationale": "Reconstruction is the aftermath of the war."
+        }
+      ]
     },
     {
       "id": "cc-128",
@@ -2500,7 +3312,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 33,
       "lng": -85,
-      "area": 600
+      "area": 600,
+      "connections": [
+        {
+          "to": "cc-150",
+          "type": "contributing",
+          "rationale": "The Fourteenth and Fifteenth Amendments Reconstruction passed are the legal base the civil rights movement uses."
+        }
+      ]
     },
     {
       "id": "cc-129",
@@ -2518,7 +3337,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 56,
       "lng": -106,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "cc-134",
+          "type": "echo",
+          "rationale": "Self-governing settler dominions of the same empire arriving at nationhood the same way."
+        }
+      ]
     },
     {
       "id": "cc-130",
@@ -2536,7 +3362,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 51.2,
       "lng": 10.4,
-      "area": 500
+      "area": 500,
+      "connections": [
+        {
+          "to": "cc-136",
+          "type": "contributing",
+          "rationale": "The new German empire's power shifts the balance that breaks in 1914."
+        }
+      ]
     },
     {
       "id": "cc-131",
@@ -2554,7 +3387,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": -30.6,
       "lng": 22.9,
-      "area": 800
+      "area": 800,
+      "connections": [
+        {
+          "to": "cc-145",
+          "type": "contributing",
+          "rationale": "Gandhi's method is forged in South Africa during the Boer era."
+        },
+        {
+          "to": "cc-159",
+          "type": "contributing",
+          "rationale": "The Union of South Africa the Boer Wars produce is the state apartheid later builds and 1994 dismantles."
+        }
+      ]
     },
     {
       "id": "cc-132",
@@ -2572,7 +3417,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 15,
       "lng": -75,
-      "area": 800
+      "area": 800,
+      "connections": [
+        {
+          "to": "cc-133",
+          "type": "contributing",
+          "rationale": "The war's overseas acquisitions and the debate they provoke feed the progressive era."
+        }
+      ]
     },
     {
       "id": "cc-133",
@@ -2590,7 +3442,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 39.8,
       "lng": -98.6,
-      "area": 4000
+      "area": 4000,
+      "connections": [
+        {
+          "to": "cc-140",
+          "type": "contributing",
+          "rationale": "The regulatory state the progressives built is tested by the Depression."
+        }
+      ]
     },
     {
       "id": "cc-134",
@@ -2644,7 +3503,29 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 50,
       "lng": 10,
-      "area": "world"
+      "area": "world",
+      "connections": [
+        {
+          "to": "cc-140",
+          "type": "contributing",
+          "rationale": "The war's debts and the peace settlement feed the interwar crisis."
+        },
+        {
+          "to": "cc-141",
+          "type": "contributing",
+          "rationale": "The settlement of 1919 is the ground of the second war."
+        },
+        {
+          "to": "cc-143",
+          "type": "contributing",
+          "rationale": "The League's failure informs the design of the United Nations."
+        },
+        {
+          "to": "cc-137",
+          "type": "contributing",
+          "rationale": "The war's collapse enables the Russian Revolution."
+        }
+      ]
     },
     {
       "id": "cc-137",
@@ -2662,7 +3543,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 61,
       "lng": 100,
-      "area": 4000
+      "area": 4000,
+      "connections": [
+        {
+          "to": "cc-142",
+          "type": "necessary",
+          "rationale": "Stalin inherits Lenin's party and state."
+        },
+        {
+          "to": "cc-144",
+          "type": "contributing",
+          "rationale": "The Soviet state Lenin founded is one pole of the Cold War."
+        }
+      ]
     },
     {
       "id": "cc-138",
@@ -2716,7 +3609,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 39.8,
       "lng": -98.6,
-      "area": 4000
+      "area": 4000,
+      "connections": [
+        {
+          "to": "cc-141",
+          "type": "contributing",
+          "rationale": "Depression economics and the rise of the dictators feed the war."
+        }
+      ]
     },
     {
       "id": "cc-141",
@@ -2734,7 +3634,29 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 20,
       "lng": 0,
-      "area": "world"
+      "area": "world",
+      "connections": [
+        {
+          "to": "cc-143",
+          "type": "necessary",
+          "rationale": "The United Nations is created by the wartime alliance."
+        },
+        {
+          "to": "cc-144",
+          "type": "contributing",
+          "rationale": "The wartime alliance breaks into the Cold War."
+        },
+        {
+          "to": "cc-146",
+          "type": "necessary",
+          "rationale": "The Holocaust and the war's aftermath produce the state of Israel."
+        },
+        {
+          "to": "cc-154",
+          "type": "contributing",
+          "rationale": "Wartime rocket research feeds the space race."
+        }
+      ]
     },
     {
       "id": "cc-142",
@@ -2752,7 +3674,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 60,
       "lng": 90,
-      "area": 4000
+      "area": 4000,
+      "connections": [
+        {
+          "to": "cc-144",
+          "type": "contributing",
+          "rationale": "Stalin's postwar domination of eastern Europe is the Cold War's other pole."
+        }
+      ]
     },
     {
       "id": "cc-143",
@@ -2770,7 +3699,24 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 20,
       "lng": 0,
-      "area": "world"
+      "area": "world",
+      "connections": [
+        {
+          "to": "cc-145",
+          "type": "contributing",
+          "rationale": "The UN's decolonisation pressure and the new postwar order speed independence."
+        },
+        {
+          "to": "cc-146",
+          "type": "necessary",
+          "rationale": "The UN partition vote of 1947 creates Israel's legal basis."
+        },
+        {
+          "to": "cc-150",
+          "type": "contributing",
+          "rationale": "The UN's human-rights language is used by the civil rights movement."
+        }
+      ]
     },
     {
       "id": "cc-144",
@@ -2789,7 +3735,29 @@ window.registerDeck({
       "lat": 20,
       "lng": 0,
       "area": "world",
-      "yearEnd": 1991
+      "yearEnd": 1991,
+      "connections": [
+        {
+          "to": "cc-148",
+          "type": "necessary",
+          "rationale": "NATO is formed in response to the Cold War."
+        },
+        {
+          "to": "cc-149",
+          "type": "necessary",
+          "rationale": "Korea is the first hot war of the Cold War."
+        },
+        {
+          "to": "cc-153",
+          "type": "contributing",
+          "rationale": "Vietnam is a containment war fought inside the Cold War frame."
+        },
+        {
+          "to": "cc-157",
+          "type": "contributing",
+          "rationale": "The Cold War ends in 1989."
+        }
+      ]
     },
     {
       "id": "cc-145",
@@ -2807,7 +3775,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 22,
       "lng": 79,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "cc-159",
+          "type": "contributing",
+          "rationale": "India's independence is a model and an encouragement for decolonisation."
+        }
+      ]
     },
     {
       "id": "cc-146",
@@ -2825,7 +3800,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 31.9,
       "lng": 35.2,
-      "area": 200
+      "area": 200,
+      "connections": [
+        {
+          "to": "cc-160",
+          "type": "contributing",
+          "rationale": "The unresolved Israeli-Palestinian conflict is part of the background to 2001."
+        }
+      ]
     },
     {
       "id": "cc-147",
@@ -2843,7 +3825,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 35,
       "lng": 105,
-      "area": 3000
+      "area": 3000,
+      "connections": [
+        {
+          "to": "cc-153",
+          "type": "contributing",
+          "rationale": "Communist China supplies and supports North Vietnam."
+        }
+      ]
     },
     {
       "id": "cc-148",
@@ -2879,7 +3868,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 36.5,
       "lng": 127.8,
-      "area": 300
+      "area": 300,
+      "connections": [
+        {
+          "to": "cc-153",
+          "type": "contributing",
+          "rationale": "Korea sets the precedent for containment wars."
+        }
+      ]
     },
     {
       "id": "cc-150",
@@ -2967,7 +3963,14 @@ window.registerDeck({
       "where": "The Moon",
       "why": "A pinnacle of 20th-century achievement.",
       "emoji": "📜",
-      "noMap": true
+      "noMap": true,
+      "connections": [
+        {
+          "to": "cc-155",
+          "type": "contributing",
+          "rationale": "The space programme's computing and communications investment feeds the information age."
+        }
+      ]
     },
     {
       "id": "cc-155",
@@ -2985,7 +3988,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 20,
       "lng": 0,
-      "area": "world"
+      "area": "world",
+      "connections": [
+        {
+          "to": "cc-160",
+          "type": "contributing",
+          "rationale": "Globalisation and networks are the medium of the 2001 attacks and of the response."
+        }
+      ]
     },
     {
       "id": "cc-156",
@@ -3021,7 +4031,19 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 52,
       "lng": 27,
-      "area": 1500
+      "area": 1500,
+      "connections": [
+        {
+          "to": "cc-158",
+          "type": "contributing",
+          "rationale": "The end of the bloc lets the European Union expand east."
+        },
+        {
+          "to": "cc-159",
+          "type": "contributing",
+          "rationale": "The end of the Cold War removes the support that had propped up apartheid."
+        }
+      ]
     },
     {
       "id": "cc-158",
@@ -3057,7 +4079,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": -30.6,
       "lng": 22.9,
-      "area": 800
+      "area": 800,
+      "connections": [
+        {
+          "to": "cc-161",
+          "type": "contributing",
+          "rationale": "The end of apartheid is part of the wave of democratisation."
+        }
+      ]
     },
     {
       "id": "cc-160",
@@ -3075,7 +4104,14 @@ window.registerDeck({
       "emoji": "📜",
       "lat": 39.8,
       "lng": -98.6,
-      "area": 4000
+      "area": 4000,
+      "connections": [
+        {
+          "to": "cc-161",
+          "type": "contributing",
+          "rationale": "The response to 2001 includes the push for democracy in the Middle East."
+        }
+      ]
     },
     {
       "id": "cc-161",

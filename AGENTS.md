@@ -220,7 +220,7 @@ designing any learning or motivational surface, and cite it by § number.
 | `doc/CROSS_PLATFORM_ROADMAP.md` | Cross-platform, cloud, monetization and packaging plan (§19 deck packages, §19.12 narration) |
 | `doc/CLOUDLESS_PLAN.md` | The **cloud-less track**: working method (research → plan → build → verify), ordered slice queue, and the two decisions it gates on. Start here for any client-side-only feature |
 | `doc/STUDY_MODES.md` | Mode catalog (v2). Ratings on a research-alignment rubric, new instruction surfaces, competitive read, and a mandated instruction-before-assessment build order. **v1's catalog and TL;DR are preserved verbatim in §14** with the reason for every change |
-| `doc/CONNECTIONS.md` | The connection/causal edge model: schema, type vocabulary, the filter rule, the logged rejections, and the `inventions-discoveries` pilot (61 authored edges). Read before touching `connections[]` |
+| `doc/CONNECTIONS.md` | The connection/causal edge model: schema, type vocabulary, the filter rule, the logged rejections, and the authored edges (`inventions-discoveries` 61, `cc-timeline` 162, `world-history-first-timeline` 38). Read before touching `connections[]` |
 
 ## FX layer (`fx.js` → `window.FX`)
 
@@ -330,16 +330,17 @@ Additional checks for the surfaces built after this doc was last revised:
   connection cue that replaced the why-line (`npm run smoke:connections`),
   scoring/round order, pixels and iOS.
 - **Connection cue (the slip-moment link line):** `npm run smoke:connections`
-  (Chromium, ~35 s, 18 checks) drives a real `inventions-discoveries` round and
+  (Chromium, ~45 s, 21 checks) drives a real `inventions-discoveries` round and
   proves the wiring the Node tests cannot: every rendered `.tl-conn` (revealed
   card) and `.gap-callout__link` (rescue callout) names a partner that is
   actually on the board (RULE 2, observed end to end), a rescue callout's
   `data-announce` carries its cue **exactly once** (no double-read through the
-  polite live region), a deck with no `connections[]` (`cc-timeline`) renders
+  polite live region), a deck with no `connections[]` (`world-literature`) renders
   neither surface while its rescue still fires (so the zero is not vacuous), and
-  the 5–7 fact sheet never restates the cue phrase (FR8 prose gate). All of it
-  holds under reduced motion. **What it cannot cover:** pixels, the screen
-  reader's spoken timing, and iOS.
+  the 5–7 fact sheet never restates the cue phrase (FR8 prose gate), while the
+  newly authored `world-history-first-timeline` renders cues through the same
+  path. All of it holds under reduced motion. **What it cannot cover:** pixels,
+  the screen reader's spoken timing, and iOS.
 - **Review queue (S2, phase 3):** `npm run smoke:review` (Chromium) covers the
   Focus-panel Review round, the derived due count, the fail-open small set, the
   5–7 era/week cap, the J2 empty state and reduced motion.
