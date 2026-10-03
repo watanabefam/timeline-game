@@ -110,11 +110,60 @@ const USER_ID = "smoke-connections";
 // vacuity check). Both are named here so a rename fails loudly.
 const CUE_DECK = "inventions-discoveries";
 const CUE_DECK_NAME = "Inventions & Discoveries";
-// world-literature is the last deck with no connections[] — cc-timeline and
-// world-history-first-timeline gained edges on 2026-10-03, so the vacuity check
-// moved here (a deck with no edges must still render nothing).
-const BARE_DECK = "world-literature";
-const BARE_DECK_NAME = "World Literature";
+// The vacuity control: a deck with no connections[] at all, injected at runtime
+// so the zero is STRUCTURAL rather than incidental. world-literature served
+// here until it gained authored edges (2026-10-03, doc/MVP_PLAN.md C3) — at
+// which point "no cue rendered" would have been a coincidence of 3 edges across
+// 80 events in a 5-card round, not a property of the code.
+const BARE_DECK = "smoke-bare-deck";
+const BARE_DECK_NAME = "Smoke Bare Deck";
+// Registered from a higher-priority source so it replaces nothing bundled and
+// cannot collide with a real deck id.
+// `evaluateOnNewDocument` runs BEFORE any page script, so `registerDeck` does
+// not exist yet. This hooks its assignment instead of assuming it: the moment
+// events-data.js installs the real function, the control deck is registered
+// through it — the same public API a user import uses, at the first moment it
+// is usable.
+const BARE_DECK_SCRIPT = `
+  (function () {
+    var control = {
+      id: ${JSON.stringify(BARE_DECK)},
+      name: ${JSON.stringify(BARE_DECK_NAME)},
+      blurb: "Synthetic control deck: 24 events, no connections[].",
+      emoji: "🧪",
+      tier: "free",
+      events: Array.from({ length: 24 }, function (_, i) {
+        return {
+          id: "bare-" + i,
+          title: "Control event " + (i + 1),
+          year: 1000 + i * 10,
+          era: i < 12 ? "medieval" : "early-modern",
+          week: Math.floor(i / 6) + 1,
+          category: "control",
+          fact: "A synthetic event used only to prove that a deck with no authored connections renders no cue.",
+          who: "nobody",
+          where: "nowhere",
+        };
+      }),
+    };
+    Object.defineProperty(window, "registerDeck", {
+      configurable: true,
+      set: function (real) {
+        Object.defineProperty(window, "registerDeck", {
+          configurable: true,
+          writable: true,
+          value: function (deck, opts) {
+            real.call(window, deck, opts);
+            if (!window.__bareRegistered) {
+              window.__bareRegistered = true;
+              real.call(window, control, { priority: 10 });
+            }
+          },
+        });
+      },
+    });
+  })();
+`;
 // A deck authored after the pilot (2026-10-03) — proves the new graph renders
 // through the same path, so "the edges exist" is not merely JSON on disk.
 const NEW_DECK_NAME = "World History: A First Timeline";
@@ -127,7 +176,7 @@ const seed = (band) => {
 const profile = () => ({ decks: {}, reviewLog: [], meta: { tz: "UTC" } });
 
 /* ------------------------------------------------------------- pages */
-async function openHome(browser, base, { band, reducedMotion = false } = {}) {
+async function openHome(browser, base, { band, reducedMotion = false, inject = null } = {}) {
   const context = await browser.createBrowserContext();
   const errs = [];
   const page = await context.newPage();
@@ -136,6 +185,10 @@ async function openHome(browser, base, { band, reducedMotion = false } = {}) {
   if (reducedMotion) {
     await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }]);
   }
+  // Inject BEFORE any page script: the deck registers through the same public
+  // API a user import uses, so the control exercises the shipped path rather
+  // than a test-only hook.
+  if (inject) await page.evaluateOnNewDocument(inject);
   await page.evaluateOnNewDocument((users, prof, key) => {
     try {
       localStorage.setItem("timeline.users.v1", JSON.stringify(users));
@@ -264,8 +317,8 @@ function partnerOnBoard(cue, owner, board) {
   return { matched, ok: other.length >= 1 };
 }
 
-async function runDeck(browser, base, { deckName, band, playCount = null, reducedMotion = false }) {
-  const { context, page, errs, reduced } = await openHome(browser, base, { band, reducedMotion });
+async function runDeck(browser, base, { deckName, band, playCount = null, reducedMotion = false, inject = null }) {
+  const { context, page, errs, reduced } = await openHome(browser, base, { band, reducedMotion, inject });
   const startedDeck = await startDeck(page, deckName, { playCount });
   const moduleOk = await page.evaluate(() => !!(window.Connections && window.Connections.PHRASES && window.Connections.cueFor));
   await new Promise((r) => setTimeout(r, 300)); // one tick so the first card settles
@@ -372,7 +425,7 @@ async function main() {
 
     /* ---- AC2: a deck with no connections renders nothing ---- */
     phase(`${BARE_DECK_NAME} — a deck with no connections[] renders no cue at all`);
-    const bare = await runDeck(browser, base, { deckName: BARE_DECK_NAME, band: "17+", playCount: 5 });
+    const bare = await runDeck(browser, base, { deckName: BARE_DECK_NAME, band: "17+", playCount: 5, inject: BARE_DECK_SCRIPT });
     allErrors.push(...bare.errs);
     check("the no-connection round started and completed", bare.startedDeck.gameVisible && bare.done, `clicks=${bare.clicks}`);
     check("no .tl-conn is rendered anywhere", bare.conns.size === 0, `reveal lines=${bare.conns.size}`);

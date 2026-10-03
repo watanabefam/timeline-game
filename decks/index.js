@@ -44,8 +44,8 @@ window.DECK_INDEX = {
       "dir": "world-literature",
       "entry": "deck.json",
       "script": "deck.js",
-      "revision": "1819388aa75c",
-      "bytes": 49899,
+      "revision": "32c136ee7983",
+      "bytes": 51008,
       "version": "1.0.0",
       "attribution": [],
       "grandfathered": true

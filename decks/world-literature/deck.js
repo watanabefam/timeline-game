@@ -14,31 +14,43 @@ window.registerDeck({
       "options": [
         {
           "value": "ancient",
-          "label": "Ancient (to 500 CE)"
+          "label": "Ancient (to 500 CE)",
+          "max": 500
         },
         {
           "value": "medieval",
-          "label": "Medieval (500–1300)"
+          "label": "Medieval (500–1300)",
+          "min": 500,
+          "max": 1300
         },
         {
           "value": "renaissance",
-          "label": "Renaissance (1300–1660)"
+          "label": "Renaissance (1300–1660)",
+          "min": 1300,
+          "max": 1660
         },
         {
           "value": "enlightenment",
-          "label": "Enlightenment (1660–1800)"
+          "label": "Enlightenment (1660–1800)",
+          "min": 1660,
+          "max": 1800
         },
         {
           "value": "romantic",
-          "label": "Romantic/Victorian (1800–1900)"
+          "label": "Romantic/Victorian (1800–1900)",
+          "min": 1800,
+          "max": 1900
         },
         {
           "value": "modern",
-          "label": "Modern/WW (1900–1960)"
+          "label": "Modern/WW (1900–1960)",
+          "min": 1900,
+          "max": 1960
         },
         {
           "value": "contemporary",
-          "label": "Contemporary (1960+)"
+          "label": "Contemporary (1960+)",
+          "min": 1960
         }
       ],
       "get": {
@@ -131,7 +143,19 @@ window.registerDeck({
       "why": "The foundational epic of Western literature.",
       "lat": 37.97,
       "lng": 23.73,
-      "area": 250
+      "area": 250,
+      "connections": [
+        {
+          "to": "odyssey",
+          "type": "necessary",
+          "rationale": "The Odyssey presupposes the Iliad: it follows the same heroes home from the same war, and its whole frame of reference is the siege the earlier poem narrates."
+        },
+        {
+          "to": "aeneid",
+          "type": "contributing",
+          "rationale": "Homer's epics set the epic form and the expectation that a founding story is told in verse; Virgil wrote into that expectation deliberately."
+        }
+      ]
     },
     {
       "id": "odyssey",
@@ -204,6 +228,13 @@ window.registerDeck({
     },
     {
       "id": "aeneid",
+      "connections": [
+        {
+          "to": "divine-comedy",
+          "type": "necessary",
+          "rationale": "Dante's poem needs Virgil, and needs him as the guide he wrote himself to be: the Comedy is built on the Aeneid's authority, quoting and continuing it."
+        }
+      ],
       "title": "Aeneid (Virgil)",
       "year": -29,
       "composed": "29 BCE",
@@ -915,7 +946,7 @@ window.registerDeck({
       "composed": "1891",
       "continent": "europe",
       "era": "romantic",
-      "category": "tragedy",
+      "category": "literary",
       "emoji": "🍀",
       "fact": "Hardy’s subtitle “A Pure Woman” scandalized Victorian readers by defending a seduced and impoverished country girl.",
       "who": "Thomas Hardy",
