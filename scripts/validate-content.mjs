@@ -46,6 +46,37 @@
  * are safe paths) and an orphan-file warning for anything the manifest does
  * not reference.
  *
+ * RULE — "A deck is scored on relations BETWEEN events."
+ *
+ * Everything above looks at ONE event in isolation. A timeline game asks "did
+ * this come before that?", so the defects that hurt most live at deck level,
+ * and the gate now checks them too (doc/DECK_VALIDATION.md has the argument,
+ * the corpus counts and the thresholds for each):
+ *
+ *   * id integrity (error) — the id is a narration filename
+ *     (`decks/<id>/narration/<event-id>.mp3`) and the key for every lookup, so
+ *     it must be a unique, safe slug.
+ *   * filter contract (error) — a field-based filter matches by equality, so an
+ *     event carrying a value the filter never declared vanishes from every
+ *     option of that filter, silently. An option matching no event at all is a
+ *     chip that returns nothing (warning).
+ *   * declared ranges (warning) — a filter option may declare `min`/`max`, so a
+ *     deck states its own era boundaries as DATA. An event dated outside the
+ *     range its own label declares is reported: resolving it means deciding
+ *     which side is wrong, which is an editorial call, not a lint fix.
+ *   * ordering determinacy (reported, never failed) — two events sharing a sort
+ *     key are BOTH accepted in either order (`correctIndexRange` returns an
+ *     inclusive range), so a tie is not a scoring bug; it is a pair that
+ *     measures nothing about ordering, which is worth knowing.
+ *   * relative-order cues (warning) — the year rule stops an ABSOLUTE leak;
+ *     this catches the relative one ("after the printing press"). Reported
+ *     because a relative cue is also legitimate scaffolding.
+ *   * readability + coverage (reported, counted nowhere) — Flesch–Kincaid on
+ *     title+fact against each age band's ceiling, and the year span, densest
+ *     century and continent/category mix. Representativeness is measured rather
+ *     than asserted, and a coverage number that counted as a warning would
+ *     train everyone to ignore the warnings.
+ *
  * Run:  node scripts/validate-content.mjs
  * Exit code 1 on any failure (wire into CI / pre-commit).
  */
@@ -54,6 +85,7 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, basename, relative, sep } from "node:path";
 import { loadDeck } from "../tools/content-pipeline/lib/load.mjs";
+import { fleschKincaidGrade } from "../tools/content-pipeline/lib/rules.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(here, "..");
@@ -290,6 +322,9 @@ const warn = (deck, id, msg) => {
   warns++;
   console.log(`  ⚠ [${deck}] ${id}: ${msg}`);
 };
+// Reports and measurements: printed, counted nowhere. A coverage number that
+// incremented the warning count would train everyone to ignore the warnings.
+const info = (msg) => console.log(`  · ${msg}`);
 
 // ------------------------------------------------------------------
 
@@ -476,6 +511,224 @@ for (const rec of records) {
     }
   }
 
+  // ------------------------------------------------------------------
+  // Deck integrity, ordering determinacy, and coverage.
+  // ------------------------------------------------------------------
+  // These rules exist because the ones above only ever looked at ONE event in
+  // isolation. A timeline game is scored on relations BETWEEN events, so the
+  // defects that matter most live at deck level. Each rule below is traceable
+  // to something, not to taste; doc/DECK_VALIDATION.md carries the full
+  // argument, the corpus counts and the thresholds.
+  //
+  //   * The scoring rule is "one placement, one correct answer" — the
+  //     item-quality literature's "one correct" rule
+  //     (Haladyna et al. 2002, k=91 studies, via
+  //     doc/references/mcg_research_synthesis.md §12). Where the game already
+  //     accepts both orders (timeline.js `correctIndexRange` returns an
+  //     inclusive range), a tie is NOT a defect and is reported as a count.
+  //     Where a filter cannot match a value, the event silently disappears from
+  //     a view every player can reach — that IS a defect.
+  //   * Representativeness is measured, never asserted (history-education
+  //     literature: Wilkening 2026 HERJ; Zurné 2026 Cogitatio; History
+  //     Workshop 2015). A deck is allowed to be narrow; it is not allowed to be
+  //     narrow without anyone having looked.
+  //   * Readability is reported per band using the SAME Flesch–Kincaid
+  //     implementation the content pipeline grades `summary` with, imported
+  //     above — two grade-level implementations in one repo would drift, and a
+  //     drifting readability number is worse than none.
+
+  const events = deck.events;
+
+  // -- id integrity ------------------------------------------------------
+  // The id is not cosmetic: narration clips are shipped as
+  // `decks/<id>/narration/<event-id>.mp3` and the fact sheet links by it, so an
+  // id carrying a slash or a space breaks an asset path, and a duplicate id
+  // makes every id lookup (review scheduler, connections, stats) ambiguous.
+  const idCounts = new Map();
+  for (const ev of events) {
+    const raw = typeof ev.id === "string" ? ev.id : "";
+    if (!raw) {
+      err(deck.id, "(deck)", "an event has no id — every lookup keys on it");
+      continue;
+    }
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(raw)) {
+      err(
+        deck.id,
+        raw,
+        `id is not a safe slug (lowercase letters, digits, "-") — it becomes narration/<id>.mp3 and a lookup key`
+      );
+    }
+    idCounts.set(raw, (idCounts.get(raw) || 0) + 1);
+  }
+  for (const [id, n] of idCounts) {
+    if (n > 1) err(deck.id, id, `id appears ${n} times — every id lookup is ambiguous`);
+  }
+
+  // -- filters: declared values are the contract -------------------------
+  // A field-based filter matches by equality (`get: { field: "era" }`), so an
+  // event carrying a value the filter never declared is excluded from EVERY
+  // option of that filter and no error is ever raised. This is the one defect
+  // class a player hits as "the filter is missing an event".
+  for (const f of deck.filters || []) {
+    if (!f || !f.get || !f.get.field || !Array.isArray(f.options)) continue;
+    const field = f.get.field;
+    const declared = new Map(f.options.map((o) => [String(o.value), o]));
+    const used = new Map();
+    for (const ev of events) {
+      const v = ev[field];
+      if (v == null || v === "") continue;
+      const key = String(v);
+      (used.get(key) || used.set(key, []).get(key)).push(ev.id);
+      if (!declared.has(key)) {
+        err(
+          deck.id,
+          ev.id,
+          `${field} "${key}" is not one of the ${f.options.length} options the "${f.id}" filter declares — this event is excluded from that filter entirely`
+        );
+      }
+    }
+    for (const [value, ids] of used) {
+      if (!declared.has(value)) continue;
+      const opt = declared.get(value);
+      // Declared ranges (min/max, seconds omitted = open) let the deck state
+      // its own era boundaries as data instead of leaving a gate to parse them
+      // back out of the human label.
+      if (typeof opt.min === "number" || typeof opt.max === "number") {
+        const lo = typeof opt.min === "number" ? opt.min : -Infinity;
+        const hi = typeof opt.max === "number" ? opt.max : Infinity;
+        for (const id of ids) {
+          const ev = eventById.get(id);
+          const y = sortYearOf(ev);
+          if (y === null || y < lo || y > hi) {
+            warn(
+              deck.id,
+              id,
+              `${field} "${value}" declares ${opt.min ?? "-∞"}..${opt.max ?? "+∞"} but this event is dated ${y} — the label and the year disagree`
+            );
+          }
+        }
+      }
+    }
+    for (const o of f.options) {
+      if (!used.has(String(o.value))) {
+        warn(
+          deck.id,
+          `(filter ${f.id})`,
+          `option "${o.label || o.value}" matches no event in this deck — a chip that returns nothing`
+        );
+      }
+    }
+  }
+
+  // -- ordering determinacy (reported, not failed) -----------------------
+  const bySortKey = new Map();
+  for (const ev of events) {
+    const k = sortYearOf(ev);
+    if (k === null) {
+      warn(deck.id, ev.id, "no year and no sortYear — it cannot be ordered at all");
+      continue;
+    }
+    (bySortKey.get(k) || bySortKey.set(k, []).get(k)).push(ev.id);
+  }
+  const tiedPairs = [...bySortKey.entries()].filter(([, ids]) => ids.length > 1);
+  const tiedEvents = tiedPairs.reduce((n, [, ids]) => n + ids.length, 0);
+
+  // -- order cues in narrated text (reported) -----------------------------
+  // The year rule above stops an ABSOLUTE giveaway. This one catches the
+  // RELATIVE one: "after the printing press", "decades later" — language that
+  // answers the very question the round asks. It is a warning, never an error:
+  // a relative cue is also legitimate scaffolding (and the younger bands get
+  // no rationale prose at all), so the count is what a human needs, not a ban.
+  const CUE_RE =
+    /\b(after|before|later|earlier|eventually|subsequently|subsequent to|preceded|followed by|years later|decades later|centuries later|by the time|first|then)\b/i;
+  // `first` and `then` are also titles and names ("First Consul"), so they are
+  // only treated as cues in the prose fields; a bare relation word in a name is
+  // not a leak, and a check that cries wolf on every Roman numeral teaches
+  // everyone to skip the line.
+  const NARROW_CUE_RE =
+    /\b(after|before|later|earlier|eventually|subsequently|preceded|followed by|years later|decades later|centuries later|by the time)\b/i;
+  const cueHits = [];
+  for (const ev of events) {
+    for (const f of ["fact", "who", "where", "why"]) {
+      const v = ev[f];
+      if (typeof v !== "string") continue;
+      const re = f === "fact" || f === "why" ? CUE_RE : NARROW_CUE_RE;
+      if (re.test(v)) cueHits.push(`${ev.id}.${f}`);
+    }
+  }
+  if (cueHits.length) {
+    warn(
+      deck.id,
+      `(deck)`,
+      `${cueHits.length}/${events.length} events carry relative-order language in narrated text (${cueHits.slice(0, 8).join(", ")}${cueHits.length > 8 ? ", …" : ""}) — the year rule stops absolute leaks, this one is relative`
+    );
+  }
+
+  // -- readability report (one line, no per-event flood) ------------------
+  const grades = events
+    .map((e) => fleschKincaidGrade(`${e.title}. ${e.fact || ""}`))
+    .filter((g) => Number.isFinite(g))
+    .sort((a, b) => a - b);
+  if (grades.length) {
+    const med = grades[Math.floor(grades.length / 2)];
+    const over = (t) => grades.filter((g) => g > t).length;
+    info(
+      `${deck.id}: fact readability (Flesch–Kincaid, title+fact) median ${med.toFixed(1)}, p90 ${grades[Math.floor(grades.length * 0.9)].toFixed(1)} · over grade 3: ${over(3)}, over 6: ${over(6)}, over 9: ${over(9)}`
+    );
+  }
+
+  // -- coverage report ---------------------------------------------------
+  // The CALENDAR year, deliberately, not sortYear: cc-timeline's sortYear is a
+  // curriculum index (-161..-1), so reporting "densest century -100s" from it
+  // would be a true number about nothing.
+  const ys = events.map((e) => e.year).filter((y) => typeof y === "number");
+  const centuries = new Map();
+  for (const y of ys) {
+    const c = Math.floor(y / 100) * 100;
+    centuries.set(c, (centuries.get(c) || 0) + 1);
+  }
+  const topCentury = [...centuries.entries()].sort((a, b) => b[1] - a[1])[0];
+  const hist = (field) => {
+    const m = new Map();
+    for (const e of events) {
+      const v = e[field];
+      if (v == null || v === "") continue;
+      m.set(String(v), (m.get(String(v)) || 0) + 1);
+    }
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  };
+  const show = (name, pairs) => {
+    if (!pairs.length) return null;
+    const total = pairs.reduce((n, [, c]) => n + c, 0);
+    return `${name}: ${pairs.slice(0, 4).map(([v, c]) => `${v} ${c} (${Math.round((100 * c) / total)}%)`).join(", ")}`;
+  };
+  const clauses = [show("continent", hist("continent")), show("category", hist("category"))].filter(Boolean);
+  info(
+    `${deck.id}: coverage — ${events.length} events over ${ys.length ? `${Math.min(...ys)}..${Math.max(...ys)}` : "no dates"}` +
+      (topCentury ? `, densest century ${topCentury[0]}s at ${topCentury[1]} events` : "") +
+      (clauses.length ? ` · ${clauses.join(" · ")}` : "")
+  );
+
+  // -- map integrity ------------------------------------------------------
+  for (const ev of events) {
+    const hasCoords = typeof ev.lat === "number" && typeof ev.lng === "number";
+    if (hasCoords && (Math.abs(ev.lat) > 90 || Math.abs(ev.lng) > 180)) {
+      err(deck.id, ev.id, `coords (${ev.lat}, ${ev.lng}) are off the globe`);
+    }
+    if (ev.noMap && hasCoords) {
+      warn(deck.id, ev.id, "noMap is set but lat/lng are present — one of the two is lying");
+    }
+    if (!ev.noMap && !hasCoords) {
+      warn(deck.id, ev.id, "no noMap and no lat/lng — the map has nothing to point at");
+    }
+  }
+
+  if (tiedEvents) {
+    info(
+      `${deck.id}: ${tiedPairs.length} sort-key tie(s) covering ${tiedEvents} event(s) — both orders are accepted there (correctIndexRange), so those pairs measure nothing about ordering`
+    );
+  }
+
   // Coverage, not correctness: an event may legitimately be a terminus.
   const linked = deck.events.filter((e) => (e.connections || []).length).length;
   if (linked === 0) {
@@ -505,7 +758,7 @@ console.log("");
 if (errors || deckErrors) {
   if (errors) {
     console.error(
-      `✗ ${errors} event(s) failed the "fact adds value beyond the title" rule` +
+      `✗ ${errors} event-level failure(s) against the fact-quality, deck-integrity and filter-contract rules` +
         (warns ? ` (${warns} warning(s)).` : ".")
     );
   }
@@ -515,6 +768,6 @@ if (errors || deckErrors) {
   process.exit(1);
 }
 console.log(
-  `✓ All events pass the fact-quality rule` +
-    (warns ? ` (${warns} opt-in warning(s) about structured fields).` : ".")
+  `✓ All events pass the fact-quality and deck-integrity rules` +
+    (warns ? ` (${warns} warning(s) — see the ⚠ lines above).` : ".")
 );
