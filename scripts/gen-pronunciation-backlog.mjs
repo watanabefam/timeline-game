@@ -57,6 +57,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { triageAll, worksheetRows } from "../tools/narration/audit.mjs";
+import { referenceAvailable } from "../tools/narration/reference.mjs";
 import { DEFERRED, RECORDS } from "../tools/narration/lexicon-records.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -85,12 +86,30 @@ function fail(msg) {
  * @returns {Promise<{open: object[], deferred: object[], counts: object}>}
  */
 export async function buildBacklog() {
+  // Fail closed on the PRECONDITION, not on an exception.
+  //
+  // The try/catch below never fires when the dictionary is missing, because
+  // nothing throws: `triage()` degrades every candidate to the spelling-only
+  // UNVERIFIED tier, `worksheetRows()` then returns zero `no-reference` rows,
+  // and a generator that trusted "no error" would write an EMPTY backlog. A
+  // `--check` run would then call the committed 138-word file "stale" and send
+  // the reader to `gen:backlog` — which would overwrite it with the empty file,
+  // deleting the accepted backlog. A check that cannot run must never report
+  // clean, so the reference layer is asserted before anything is derived.
+  if (!(await referenceAvailable())) {
+    fail(
+      "the reference dictionary could not be loaded, so the backlog cannot be derived.\n" +
+        "  This gate needs tools/narration/node_modules (npm --prefix tools/narration install).\n" +
+        "  It is refusing to write a file from partial data rather than reporting a clean check."
+    );
+  }
+
   let triaged;
   try {
     triaged = await triageAll();
   } catch (err) {
     // Deliberately fatal. A partial run must never look like a smaller
-    // backlog.
+    // backlog, even if a future refactor breaks the precondition above.
     fail(
       `the audit could not run, so the backlog cannot be derived: ${err && err.message}\n` +
         "  This gate needs tools/narration/node_modules (npm --prefix tools/narration install).\n" +

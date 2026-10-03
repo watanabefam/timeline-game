@@ -2048,8 +2048,28 @@ export function validatePrompt(prompt: unknown): string | null {
 
 ## 13. Monetization Strategy
 
+> ### ⚠️ §13 is CONTRADICTED by newer evidence — do not build as written
+>
+> [`COMMERCIAL_PLAN.md`](./COMMERCIAL_PLAN.md) (2026-10-02) supersedes the
+> pricing below, on independent sources. Nothing in §13 has been ratified.
+>
+> | §13 says | Evidence says | Grade |
+> |---|---|---|
+> | `$9.99/mo` is "the sweet spot for education apps" | **Monthly is the worst-performing plan type in every category at every price tier.** Education revenue splits weekly 52% / annual 22% / **monthly 9%** | Medium |
+> | §13.4: hard paywall + 7-day trial is the primary mechanism | Duolingo (issuer disclosure): *"This scale wouldn't be possible with a hard paywall."* 9.2% penetration at 133M MAU | **High** |
+> | §13.3: introduce **monthly** first | If ever, annual only; the free/no-IAP posture in `AGENTS.md` is the asset | Medium |
+> | *(silent)* | **One-time purchases grew 6% → 17% of Education revenue, 2023→2025** — content ownership, not access rental | Medium |
+> | §13.2: 100k MAU → $100k/mo | Not supported by any source; no acquisition channel is budgeted. §16.3's break-even (≈8 subscribers) is the only defensible figure here | — |
+>
+> **The open decision is packaging**, not whether to sell. See
+> `COMMERCIAL_PLAN.md` §6. Recommendation: free core + paid deck packs ($3–9
+> one-time) via a Merchant of Record; institutional tier later, and only with a
+> backend. Resolve with the user before implementing anything in §7 or §13.
+
 ### 13.1 Pricing Matrix (Revised Based on Market Data)
 
+> ⚠️ **SUPERSEDED — see the notice above.** Retained for history only.
+>
 > **Key insight from RevenueCat 2026 data:** Don't price too low out of fear. $2.99 signals low value; you need 3x subscribers for the same revenue. $9.99/month is the sweet spot for education apps.
 
 | Feature | Free | Pro ($9.99/mo) | Pro+ ($14.99/mo) | Classroom ($19.99/mo) |

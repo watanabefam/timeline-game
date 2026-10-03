@@ -69,7 +69,7 @@ designing any learning or motivational surface, and cite it by § number.
    was **moved out of** `assets/vendor/` — moved, never edited — into the
    gitignored `tools/kokoro-authoring/`. See `doc/LIBRARY_RESEARCH.md` §2.)*
 3. **Cache-busting:** first-party scripts load with `?v=N`
-   (`fx.js?v=26`, `timeline.js?v=204`). Bump `N` whenever you edit that file,
+   (`fx.js?v=26`, `timeline.js?v=206`). Bump `N` whenever you edit that file,
    or returning players get stale code.
 4. **Script load order in `index.html` matters** (classic scripts, sync):
    `events-data.js` → `decks-io.js` → Leaflet → `world-land.js` →
@@ -214,11 +214,13 @@ designing any learning or motivational surface, and cite it by § number.
 | `THIRD_PARTY_LICENSES.md` | Attribution manifest for everything third-party; enforced by `npm run validate:vendor` |
 | `doc/GAMIFICATION_BRIEF.md` | Ratified spec for the gamification layer over the mastery review log (streaks, leveling, achievements, feedback copy) |
 | `doc/LIBRARY_RESEARCH.md` | Decision record for third-party libraries: stack-fit ratings, licenses, and the traps |
-| `doc/SUCCESS_FACTORS.md` | Evidence-graded external research; subordinate to the brief and `MARKET_COMPARISON.md` |
+| `doc/SUCCESS_FACTORS.md` | Evidence-graded external research; subordinate to the brief and `MARKET_COMPARISON.md`. **Forbidden as a commercial citation** (§6.5) |
+| `doc/COMMERCIAL_PLAN.md` | Monetization + distribution evidence, evidence-graded, and the **open** pricing/packaging decision. Independent corpus (Adapty SOIS 2026, Duolingo IR, GameAnalytics); supersedes §13 of `CROSS_PLATFORM_ROADMAP.md` where they disagree — nothing in it is ratified |
 | `doc/references/mcg_research_synthesis.md` | Vendored learning-science evidence base (26 fronts; effect sizes, boundary conditions, anti-patterns, cross-front conflict rules). Citable by § number |
 | `doc/references/evidence-base.md` | Per-pattern evidence ratings for the borrowed patterns. Written for the sibling Montessori grammar project — **only its §7 gamification row and general SDT/feedback rows transfer here** |
 | `doc/CROSS_PLATFORM_ROADMAP.md` | Cross-platform, cloud, monetization and packaging plan (§19 deck packages, §19.12 narration) |
 | `doc/CLOUDLESS_PLAN.md` | The **cloud-less track**: working method (research → plan → build → verify), ordered slice queue, and the two decisions it gates on. Start here for any client-side-only feature |
+| `doc/CONTENT_BACKLOG_PLAN.md` | Plan for the two content backlogs the gates cannot close alone: the pronunciation backlog gate (`validate:backlog`) and the 321 unsourced events. Evidence-graded research + sequenced slices with falsifiers |
 | `doc/STUDY_MODES.md` | Mode catalog (v2). Ratings on a research-alignment rubric, new instruction surfaces, competitive read, and a mandated instruction-before-assessment build order. **v1's catalog and TL;DR are preserved verbatim in §14** with the reason for every change |
 | `doc/CONNECTIONS.md` | The connection/causal edge model: schema, type vocabulary, the filter rule, the logged rejections, and the authored edges (`inventions-discoveries` 61, `cc-timeline` 162, `world-history-first-timeline` 38). Read before touching `connections[]` |
 

@@ -60,6 +60,10 @@ Exit codes: `0` pass · `1` findings at or above `--fail-level` · `2` fatal/con
    not part of `npm run validate`, because a gate this red in an always-green
    chain is a gate nobody reads.
 
+   The plan for retiring the exemption — pilot, batch, ratchet, and the licences
+   to prefer for the decks most likely to be sold — is
+   [`doc/CONTENT_BACKLOG_PLAN.md`](../../doc/CONTENT_BACKLOG_PLAN.md) §4.
+
 ## Rules
 
 | Rule | Severity | Checks |

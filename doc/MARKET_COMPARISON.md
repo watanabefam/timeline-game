@@ -180,6 +180,28 @@ Legend: ✅ = supported · 🟡 = partial/limited · ❌ = not supported · — 
 
 ---
 
+## 7a. Monetization evidence (added 2026-10-02)
+
+Pricing and packaging questions are **not** answered here — they are recorded,
+evidence-graded and still open in [`COMMERCIAL_PLAN.md`](./COMMERCIAL_PLAN.md),
+which draws on independent sources (Adapty SOIS 2026, Duolingo IR, GameAnalytics)
+rather than this corpus, per `SUCCESS_FACTORS.md` §6.5.
+
+Two findings from it bear directly on the tables above:
+
+- **One-time purchases have grown to 17% of Education revenue (from 6% in
+  2023)** — the fastest-moving monetization behavior in the category, and it
+  favours paid *content packs* over access subscriptions.
+- **Duolingo: "This scale wouldn't be possible with a hard paywall."** The
+  free / no-ads / no-IAP posture in §5.1 is supported by the issuer's own
+  disclosure, not merely asserted — so §13's `$9.99/mo` + hard-paywall plan in
+  `CROSS_PLATFORM_ROADMAP.md` is contradicted and is now an open decision.
+
+The "Pricing Summary" table in §4 above remains a *competitor* survey. This app's
+own pricing is unset.
+
+---
+
 ## 8. Corroborating research (added 2026-09-11)
 
 A second, independent line of research — **why successful education apps succeed**
