@@ -475,6 +475,93 @@
     }
     return streak;
   }
+  // ---- streak state (doc/MVP_PLAN.md S2, D1/D2/A5) -----------------------
+  // ONE pure derivation over the same append-only log as everything else (D3):
+  // nothing below is stored, so the streak cannot drift from the log. The
+  // states are the ones a recorded review of ten shipping streak screens lists
+  // as necessary, and they are why a break never reads as a failure here:
+  //
+  //   none    no qualifying day yet         (never a 0-day, never a 0% bar).
+  //   active  today already counts.
+  //   at-risk today not yet counted, chain alive (no pressure copy).
+  //   paused  break longer than the grace window (resumable).
+  //
+  // `best` is derived by scanning the same day set rather than persisted, so a
+  // reset can never erase the record and no new field reaches storage.
+  const STREAK_GRACE_DAYS = 3; // D2b: resume after a break, never a broken flame
+
+  /** Monday-based calendar-week key for a day string — the freeze bucket. */
+  function weekKeyOf(dayKey) {
+    const [y, m, d] = dayKey.split("-").map(Number);
+    const dow = (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7;
+    return shiftDayKey(dayKey, -dow);
+  }
+
+  function streakState(p, now) {
+    const tz = (p && p.meta && p.meta.tz) || localTimeZone();
+    const days = activeDays(p);
+    const set = new Set(days);
+    const today = localDayKey(now == null ? Date.now() : now, tz);
+    // Longest run in the log's own day set — the record a reset must not erase.
+    let best = 0;
+    let run = 0;
+    let prev = null;
+    for (const day of days) {
+      run = (prev && shiftDayKey(prev, 1) === day) ? run + 1 : 1;
+      if (run > best) best = run;
+      prev = day;
+    }
+    // Forgiven days (D2a): a one-day gap whose far side is also active, at most
+    // ONE per calendar week. The week bucket is what makes the freeze a
+    // per-week allowance rather than an unlimited undo.
+    const forgiven = [];
+    const frozenWeeks = new Set();
+    for (const day of days) {
+      const missed = shiftDayKey(day, 1);
+      if (set.has(missed) || missed > today) continue;
+      if (!set.has(shiftDayKey(missed, 1))) continue;
+      const wk = weekKeyOf(missed);
+      if (frozenWeeks.has(wk)) continue;
+      frozenWeeks.add(wk);
+      forgiven.push(missed);
+    }
+    // Count WITH the freeze honoured (D2a). The raw `currentStreak` walk stops
+    // at any gap, which would make the calendar mark a day "forgiven" while the
+    // count still read as broken — the exact contradiction the recorded streak
+    // review warns about ("the interface should never show both completed and
+    // at-risk"). A forgiven day is therefore stepped THROUGH, not over.
+    // `currentStreak` stays as the unforgiving primitive it always was.
+    const forgivenSet = new Set(forgiven);
+    let count = 0;
+    {
+      let cursor = set.has(today) ? today : shiftDayKey(today, -1);
+      while (set.has(cursor) || forgivenSet.has(cursor)) {
+        count += 1;
+        cursor = shiftDayKey(cursor, -1);
+      }
+    }
+    const activeToday = set.has(today);
+    let state = "none";
+    if (days.length) {
+      if (activeToday) state = "active";
+      else if (count > 0) state = "at-risk";
+      else state = "paused";
+    }
+    return {
+      state,
+      count,
+      best: Math.max(best, count),
+      longest: best,
+      activeToday,
+      resumable: state === "paused",
+      forgiven,
+      days,
+      today,
+      tz,
+      graceDays: STREAK_GRACE_DAYS,
+    };
+  }
+
   // Forward-only timezone sync (D1/D3): if the device zone changed, newly
   // logged rows group by the new zone; past rows are never rewritten.
   function syncTimezone() {
@@ -598,6 +685,7 @@
     reviewLog: (userId) => readUser(userId || activeUser().id).reviewLog || [],
     activeDays: (userId) => activeDays(readUser(userId || activeUser().id)),
     currentStreak: (userId) => currentStreak(readUser(userId || activeUser().id)),
+    streakState: (userId) => streakState(readUser(userId || activeUser().id)),
     mastery: (userId) => masteryOf(readUser(userId || activeUser().id)),
     band,
     timezone: localTimeZone,
@@ -1516,6 +1604,39 @@
   // ==================================================================
   //  HUB — choose a deck + mode
   // ==================================================================
+  // ---- streak chip (doc/MVP_PLAN.md S2) ----------------------------------
+  // The count AND today's state, because one number without context is not a
+  // readable signal. Hidden entirely until the profile has a qualifying day,
+  // so a new player never meets a 0-day or a 0% bar (D5). Copy is state-aware
+  // and never shames a break: "paused" invites a return, it does not mourn.
+  function renderStreakChip() {
+    const el = $("streak-chip");
+    if (!el) return;
+    const u = activeUser();
+    const s = u ? streakState(readUser(u.id)) : null;
+    if (!s || !s.days.length) {
+      el.className = "streak-chip hidden";
+      el.innerHTML = "";
+      return;
+    }
+    const bandNow = band(u);
+    const label = s.state === "active" ? "Today counts"
+      : s.state === "at-risk" ? "Play today to keep it going"
+      : "Paused — pick it back up";
+    // 5–7 gets words and a flame, never a bare percentage or a numeric ladder.
+    const countText = bandNow === "5-7"
+      ? `${s.count} day${s.count === 1 ? "" : "s"}`
+      : `${s.count} day streak`;
+    el.className = `streak-chip streak-chip--${s.state}`;
+    el.setAttribute("data-state", s.state);
+    el.setAttribute("data-count", String(s.count));
+    el.setAttribute("data-best", String(s.best));
+    el.innerHTML =
+      `<span class="streak-flame" aria-hidden="true">🔥</span>` +
+      `<span class="streak-count">${escapeHtml(countText)}</span>` +
+      `<span class="streak-sub">${escapeHtml(label)}</span>`;
+  }
+
   function renderHub() {
     const grid = $("deck-grid");
     grid.innerHTML = "";
@@ -1534,6 +1655,7 @@
 
     // Active user + focus options (only once this user has finished a run).
     updateAppbarAvatars();
+    renderStreakChip();
     renderFocusPanel();
 
     show("home");
@@ -1591,6 +1713,93 @@
     statsDeckId = mostPlayedDeckId(userId);
     renderStats();
     show("stats");
+  }
+
+  // ---- streak calendar (doc/MVP_PLAN.md S2, A5) --------------------------
+  // A plain CSS grid inside a real <table>, so the month is navigable as a
+  // TABLE for assistive tech rather than as a wall of divs. Each day cell
+  // carries `data-state` (on / forgiven / missed / off / today / future) and an
+  // `aria-label.` sentence, which is what lets the smoke assert the contract and
+  // a screen reader hear words instead of colour.
+  //
+  // States shown: which days counted, which were forgiven, which were missed,
+  // and where the run started. The week's freeze is spent visibly, so the rule
+  // is inspectable BEFORE it is needed — the single most repeated finding in the
+  // recorded streak-screen review.
+  const STREAK_CAL_DAYS = 35; // five weeks: enough to see a pattern, not a year
+  function streakCalendarEl(u) {
+    const wrap = document.createElement("div");
+    wrap.className = "stats-section streak-cal";
+    wrap.setAttribute("data-streak-state", "none");
+    const s = streakState(readUser(u.id));
+    const h = document.createElement("h3");
+    h.textContent = "Practice calendar";
+    wrap.appendChild(h);
+
+    if (!s.days.length) {
+      wrap.className += " streak-cal--empty";
+      const empty = document.createElement("p");
+      empty.className = "stats-empty streak-cal-empty";
+      empty.textContent = "Finish a round and your practice days will show up here.";
+      wrap.appendChild(empty);
+      return wrap;
+    }
+
+    const daySet = new Set(s.days);
+    const forgiven = new Set(s.forgiven);
+    const bestText = document.createElement("p");
+    bestText.className = "streak-cal-summary";
+    // Current AND best together: the record survives a reset, so a break can
+    // never read as losing everything ("preserve past bests after the current
+    // streak ends" — the recorded streak-screen review).
+    bestText.textContent = `Current: ${s.count} day${s.count === 1 ? "" : "s"} · Best: ${s.best} day${s.best === 1 ? "" : "s"}`;
+    const table = document.createElement("table");
+    table.className = "streak-grid";
+    const thead = document.createElement("thead");
+    const hrow = document.createElement("tr");
+    ["M", "T", "W", "T", "F", "S", "S"].forEach((d) => {
+      const th = document.createElement("th");
+      th.scope = "col";
+      th.textContent = d;
+      hrow.appendChild(th);
+    });
+    thead.appendChild(hrow);
+    table.appendChild(thead);
+    const tbody = document.createElement("tbody");
+
+    // Start from the Monday of the week containing the oldest shown day, so
+    // columns line up with the weekday headers.
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    // Anchor the window so it ENDS with the current week. Anchoring on the
+    // oldest day instead put today outside the grid whenever the 35-day span
+    // did not reach it (found by smoke:streak — every recent cell rendered
+    // `off`, so the calendar contradicted the chip).
+    const start = shiftDayKey(weekKeyOf(s.today), -((STREAK_CAL_DAYS / 7) - 1) * 7);
+    let cursor = start;
+    for (let w = 0; w < 5; w += 1) {
+      const tr = document.createElement("tr");
+      for (let d = 0; d < 7; d += 1) {
+        const td = document.createElement("td");
+        td.className = "streak-day";
+        let label = days[d];
+        const isToday = cursor === s.today;
+        let state = "off";
+        if (daySet.has(cursor)) state = isToday ? "today" : "on";
+        else if (forgiven.has(cursor)) state = "forgiven";
+        else if (cursor > s.today) state = "future";
+        else if (cursor >= start) state = "missed";
+        td.setAttribute("data-state", state);
+        td.setAttribute("data-day", cursor);
+        td.setAttribute("aria-label", `${label} ${cursor} — ${state}`);
+        tr.appendChild(td);
+        cursor = shiftDayKey(cursor, 1);
+      }
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    wrap.appendChild(bestText);
+    wrap.appendChild(table);
+    return wrap;
   }
 
   function renderStats() {
@@ -1705,6 +1914,13 @@
         detail;
     }
     body.appendChild(lc);
+
+    // Streak calendar (S2) — rendered HERE, beside the level card, because the
+    // conflict ledger requires the pair: a streak surface must never be the
+    // only visible progress signal (§11 phase 2). A5 frames it as a monitoring
+    // tool, so it shows what happened (practised, forgiven, missed) rather than
+    // a target to hit.
+    body.appendChild(streakCalendarEl(u));
 
     // Overview
     const ov = document.createElement("div");
@@ -2493,6 +2709,54 @@
       .filter(Boolean);
   }
 
+  // ---- cue-aware reach-back (doc/MVP_PLAN.md S1, T2) ---------------------
+  // Two facts the scheduler cannot know on its own, because it has no deck, no
+  // years and no edges (review-scheduler.js is DOM-free by design):
+  //
+  //   cue   — which due events can actually produce a cue at all.
+  //   order — the order to ask them in.
+  //
+  // `order` is the part that makes the feature real rather than nominal. The
+  // cue's RULE 2 only fires when the partner is ALREADY on the board, and a
+  // review round starts from an empty board — so a promoted pair is only useful
+  // if the EARLIER endpoint is asked first. Storage order gives that: an edge is
+  // stored on its earlier endpoint (RULE 1), so an event that has an OUTGOING
+  // edge to another candidate is the one to ask first.
+  //
+  // Why "both endpoints are candidates" rather than "has any edge": a due event
+  // whose only partner is not itself due cannot be cued by promoting it — the
+  // partner would never appear, so the promotion would buy nothing.
+  //
+  // Returns null (not an empty set) when there is nothing to say, so the caller
+  // passes no `cue` key at all and the scheduler takes its untouched path.
+  function cuePlanFor(deck, candidateIds) {
+    if (!deck || !window.Connections || typeof window.Connections.indexEdges !== "function") return null;
+    if (!(candidateIds instanceof Set) || candidateIds.size < 2) return null;
+    const idx = connectionIndexFor(deck);
+    if (!idx || !idx.out || !idx.in) return null;
+    const cue = new Set();
+    const order = {};
+    candidateIds.forEach((id) => {
+      const out = idx.out.get(id) || [];
+      const inc = idx.in.get(id) || [];
+      // An outgoing edge to a due partner: this card comes FIRST (dependency).
+      let earlier = false;
+      for (let i = 0; i < out.length; i += 1) {
+        if (candidateIds.has(out[i].to)) { earlier = true; break; }
+      }
+      // An incoming edge from a due partner: this card comes AFTER it.
+      let later = false;
+      for (let j = 0; j < inc.length; j += 1) {
+        if (candidateIds.has(inc[j].from)) { later = true; break; }
+      }
+      if (earlier || later) {
+        cue.add(id);
+        order[id] = earlier ? 0 : 1;
+      }
+    });
+    return cue.size ? { cue: cue, order: order } : null;
+  }
+
   // The due set for a deck, from the pure scheduler (review-scheduler.js) over
   // the append-only reviewLog. Everything is re-derived on read (D3) — there is
   // no stored queue. The block the learner last worked in is the "current"
@@ -2517,14 +2781,26 @@
           break;
         }
       }
-      const ids = RS.dueSet(states, deckId, band(u), {
+      const opts = {
         events: deck.events.map((e) => ({ id: e.id, era: eraOf(e.year), week: e.week })),
         cap: 10,
         recencyK: RS.K_MIN,
         eraOrder: ERAS.map((er) => er.name),
         currentEra,
         currentWeek,
-      });
+      };
+      // Two passes, and the second is why: the cue set can only be built from
+      // the ids the scheduler ALREADY considers due, and `dueSet` is what knows
+      // that (it owns recencyK, the age gate and deck scope). Asking it once
+      // uncued gives the honest candidate list; asking it again with the cue
+      // promotes only cards that were already in that list, so a cue can never
+      // introduce a card the scheduler would not have served (FR2). The second
+      // pass re-applies every filter, so it is a refinement, not a bypass.
+      const uncued = RS.dueSet(states, deckId, band(u), opts);
+      const plan = cuePlanFor(deck, new Set(uncued));
+      const ids = plan
+        ? RS.dueSet(states, deckId, band(u), Object.assign({}, opts, plan))
+        : uncued;
       const byId = new Map(deck.events.map((e) => [e.id, e]));
       return ids.map((id) => byId.get(id)).filter(Boolean);
     } catch (e) {
@@ -3338,16 +3614,22 @@
   // The authored connections[] graph, indexed once per deck object. Keyed on
   // the deck OBJECT so switching or importing a deck rebuilds it; nothing is
   // persisted (the index is derived from the deck alone — D3).
-  let connIdxDeck = null;
-  let connIdx = null;
-  function connectionIndex() {
-    const deck = ui.deck;
+  // Keyed per deck OBJECT (a WeakMap, not one slot): the focus panel asks
+  // about the most-played deck while `ui.deck` may be a different one, and a
+  // single memo slot would thrash between them. Nothing is persisted — the
+  // index is derived from the deck alone (D3).
+  const connIdxCache = new WeakMap();
+  function connectionIndexFor(deck) {
     if (!deck || !window.Connections || !Array.isArray(deck.events)) return null;
-    if (connIdxDeck !== deck) {
-      connIdx = window.Connections.indexEdges(deck.events);
-      connIdxDeck = deck;
+    let idx = connIdxCache.get(deck);
+    if (!idx) {
+      idx = window.Connections.indexEdges(deck.events);
+      connIdxCache.set(deck, idx);
     }
-    return connIdx;
+    return idx;
+  }
+  function connectionIndex() {
+    return connectionIndexFor(ui.deck);
   }
 
   // The one cue for this card, computed against the board as it stands NOW and

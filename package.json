@@ -37,6 +37,8 @@
     "smoke:review": "node tools/offline-smoke/review.mjs",
     "smoke:feedback": "node tools/offline-smoke/feedback.mjs",
     "smoke:connections": "node tools/offline-smoke/connections.mjs",
+    "smoke:streak": "node tools/offline-smoke/streak.mjs",
+    "audit:connections": "node scripts/audit-connections.mjs",
     "validate:backlog": "node scripts/gen-pronunciation-backlog.mjs --check",
     "validate:content": "node scripts/validate-content.mjs",
     "validate:index": "node scripts/gen-deck-index.mjs --check",
