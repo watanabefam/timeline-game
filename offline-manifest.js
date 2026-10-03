@@ -2,7 +2,7 @@
  * The service worker loads this with importScripts() at install time. */
 self.OFFLINE_MANIFEST = {
   "formatVersion": 1,
-  "hash": "5f83273a4232",
+  "hash": "b7c2ee4ffdd8",
   "generatedBy": "scripts/gen-offline-manifest.mjs",
   "cacheName": "timeline-offline",
   "totalBytes": 19255450,
@@ -639,7 +639,7 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "index.html",
-      "rev": "83f259e0dea1",
+      "rev": "cea84b5b27a6",
       "bytes": 28931
     },
     {
@@ -674,7 +674,7 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "timeline.js",
-      "rev": "b4900ea06606",
+      "rev": "8882ab16400a",
       "bytes": 223218
     }
   ]
