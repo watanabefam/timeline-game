@@ -187,12 +187,12 @@
     root.addEventListener("keydown", (e) => {
       if (splitCtx && splitCtx.length) return; // split: keys are document-level
       if (!root.contains(document.activeElement)) return;
-      // Step: W/← up, S/→ down. Jump: E/↑ (start), D/↓ (end). Home/End also
+      // Step: W/↑ up, S/↓ down. Jump: E/← (start), D/→ (end). Home/End also
       // jump. Same semantics as the split bindings.
-      if (e.key === "ArrowRight" || e.key === "s" || e.key === "S") { move(1); e.preventDefault(); }
-      else if (e.key === "ArrowLeft" || e.key === "w" || e.key === "W") { move(-1); e.preventDefault(); }
-      else if (e.key === "ArrowUp" || e.key === "e" || e.key === "E" || e.key === "Home") { jump(false); e.preventDefault(); }
-      else if (e.key === "ArrowDown" || e.key === "d" || e.key === "D" || e.key === "End") { jump(true); e.preventDefault(); }
+      if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") { move(1); e.preventDefault(); }
+      else if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") { move(-1); e.preventDefault(); }
+      else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D" || e.key === "End") { jump(true); e.preventDefault(); }
+      else if (e.key === "ArrowLeft" || e.key === "e" || e.key === "E" || e.key === "Home") { jump(false); e.preventDefault(); }
     });
   }
 
@@ -4568,11 +4568,11 @@
         case "KeyE": splitJump(0, false); e.preventDefault(); break;
         case "KeyD": splitJump(0, true); e.preventDefault(); break;
         case "KeyA": splitPlace(0); e.preventDefault(); break;
-        // P2: ←/→ step, ↑/↓ jump (start/end), Enter place.
-        case "ArrowLeft": splitMove(1, -1); e.preventDefault(); break;
-        case "ArrowRight": splitMove(1, 1); e.preventDefault(); break;
-        case "ArrowUp": splitJump(1, false); e.preventDefault(); break;
-        case "ArrowDown": splitJump(1, true); e.preventDefault(); break;
+        // P2: ↑/↓ step, ←/→ jump (start/end), Enter place.
+        case "ArrowUp": splitMove(1, -1); e.preventDefault(); break;
+        case "ArrowDown": splitMove(1, 1); e.preventDefault(); break;
+        case "ArrowLeft": splitJump(1, false); e.preventDefault(); break;
+        case "ArrowRight": splitJump(1, true); e.preventDefault(); break;
         case "Enter": splitPlace(1); e.preventDefault(); break;
       }
     });
