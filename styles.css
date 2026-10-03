@@ -512,6 +512,10 @@ body.dock-active .split-pane { padding-bottom: 106px; }
 .tl-title { font-weight: 600; font-size: 0.98rem; }
 .tl-year { color: var(--muted); font-size: 0.82rem; }
  .tl-fact { color: var(--muted); font-size: 0.82rem; font-style: italic; margin-top: 4px; }
+ /* Connection cue: the authored link, shown only on a slipped card whose
+    partner is already on the board (doc/CONNECTION_CUE_PLAN.md). Static text,
+    so it needs no reduced-motion story. */
+ .tl-conn { color: var(--accent); font-size: 0.8rem; margin-top: 3px; }
  .same-year-note { color: var(--warn); font-size: 0.74rem; margin-top: 2px; }
   /* Placed-card state, shared by the game timeline and the results page.
      Green = first-try clean. Dashed border escalates amber → orange → red
@@ -1194,6 +1198,7 @@ body.dock-active .feedback { bottom: calc(104px + env(safe-area-inset-bottom, 0p
 }
 .gap-callout__order { margin: 0; font-size: 0.95rem; font-weight: 600; }
 .gap-callout__why { margin: 6px 0 0; font-size: 0.85rem; color: var(--muted); }
+.gap-callout__link { margin: 6px 0 0; font-size: 0.85rem; color: var(--accent); }
 /* Reduced motion: no pulse — a static ring carries the same meaning. */
 @media (prefers-reduced-motion: reduce) {
   .gap--rescue, .gap--rescue:hover, .gap--rescue:focus-visible {

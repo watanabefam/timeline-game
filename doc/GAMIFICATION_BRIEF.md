@@ -622,7 +622,8 @@ review **three were retired the same day** and one survives. Full reasoning in
   existing `Why it matters` row — one slipped card showed the why up to three
   times (rescue callout, the inline line, the popover).
   `doc/CONNECTION_CUE_PLAN.md` replaces it with a cue built from the
-  already-authored `connections[]` edges.
+  already-authored `connections[]` edges — **shipped 2026-10-03** (`connections.js`
+  plus the two slip render sites; `npm run smoke:connections` covers the wiring).
 - **4b — the pre-reveal prompt.** ❌ **Retired.** It fired on the round's first
   card, where "the event just before this one" is a given anchor or does not
   exist, and its cue had no input — the only controls were *I'm sure / Not sure /
@@ -634,7 +635,8 @@ review **three were retired the same day** and one survives. Full reasoning in
   `{ ts, deck, eventId, outcome, mode }`.
 - **Also removed:** `prompt-plan.js`, `scripts/test/prompt-plan.test.mjs`, the
   `test:prompt` chain entry, the `.tl-why*` and `.tl-prompt*` CSS, and the boot
-  `<script>` tag (manifest is back to **133 files**).
+  `<script>` tag (manifest was back to **133 files** then; **134** as of
+  2026-10-03, after `connections.js` joined the boot shell).
 - **Not changed:** score/XP/level (G5), the review-scheduler interface (A10's
   seam), and the log cap.
 - **Verified:** `npm run smoke:feedback` (Chromium, 24 checks) now proves the

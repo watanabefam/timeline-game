@@ -2385,6 +2385,9 @@
       // placed cards can show clean vs. needed-retries.
       anchorIds: new Set(anchors.map((e) => e.id)),
       cardSlips: {},
+      // Frozen connection cue per card id (doc/CONNECTION_CUE_PLAN.md §4.2).
+      // null/absent for clean cards and for decks with no usable edge.
+      cardCue: {},
       status: "playing",
       // Active rescue (after RESCUE_AFTER misses): { lo, hi, id } — the correct
       // gap range and the card being revealed. Null when no rescue is showing.
@@ -2818,14 +2821,19 @@
   // Optional post-placement "learn more" prose. Shown only where the fact
   // sheet is (all post-reveal surfaces), so a year here does not leak the
   // answer; it is never narrated. Absent on most events and on imported decks.
-  function factSheetHtml(e, includeMap = true) {
+  function factSheetHtml(e, includeMap = true, whyOverride = null) {
     const summary = e.summary
       ? `<p class="fs-summary">${escapeHtml(e.summary)}</p>`
       : "";
+    // A connection rationale may stand in for the significance line on a
+    // slipped card (doc/CONNECTION_CUE_PLAN.md §4.5). Absent on every other
+    // surface and for every band that may not see prose.
+    const whyValue =
+      whyOverride != null && String(whyOverride).trim() !== "" ? whyOverride : e.why;
     const rows =
       factRow("Who", e.who) +
       factRow("Where", e.where) +
-      factRow("Why it matters", e.why);
+      factRow("Why it matters", whyValue);
     let mapHtml = "";
     if (includeMap) {
       if (e.noMap) {
@@ -3310,6 +3318,56 @@
     if (wasHidden) { sheet.style.visibility = ""; sheet.style.display = ""; }
   }
 
+  // ---- connection cue (doc/CONNECTION_CUE_PLAN.md) ----------------------
+  // The authored connections[] graph, indexed once per deck object. Keyed on
+  // the deck OBJECT so switching or importing a deck rebuilds it; nothing is
+  // persisted (the index is derived from the deck alone — D3).
+  let connIdxDeck = null;
+  let connIdx = null;
+  function connectionIndex() {
+    const deck = ui.deck;
+    if (!deck || !window.Connections || !Array.isArray(deck.events)) return null;
+    if (connIdxDeck !== deck) {
+      connIdx = window.Connections.indexEdges(deck.events);
+      connIdxDeck = deck;
+    }
+    return connIdx;
+  }
+
+  // The one cue for this card, computed against the board as it stands NOW and
+  // then frozen, so a later re-render can never change the story (the board
+  // keeps moving as cards land — §2.3). Only a SLIPPED card carries one: it is
+  // a slip surface, inherited from A8 (§8 Q3). Memoised per card id.
+  function freezeCue(state, ev) {
+    if (!state || !ev || typeof ev.id !== "string") return null;
+    if (!state.cardCue) state.cardCue = {};
+    if (Object.prototype.hasOwnProperty.call(state.cardCue, ev.id)) {
+      return state.cardCue[ev.id];
+    }
+    let cue = null;
+    if ((state.wrongOnCurrent || 0) > 0 && window.Connections) {
+      const idx = connectionIndex();
+      if (idx) cue = window.Connections.cueFor(ev, idx, new Set(state.timeline));
+    }
+    state.cardCue[ev.id] = cue;
+    return cue;
+  }
+
+  function cueLineFor(state, id) {
+    if (!window.Connections || !state.cardCue || !state.cardCue[id]) return "";
+    return window.Connections.cueText(state.cardCue[id]);
+  }
+
+  // The band of the player a state belongs to (split-screen aware), never
+  // re-derived from anywhere else (GAMIFICATION_BRIEF §5).
+  function bandForState(state) {
+    if (state && state.userId) {
+      const u = ensureUsers().users.find((x) => x.id === state.userId);
+      if (u) return band(u);
+    }
+    return band(activeUser());
+  }
+
   function eventEl(state, e, idx) {
     const li = document.createElement("li");
     li.className = "tl-event " + placedClassFor(state, e);
@@ -3317,7 +3375,16 @@
     const sameYearNeighbor = state.timeline.some(
       (id, i) => id !== e.id && sortYearOf(eventById(ui.deck, id)) === sortYearOf(e)
     );
-    const sheet = factSheetHtml(e);
+    const connText = cueLineFor(state, e.id);
+    // The popover's generic "Why it matters" restates the card's significance;
+    // on a slipped card with a usable edge, the connection's authored rationale
+    // explains the placement instead (FR5). Prose is 12+ only (FR8), so younger
+    // bands keep the significance line and simply get the phrase inline.
+    const connRationale =
+      state.cardCue && state.cardCue[e.id] && window.Connections
+        ? window.Connections.rationaleFor(state.cardCue[e.id], bandForState(state))
+        : null;
+    const sheet = factSheetHtml(e, true, connRationale);
     // .tl-event is the untransformed layout box (rail node + connector + the
     // fact-sheet popover live here); the card skin and its contents are the
     // inner .tl-card, which is what FX.focusScale scales — so the rail and the
@@ -3331,6 +3398,7 @@
       (revealed
         ? (fmtYears(e) ? `<span class="tl-year">${fmtYears(e)}</span>` : "") +
           `<span class="tl-fact">${escapeHtml(revealed)}</span>` +
+          (connText ? `<span class="tl-conn">${escapeHtml(connText)}</span>` : "") +
           (sheet
             ? `<button class="fact-toggle" type="button" aria-label="Show fact sheet" aria-expanded="false">❔</button>`
             : "") +
@@ -3480,6 +3548,10 @@
   function commitPlacement(ctx, index, ev) {
     const state = ctx.state;
     const root = ctx.root;
+    // Freeze the connection cue against the board as it stands now — before
+    // this card lands and before wrongOnCurrent is cleared — so the reveal and
+    // any rescue callout agree, and a later re-render cannot change it.
+    const cue = freezeCue(state, ev);
     // Capture BEFORE clearing: the incremental path must wipe the rescue
     // callout/locked gaps itself (the old full rebuild did it for free).
     // Clear BEFORE the splice: clearRescueUI re-labels gaps from their
@@ -3504,6 +3576,12 @@
     state.roundIndex += 1;
     state.wrongOnCurrent = 0;
     flashFeedback(value > 0 ? `✓ +${value}` : "✓ placed +0", true, root);
+    // The reveal line also reaches the polite live region (FR9). Skipped on the
+    // rescue path: the callout already announced the same cue, and repeating it
+    // at commit would read the sentence twice.
+    if (cue && !hadRescue && live && window.Connections) {
+      live.textContent = window.Connections.cueAnnounce(cue);
+    }
     state.streak += 1;
     playSfx("correct", { streak: state.streak });
 
@@ -3658,6 +3736,10 @@
 
   function buildRescueCallout(state, lo, hi, ev) {
     const order = rescueOrderingText(state, lo, hi, ev);
+    // The connection cue, from the SAME frozen selector as the reveal line, so
+    // the two slip surfaces can never disagree (FR4).
+    const cue = freezeCue(state, ev);
+    const conn = cue && window.Connections ? window.Connections.cueText(cue) : "";
     // Prefer the authored significance line; `fact` is the fallback so the
     // moment is never empty even on decks without structured fields (§9).
     const why = ev.why || ev.fact || "";
@@ -3666,8 +3748,9 @@
     li.innerHTML =
       `<span class="gap-callout__arrow" aria-hidden="true"></span>` +
       `<p class="gap-callout__order">${order.html}</p>` +
+      (conn ? `<p class="gap-callout__link">${escapeHtml(conn)}</p>` : "") +
       (why ? `<p class="gap-callout__why">${escapeHtml(why)}</p>` : "");
-    li.dataset.announce = order.text + (why ? " " + why : "");
+    li.dataset.announce = order.text + (conn ? " " + conn : "") + (why ? " " + why : "");
     return li;
   }
 

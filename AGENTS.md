@@ -47,8 +47,8 @@ designing any learning or motivational surface, and cite it by § number.
    `<script type="module">` (allowed since the hosting change) — but never a
    bundler-required npm package.
    **Scope:** rules 1–4 and 6 govern the web game core (`index.html`, `timeline.js`,
-   `fx.js`, `globe.js`, `narration.js`, `decks-io.js`, `events-data.js`,
-   `decks/`, `assets/`). The cross-platform
+   `fx.js`, `globe.js`, `narration.js`, `connections.js`, `decks-io.js`,
+   `events-data.js`, `decks/`, `assets/`). The cross-platform
    packaging layer planned in `doc/CROSS_PLATFORM_ROADMAP.md` (Capacitor/Tauri
    shells, staging scripts, npm dev tooling) is exempt from the no-build rule —
    but it must **wrap the game core unmodified**, not rewrite it. Capacitor and
@@ -69,18 +69,19 @@ designing any learning or motivational surface, and cite it by § number.
    was **moved out of** `assets/vendor/` — moved, never edited — into the
    gitignored `tools/kokoro-authoring/`. See `doc/LIBRARY_RESEARCH.md` §2.)*
 3. **Cache-busting:** first-party scripts load with `?v=N`
-   (`fx.js?v=26`, `timeline.js?v=203`). Bump `N` whenever you edit that file,
+   (`fx.js?v=26`, `timeline.js?v=204`). Bump `N` whenever you edit that file,
    or returning players get stale code.
 4. **Script load order in `index.html` matters** (classic scripts, sync):
    `events-data.js` → `decks-io.js` → Leaflet → `world-land.js` →
    `liquid-glass.js` → `vis-timeline` → `anime.umd.min.js` →
    `canvas-confetti` → `fx.js` → `globe.js` → `narration-recipe.js` →
-   `narration.js` → `offline.js` → `review-scheduler.js` → `timeline.js`.
+   `narration.js` → `offline.js` → `review-scheduler.js` →
+   `connections.js` → `timeline.js`.
    `fx.js` (defines `window.FX`), `globe.js` (`window.GlobeDock`),
    `narration-recipe.js` (`window.NarrationText`, generated),
-   `narration.js` (`window.Narrator`) and `review-scheduler.js`
-   (`window.ReviewScheduler`) must all load before `timeline.js`, which uses
-   them. Decks themselves arrive from `decks/index.js` (generated)
+   `narration.js` (`window.Narrator`), `review-scheduler.js`
+   (`window.ReviewScheduler`) and `connections.js` (`window.Connections`)
+   must all load before `timeline.js`, which uses them. Decks themselves arrive from `decks/index.js` (generated)
    via the `window.registerDeckSource` registry in `events-data.js`.
    `offline.js` (`window.Offline`) is independent of all of them — it touches
    only its own DOM hooks — and `sw.js` is never a `<script>` tag at all: the
@@ -197,6 +198,7 @@ designing any learning or motivational surface, and cite it by § number.
 | `decks-io.js` | Deck JSON import/export → `window.exportDeck` / `exportAllDecks` / `importDeckFromFile` / `loadImportedDecks` (Blob + FileReader, no server) |
 | `events-data.js` | Deck registry (`window.DECKS`, `registerDeck`) + deck *sources* + shared filter helpers. **Holds no event data.** |
 | `review-scheduler.js` | Pure reach-back review scheduler → `window.ReviewScheduler` (`replay`/`rate`/`dueSet`, the A10 L2 seam). DOM-free classic script; unit-tested under `scripts/test/` |
+| `connections.js` | The authored connection graph as a placement cue → `window.Connections` (`indexEdges`/`cueFor`/`cueText`/`rationaleFor`; RULE 1–4 of `doc/CONNECTION_CUE_PLAN.md`). DOM-free classic script; unit-tested under `scripts/test/` |
 | `decks/index.json` + `index.js` | **Generated** deck list (revision + bytes per package) — never hand-edited; regenerate with `npm run gen:index` |
 | `manifest.webmanifest` + `icons/` | Web app manifest and **generated** app icons (installability, S1a). Icons live here, not in `assets/`, because `assets/` is vendored and never edited (rule 2). Regenerate with `npm run gen:icons` |
 | `offline.js` | Installability affordance + service-worker registration, update timing, storage persistence, offline status → `window.Offline` |
@@ -207,7 +209,7 @@ designing any learning or motivational surface, and cite it by § number.
 | `decks/<id>/` | A deck package: `manifest.json` + `deck.json` + generated `deck.js` (+ `narration/*.mp3`) |
 | `scripts/*.mjs` | Node content tooling only (never loaded by the game): deck index + content/vendor/narration/offline gates, the recipe mirror and icon generators |
 | `tools/narration/` | Author-time narration generator: the recipe, Kokoro synthesis, ffmpeg post-processing, tests (see its README) |
-| `tools/offline-smoke/` | Author-time browser smokes: the offline layer (`smoke.mjs` in Chromium, `webkit.mjs` in Safari's engine), the S2 mastery level card (`mastery.mjs`), the review queue (`review.mjs`) and the A8 feedback/confidence slice (`feedback.mjs`) — all Chromium except `webkit.mjs`. Not part of `npm test` — they need a real browser download, and a check that cannot run must never report clean |
+| `tools/offline-smoke/` | Author-time browser smokes: the offline layer (`smoke.mjs` in Chromium, `webkit.mjs` in Safari's engine), the S2 mastery level card (`mastery.mjs`), the review queue (`review.mjs`), the retired A8 feedback surface (`feedback.mjs`) and the connection cue (`connections.mjs`) — all Chromium except `webkit.mjs`. Not part of `npm test` — they need a real browser download, and a check that cannot run must never report clean |
 | `tools/kokoro-authoring/` | Author-time TTS model bundle only, gitignored and **never shipped** (see rule 2) |
 | `THIRD_PARTY_LICENSES.md` | Attribution manifest for everything third-party; enforced by `npm run validate:vendor` |
 | `doc/GAMIFICATION_BRIEF.md` | Ratified spec for the gamification layer over the mastery review log (streaks, leveling, achievements, feedback copy) |
@@ -325,8 +327,19 @@ Additional checks for the surfaces built after this doc was last revised:
   while the 5–7 focus panel still shows stars and no percentage (17+ still shows
   it) and all of it holds under reduced motion. The decision record for the
   removal is `doc/CONNECTION_CUE_PLAN.md` §0. **What it cannot cover:** the
-  connection cue that replaces the why-line (not built yet), scoring/round
-  order, pixels and iOS.
+  connection cue that replaced the why-line (`npm run smoke:connections`),
+  scoring/round order, pixels and iOS.
+- **Connection cue (the slip-moment link line):** `npm run smoke:connections`
+  (Chromium, ~35 s, 18 checks) drives a real `inventions-discoveries` round and
+  proves the wiring the Node tests cannot: every rendered `.tl-conn` (revealed
+  card) and `.gap-callout__link` (rescue callout) names a partner that is
+  actually on the board (RULE 2, observed end to end), a rescue callout's
+  `data-announce` carries its cue **exactly once** (no double-read through the
+  polite live region), a deck with no `connections[]` (`cc-timeline`) renders
+  neither surface while its rescue still fires (so the zero is not vacuous), and
+  the 5–7 fact sheet never restates the cue phrase (FR8 prose gate). All of it
+  holds under reduced motion. **What it cannot cover:** pixels, the screen
+  reader's spoken timing, and iOS.
 - **Review queue (S2, phase 3):** `npm run smoke:review` (Chromium) covers the
   Focus-panel Review round, the derived due count, the fail-open small set, the
   5–7 era/week cap, the J2 empty state and reduced motion.

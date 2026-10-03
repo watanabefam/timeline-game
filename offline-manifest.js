@@ -2,10 +2,10 @@
  * The service worker loads this with importScripts() at install time. */
 self.OFFLINE_MANIFEST = {
   "formatVersion": 1,
-  "hash": "00429edf8509",
+  "hash": "3af8bff4d766",
   "generatedBy": "scripts/gen-offline-manifest.mjs",
   "cacheName": "timeline-offline",
-  "totalBytes": 19174813,
+  "totalBytes": 19192384,
   "files": [
     {
       "path": "assets/audio/alex-morgan-battle-boss-fight-game-music-583276.mp3",
@@ -363,6 +363,11 @@ self.OFFLINE_MANIFEST = {
       "bytes": 138180
     },
     {
+      "path": "connections.js",
+      "rev": "1aab5287cd29",
+      "bytes": 13083
+    },
+    {
       "path": "decks-io.js",
       "rev": "511d628f03e2",
       "bytes": 7541
@@ -374,18 +379,18 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "decks/index.js",
-      "rev": "96473f8ec8d6",
+      "rev": "0aa95bd08e8f",
       "bytes": 1346
     },
     {
       "path": "decks/index.json",
-      "rev": "9c98e61d09ee",
+      "rev": "aeab391597a2",
       "bytes": 1254
     },
     {
       "path": "decks/inventions-discoveries/deck.js",
-      "rev": "0e6637fa3e9f",
-      "bytes": 62104
+      "rev": "edde392c45ab",
+      "bytes": 62052
     },
     {
       "path": "decks/world-history-first-timeline/deck.js",
@@ -614,28 +619,28 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "icons/apple-touch-icon-180.png",
-      "rev": "4ad81f168047",
-      "bytes": 1563
+      "rev": "bf5846a5e762",
+      "bytes": 1562
     },
     {
       "path": "icons/icon-192.png",
-      "rev": "5d851e2ae711",
-      "bytes": 3436
+      "rev": "84e5b8e9fc46",
+      "bytes": 3446
     },
     {
       "path": "icons/icon-512.png",
-      "rev": "04005918c5c4",
-      "bytes": 9015
+      "rev": "e1ba3e86aaa1",
+      "bytes": 9028
     },
     {
       "path": "icons/icon-maskable-512.png",
-      "rev": "576be76129ad",
+      "rev": "bd8975276469",
       "bytes": 4447
     },
     {
       "path": "index.html",
-      "rev": "9be9858da8aa",
-      "bytes": 28532
+      "rev": "a752c6cd40fe",
+      "bytes": 28575
     },
     {
       "path": "manifest.webmanifest",
@@ -664,13 +669,13 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "styles.css",
-      "rev": "c42552317484",
-      "bytes": 85410
+      "rev": "79ce61a7775c",
+      "bytes": 85761
     },
     {
       "path": "timeline.js",
-      "rev": "a92034aa3e34",
-      "bytes": 205613
+      "rev": "57658c7b34ff",
+      "bytes": 209737
     }
   ]
 };

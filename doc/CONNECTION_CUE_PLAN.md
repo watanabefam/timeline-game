@@ -1,7 +1,7 @@
 # Connection Cue at the Slip — Research & Plan
 
-**Status:** 📋 **planned, not implemented** (planned 2026-10-02)
-**Date:** 2026-10-02
+**Status:** ✅ **implemented** (planned 2026-10-02, shipped 2026-10-03)
+**Date:** 2026-10-02 (implementation record §9)
 **Scope:** replace the A8 phase-4 "why at the slip" line with a cue built from the
 **already-authored `connections[]` edges**, rendered at the two slip moments (the rescue callout
 and a slipped card's reveal). One line, age-safe, derived, no new dependency.
@@ -15,7 +15,8 @@ number, derives everything from the append-only `reviewLog` + the deck (D3), add
 dependency (rule 1), and gives every new motion a reduced-motion story (D8).
 
 > Planning artifact. Defines the requirements, the design and the ordered task plan. No game code
-> is written until it is approved.
+> is written until it is approved. **Implemented 2026-10-03** — see §9 for what landed and how it was
+> verified.
 
 ---
 
@@ -406,13 +407,17 @@ amended to point here.
 
 ## 8. Open questions
 
-1. **The two misordered edges (§2.4): move or drop?** Moving `timbuktu-scholars → house-of-wisdom`
-   onto `house-of-wisdom` gives the cue the correct direction and keeps the lesson; dropping it loses
-   a good `echo`. Recommendation: move both, since the rationales already read in the corrected
-   direction (*"Timbuktu is the House of Wisdom's later… counterpart"*).
-2. **Does the cue belong on the rescue callout, the reveal, or both?** Both are specified (FR4) and
-   they share one selector, but the rescue is the stronger moment (the player is stuck) while the
-   reveal is the durable record. If only one survives playtest, keep the rescue.
+1. **The two misordered edges (§2.4): move or drop?** **Decided: move both** (2026-10-03).
+   `timbuktu-scholars → house-of-wisdom` was moved onto `house-of-wisdom` (813) as
+   `to: "timbuktu-scholars"`, and `mendeleev-periodic-table → newton-principia` was moved onto
+   `newton-principia` (1687) as `to: "mendeleev-periodic-table"` — both kept their authored
+   rationale, which already read in the corrected direction, and both source events dropped their
+   `connections` key entirely. `validate:content` now **fails** on a reversed edge (§4.7), so this
+   class of defect cannot return silently.
+2. **Does the cue belong on the rescue callout, the reveal, or both?** **Decided: both**
+   (2026-10-03). They are specified (FR4) and share one `freezeCue` selector, so they cannot
+   disagree; the rescue is the stronger moment (the player is stuck) and the reveal is the durable
+   record. If only one survives playtest, drop the reveal and keep the rescue.
 3. **Should a correct-but-slow placement carry the cue?** Currently slipped-only, inherited from
    A8. Revisit after the falsifier runs.
 4. **`rationale` length.** Some run to three lines and were written for an author, not a player
@@ -421,3 +426,48 @@ amended to point here.
 5. **Does the cue feed the review scheduler?** `doc/CONNECTIONS.md` §8 wants a due event promptable
    from *any* edge touching it, in either direction. That is a reach-back feature; this plan does
    not touch `rate()` or `dueSet()`.
+
+---
+
+## 9. Implementation record (2026-10-03)
+
+All of §5 landed. `connections.js` is a DOM-free classic IIFE exporting `PHRASES`,
+`PROSE_BLOCKED_BANDS`, `indexEdges`, `storageRuleViolations`, `cueFor`, `cueText`, `cueAnnounce`,
+`rationaleFor`, `isContested`, `sortYearOf`. `timeline.js` (`?v=204`) added `state.cardCue`, a
+memoised `connectionIndex()` keyed on the deck object, `freezeCue(state, ev)` (slip-only;
+`wrongOnCurrent > 0`; the board is `new Set(state.timeline)` at commit), and `bandForState(state)`
+(split-screen aware). The two render sites are `buildRescueCallout` (`p.gap-callout__link`) and
+`eventEl` (`.tl-conn` on a revealed slipped card); `commitPlacement` announces the reveal cue through
+the existing `.rescue-status` polite region, **except** on the rescue path (where the callout already
+announced it — no double-read). `factSheetHtml(e, includeMap, whyOverride)` lets the 12+ popover row
+carry the edge `rationale` in place of the generic `Why it matters`.
+
+Order (§5.1) was preserved: module + gate before the render sites, with `?v=`/load-order/manifest
+changes in the same edit as the first render change.
+
+**Verification (all run, all green unless noted):**
+
+- `scripts/test/connections.test.mjs` — 20/20, chained into `npm test` as `test:connections` (phrase
+  table 4×2, eligibility, FR7 year rule, the two moved edges by id, dangling/self/unknown/year-less
+  drops, reverse index, selection order, age gate, purity, real-deck index sanity).
+- `npm run validate:content` — **negative-tested**: re-adding the reversed `mendeleev → newton` edge
+  printed one error naming the edge and exited 1; removing it returned the gate to 0 errors.
+- `npm run smoke:connections` (new, Chromium, §T7) — 18/18. Drives an `inventions-discoveries` round:
+  25 reveal lines and 25 rescue cue lines, each naming a partner on the board; a rescue callout's
+  `data-announce` carries its cue exactly once; `cc-timeline` renders neither surface while its rescue
+  still fires; the 5–7 fact sheet never restates the cue; all of it holds under reduced motion.
+- Regression: `npm run smoke:feedback` 24/24, `smoke:mastery` 18/18, `smoke:review` 17/17,
+  `smoke:offline` 48/48, `smoke:webkit` 20/20 — the render changes did not disturb the retired
+  surface or the offline layer.
+- Gates: `validate:index`, `validate:content`, `validate:vendor`, `validate:offline` (134 files,
+  generation `432de6335ad2`), `validate:recipe`, `validate:narration` (40 clips) all pass. The two
+  known pre-existing reds are unchanged and were **not** touched: `validate:backlog` (needs
+  `tools/narration/node_modules`; a check that could not run must never report clean) and
+  `validate:pipeline` (0/321 events carry a `source`).
+- Changed first-party files: `index.html` (`connections.js?v=1` before `timeline.js?v=204`,
+  `styles.css?v=137`), `styles.css` (`.tl-conn`, `.gap-callout__link`),
+  `scripts/gen-offline-manifest.mjs` (`SHELL`), `decks/inventions-discoveries/deck.json` +
+  regenerated `deck.js`/`decks/index.{json,js}`.
+
+**Still unverifiable by this work, and not claimed:** iOS Safari, print output, pixel appearance, and
+whether the cue *improves learning* (§5.4 — a playtest question, not a code question).

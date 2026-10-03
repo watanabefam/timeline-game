@@ -330,6 +330,13 @@ for (const rec of records) {
 
   // Connections reference other events by id, so the full id set is needed first.
   const eventIds = new Set(deck.events.map((e) => e.id).filter(Boolean));
+  const eventById = new Map(
+    deck.events.filter((e) => e.id).map((e) => [e.id, e])
+  );
+  // The chronological key a consumer sorts by (mirrors sortYearOf in
+  // timeline.js / connections.js). `null` means "cannot be known".
+  const sortYearOf = (e) =>
+    typeof e.sortYear === "number" ? e.sortYear : (e.year == null ? null : e.year);
   const connTypeCounts = {}; // per-deck type histogram, for the balance check below
 
   for (const ev of deck.events) {
@@ -421,6 +428,21 @@ for (const rec of records) {
           }
           if (c.to === id) {
             err(deck.id, id, `${at} links the event to itself`);
+          }
+          // RULE — edges are directed earlier -> later and stored on the
+          // EARLIER event (doc/CONNECTIONS.md §2). This was asserted in the
+          // comment above but never checked, and two shipped edges violated it.
+          // A consumer (connections.js) renders a direction-sensitive phrase,
+          // so a backwards edge produces a sentence that is simply false.
+          const target = eventById.get(c.to);
+          const fromYear = sortYearOf(ev);
+          const toYear = target ? sortYearOf(target) : null;
+          if (fromYear !== null && toYear !== null && toYear < fromYear) {
+            err(
+              deck.id,
+              id,
+              `${at} points to "${c.to}" (${toYear}), which is EARLIER than this event (${fromYear}) — store the edge on the earlier event (doc/CONNECTIONS.md §2)`
+            );
           }
           if (c.to && seen.has(c.to)) {
             err(deck.id, id, `${at} duplicates a link to "${c.to}"`);

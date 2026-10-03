@@ -36,6 +36,15 @@ world-history deck (see §5).
 event**. The reverse index is derived at load time, so a missing back-edge is not a defect and two
 events can never disagree about the same link.
 
+**The rule is enforced, twice (2026-10-03).** `validate-content.mjs` now errors on any edge whose
+endpoint is earlier than the event holding it (naming the correct holder), and `connections.js`
+re-checks the same rule at load time (`indexEdges` drops a misordered edge) because imported decks
+never pass through the gate. Two shipped edges violated it before this landed —
+`timbuktu-scholars → house-of-wisdom` (1493 → 813) and `mendeleev-periodic-table →
+newton-principia` (1869 → 1687). Both were **moved onto the earlier event**, keeping their authored
+rationales (which already read in the corrected direction) rather than dropped; see
+`doc/CONNECTION_CUE_PLAN.md` §8 Q1 and §9.
+
 **Why the rationale is mandatory.** This is not a stylistic choice. IHMC's **CXL** (Concept Mapping
 Extensible Language), the canonical interchange format for concept maps, models a map as
 `concept-list` + **`linking-phrase-list`** + `connection-list` + `proposition-list`. The linking
@@ -204,8 +213,10 @@ intermediate (.905\*), so calibrate by playtest rather than assuming older learn
   Telerik's diagram ships WCAG 2.2 AA against it. The graph must also be navigable as a **list/tree
   structure** for screen readers — that is the `Data Navigator` (CMU) and `Olli` pattern, and it must
   be implemented here rather than adopted, since this project is no-build vanilla JS.
-- **The reverse index is required for review cueing.** A due event must be promptable from *any* edge
-  touching it, in either direction, or "additional retrieval paths" is a claim about one path.
+- **The reverse index is required for review cueing — and it now exists.** `connections.js`
+  (`indexEdges` / `cueFor`, the cue shipped 2026-10-03; `doc/CONNECTION_CUE_PLAN.md`) builds `out`,
+  `in`, `years` and `titles` in one pass, so a card is promptable from *any* edge touching it, in
+  either direction. Wiring the cue into `dueSet()` is a separate reach-back slice and is not built.
 - **No drag-only interaction** anywhere in the mode (WCAG 2.2 SC 2.5.7, already a hard requirement).
 - **Rotate the cue.** Sometimes cue with the year, sometimes with the cause, sometimes with "what did
   this make possible?" One cue format is one retrieval route.
@@ -215,9 +226,9 @@ intermediate (.905\*), so calibrate by playtest rather than assuming older learn
 | | |
 |---|---|
 | events | 40 |
-| events with ≥1 outgoing edge | **36** (90%) |
+| events with ≥1 outgoing edge | **34** (85%) |
 | edges authored | **61** (median 1.5/event) |
-| events with none | `fleming-penicillin`, `dna-double-helix`, `oral-contraceptive`, `iphone-launch` |
+| events with none | `fleming-penicillin`, `dna-double-helix`, `oral-contraceptive`, `iphone-launch`, plus `timbuktu-scholars` and `mendeleev-periodic-table` (their single edge each was misordered and moved onto the earlier event — §2) |
 | dangling references | 0 |
 
 The four unconnected events are legitimate: three are termini (the newest discoveries, with nothing
@@ -230,9 +241,11 @@ the reasoning raw material a rationale is built from; median 24 candidate partne
 dense enough that selection is a real act rather than the bottleneck.
 
 **Gate.** `scripts/validate-content.mjs` enforces: dangling `to`, unknown `type`, rationale <20 chars,
-self-reference, duplicate target, non-array `connections`, non-boolean `contested` — all **errors**;
-a deck with no connections at all — a **warning**. The gate was negative-tested against all four
-defect classes before being trusted.
+self-reference, duplicate target, non-array `connections`, non-boolean `contested`, and — added
+2026-10-03 — an edge whose `to` endpoint is **earlier than the event holding it** (the storage rule,
+§2) — all **errors**; a deck with no connections at all — a **warning**. The gate was negative-tested
+against all four original defect classes, and the year-order error was negative-tested by
+re-introducing the reversed `mendeleev → newton` edge (one error, exit 1) before removal.
 
 **Authoring cost, measured.** 61 edges over 40 events is roughly one focused pass. That is the number
 that decides the rest: scaled to `cc-timeline`'s 161 events it is ~250 edges, and `cc-timeline` has
