@@ -40,8 +40,8 @@
  * deliberately NOT part of `npm test` (it needs a browser download).
  *
  * NOT covered here, and never claimed: iOS Safari, how any of it LOOKS (this is
- * a DOM/state check), print output, and whether the connection cue that is
- * planned to replace the why-line behaves (it does not exist yet).
+ * a DOM/state check), print output, and whether the connection cue that replaced
+ * the why-line behaves — that is tools/offline-smoke/connections.mjs.
  */
 import { createServer } from "node:http";
 import { existsSync, readFileSync, statSync } from "node:fs";
@@ -350,7 +350,7 @@ async function main() {
 
     /* ---- not covered ---- */
     phase("explicitly not covered by this run");
-    note("the connection cue is NOT tested here", "it does not exist yet — see doc/CONNECTION_CUE_PLAN.md");
+    note("the connection cue is NOT tested here", "covered by `npm run smoke:connections` — see doc/CONNECTION_CUE_PLAN.md");
     note("scoring and the exact round order are NOT verified here",
       "the round is played by clicking the first gap until it ends");
     note("how any of it LOOKS is NOT verified here", "this asserts DOM text, roles and stored values, not pixels");

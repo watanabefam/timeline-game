@@ -2,10 +2,10 @@
  * The service worker loads this with importScripts() at install time. */
 self.OFFLINE_MANIFEST = {
   "formatVersion": 1,
-  "hash": "bbcaf47e1d82",
+  "hash": "432de6335ad2",
   "generatedBy": "scripts/gen-offline-manifest.mjs",
   "cacheName": "timeline-offline",
-  "totalBytes": 19171353,
+  "totalBytes": 19188902,
   "files": [
     {
       "path": "assets/audio/alex-morgan-battle-boss-fight-game-music-583276.mp3",
@@ -363,6 +363,11 @@ self.OFFLINE_MANIFEST = {
       "bytes": 138180
     },
     {
+      "path": "connections.js",
+      "rev": "1aab5287cd29",
+      "bytes": 13083
+    },
+    {
       "path": "decks-io.js",
       "rev": "511d628f03e2",
       "bytes": 7541
@@ -374,18 +379,18 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "decks/index.js",
-      "rev": "96473f8ec8d6",
+      "rev": "0aa95bd08e8f",
       "bytes": 1346
     },
     {
       "path": "decks/index.json",
-      "rev": "9c98e61d09ee",
+      "rev": "aeab391597a2",
       "bytes": 1254
     },
     {
       "path": "decks/inventions-discoveries/deck.js",
-      "rev": "0e6637fa3e9f",
-      "bytes": 62104
+      "rev": "edde392c45ab",
+      "bytes": 62052
     },
     {
       "path": "decks/world-history-first-timeline/deck.js",
@@ -634,8 +639,8 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "index.html",
-      "rev": "af01335fd293",
-      "bytes": 28532
+      "rev": "f89a2624bb4a",
+      "bytes": 28575
     },
     {
       "path": "manifest.webmanifest",
@@ -664,13 +669,13 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "styles.css",
-      "rev": "c42552317484",
-      "bytes": 85410
+      "rev": "79ce61a7775c",
+      "bytes": 85761
     },
     {
       "path": "timeline.js",
-      "rev": "371be82ab72f",
-      "bytes": 203921
+      "rev": "c5602ed41943",
+      "bytes": 208045
     }
   ]
 };

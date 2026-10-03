@@ -284,6 +284,11 @@
           "type": "contributing",
           "via": "idea",
           "rationale": "Newton works in a mathematics -- algebra, positional numerals -- that reached Europe through Arabic transmission. The ideas are his; the notation he thought in was not."
+        },
+        {
+          "to": "timbuktu-scholars",
+          "type": "echo",
+          "rationale": "Both are translation-and-copying centres that kept learning alive where it was not the dominant priority. Timbuktu is the House of Wisdom's later, hand-copied counterpart."
         }
       ]
     },
@@ -399,14 +404,7 @@
       "summary": "Under the Songhai Empire, Timbuktu became a wealthy trading city and a famous centre of learning. Scholars gathered at the Sankore mosque and other schools to study law, astronomy, medicine and history. Because printing had not reached the region, scribes copied books by hand, and a busy trade in manuscripts grew up. Many of those handwritten books survived in family libraries and show how deep and widespread learning was in West Africa.",
       "lat": 16.8,
       "lng": -3,
-      "area": 1500,
-      "connections": [
-        {
-          "to": "house-of-wisdom",
-          "type": "echo",
-          "rationale": "Both are translation-and-copying centres that kept learning alive where it was not the dominant priority. Timbuktu is the House of Wisdom's later, hand-copied counterpart."
-        }
-      ]
+      "area": 1500
     },
     {
       "id": "copernicus-revolutions",
@@ -491,6 +489,11 @@
           "to": "goddard-rocket",
           "type": "necessary",
           "rationale": "Rocketry is Newtonian mechanics applied. Goddard's summary calls him a physicist for a reason -- the trajectory equations come from the Principia."
+        },
+        {
+          "to": "mendeleev-periodic-table",
+          "type": "echo",
+          "rationale": "Both are organising theories, and the shared move is the gaps. Newton reduced motion to a few laws; Mendeleev reduced the elements to a table with blanks and insisted the blanks were real. A theory that predicts what has not been found yet."
         }
       ]
     },
@@ -716,14 +719,7 @@
       "summary": "Chemists in the nineteenth century knew many elements but had no clear way to organise them. Dmitri Mendeleev arranged the known elements in order of atomic weight, starting a new row when properties repeated. He noticed gaps where an element seemed to be missing and boldly predicted the properties of those undiscovered elements. When gallium and germanium were found and matched his predictions, the table's power was clear. It became one of the most useful charts in all of science.",
       "lat": 59.9,
       "lng": 30.3,
-      "area": 1500,
-      "connections": [
-        {
-          "to": "newton-principia",
-          "type": "echo",
-          "rationale": "Both are organising theories, and the shared move is the gaps. Newton reduced motion to a few laws; Mendeleev reduced the elements to a table with blanks and insisted the blanks were real. A theory that predicts what has not been found yet."
-        }
-      ]
+      "area": 1500
     },
     {
       "id": "bell-telephone",

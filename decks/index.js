@@ -20,8 +20,8 @@ window.DECK_INDEX = {
       "dir": "inventions-discoveries",
       "entry": "deck.json",
       "script": "deck.js",
-      "revision": "310789da71e4",
-      "bytes": 62222,
+      "revision": "cb0d007d1f6f",
+      "bytes": 62170,
       "version": "1.0.0",
       "license": "CC-BY-SA-4.0",
       "attribution": []
