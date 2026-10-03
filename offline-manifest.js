@@ -2,10 +2,10 @@
  * The service worker loads this with importScripts() at install time. */
 self.OFFLINE_MANIFEST = {
   "formatVersion": 1,
-  "hash": "e9028f843eb5",
+  "hash": "b7c2ee4ffdd8",
   "generatedBy": "scripts/gen-offline-manifest.mjs",
   "cacheName": "timeline-offline",
-  "totalBytes": 19235873,
+  "totalBytes": 19255450,
   "files": [
     {
       "path": "assets/audio/alex-morgan-battle-boss-fight-game-music-583276.mp3",
@@ -379,12 +379,12 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "decks/index.js",
-      "rev": "61a5737b37ab",
+      "rev": "f684da967c8e",
       "bytes": 1347
     },
     {
       "path": "decks/index.json",
-      "rev": "f30315869690",
+      "rev": "315fab7e2a19",
       "bytes": 1255
     },
     {
@@ -599,8 +599,8 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "decks/world-literature/deck.js",
-      "rev": "85079bf4a4ab",
-      "bytes": 49776
+      "rev": "0654845e00fc",
+      "bytes": 50885
     },
     {
       "path": "events-data.js",
@@ -639,8 +639,8 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "index.html",
-      "rev": "20e2c2f8a49c",
-      "bytes": 28575
+      "rev": "cea84b5b27a6",
+      "bytes": 28931
     },
     {
       "path": "manifest.webmanifest",
@@ -664,18 +664,18 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "review-scheduler.js",
-      "rev": "fe055c01a760",
-      "bytes": 10971
+      "rev": "ee97d4bcfff9",
+      "bytes": 14088
     },
     {
       "path": "styles.css",
-      "rev": "79ce61a7775c",
-      "bytes": 85761
+      "rev": "8e809a33e771",
+      "bytes": 87878
     },
     {
       "path": "timeline.js",
-      "rev": "8061f5fd1a64",
-      "bytes": 210340
+      "rev": "8882ab16400a",
+      "bytes": 223218
     }
   ]
 };

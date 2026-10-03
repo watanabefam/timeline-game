@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Timeline Game — place history in order</title>
-  <link rel="stylesheet" href="styles.css?v=137" />
+  <link rel="stylesheet" href="styles.css?v=138" />
   <link rel="stylesheet" href="assets/leaflet/leaflet.css" />
   <link rel="stylesheet" href="assets/vendor/vis-timeline-graph2d.min.css" />
   <!-- Installability (S1a). Icons live in icons/ — assets/ is vendored and
@@ -64,6 +64,12 @@
           <button class="icon-btn" id="install-dismiss" type="button" aria-label="Not now">&times;</button>
         </span>
       </div>
+
+      <!-- Streak chip (doc/MVP_PLAN.md S2). Rendered only once a profile has at
+           least one qualifying day, so a brand-new player never sees a 0-day or
+           a 0% bar (D5). The count is derived from the review log on every
+           render — nothing here is stored (D3). -->
+      <div id="streak-chip" class="streak-chip hidden"></div>
 
       <div class="deck-grid" id="deck-grid"></div>
 
@@ -527,8 +533,8 @@
 <script src="narration-recipe.js?v=10"></script>
 <script src="narration.js?v=22"></script>
 <script src="offline.js?v=6"></script>
-<script src="review-scheduler.js?v=3"></script>
+<script src="review-scheduler.js?v=4"></script>
 <script src="connections.js?v=1"></script>
-<script src="timeline.js?v=207"></script>
+<script src="timeline.js?v=209"></script>
 </body>
 </html>

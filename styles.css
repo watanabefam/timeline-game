@@ -1779,3 +1779,57 @@ body.dock-active #results { padding-bottom: 116px; }
   .install-bar { flex-direction: column; align-items: stretch; gap: 10px; text-align: center; }
   .install-bar-actions { justify-content: center; }
 }
+
+/* ---------- Streak chip + practice calendar (doc/MVP_PLAN.md S2) ----------
+   Plain CSS grid, ported from Trophy UI's Streak Calendar STRUCTURE only
+   (ui.trophy.so, MIT) — no React, no Tailwind, no dependency. The chip pairs
+   the count with today's state; the calendar is the monitoring surface A5 asks
+   for. Colours come from the existing tokens, and every state also carries
+   data-state + an aria-label, so nothing here is colour-only. */
+.streak-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  margin: 0 auto var(--sp-2);
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--glass-tint);
+  font-size: 0.86rem;
+  color: var(--text);
+}
+.streak-chip.hidden { display: none; }
+.streak-chip--active { border-color: var(--good); }
+.streak-chip--at-risk { border-color: var(--warn); }
+.streak-chip--paused { border-color: var(--border); color: var(--muted); }
+.streak-flame { font-size: 1rem; line-height: 1; }
+.streak-count { font-weight: 700; }
+.streak-sub { color: var(--muted); }
+.streak-cal-summary { margin: 0 0 var(--sp-1); color: var(--muted); font-size: 0.85rem; }
+.streak-grid {
+  border-collapse: separate;
+  border-spacing: 4px;
+  font-size: 0.75rem;
+}
+.streak-grid th {
+  color: var(--muted);
+  font-weight: 600;
+  text-align: center;
+  padding: 0 0 2px;
+}
+.streak-day {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+}
+/* Practised, forgiven, missed, today. Forgiven is deliberately a softer,
+   non-alarming tone than missed, and missed is muted rather than red — the
+   review's anti-shame guardrail. */
+.streak-day[data-state="on"] { background: var(--good); border-color: var(--good); }
+.streak-day[data-state="today"] { background: var(--accent); border-color: var(--accent); }
+.streak-day[data-state="forgiven"] { background: var(--good-bg); border-color: var(--good); }
+.streak-day[data-state="missed"] { background: transparent; border-style: dashed; }
+.streak-day[data-state="off"],
+.streak-day[data-state="future"] { opacity: 0.35; }

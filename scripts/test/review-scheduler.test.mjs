@@ -389,6 +389,129 @@ test("audit: a non-array log (undefined/string) degrades instead of throwing", (
   assert.deepEqual(RS.dueSet(RS.replay("x"), "d1", "8-11", { events: [] }), []);
 });
 
+/* ------------------------------------------------ cue promotion (S1, T3) */
+// doc/MVP_PLAN.md S1. The cue capability is a SUPPLIED id set, because this
+// module has no deck, no years and no edges — the graph lives in
+// connections.js. These tests pin the three properties the design rests on:
+//   1. no `cue` key  -> byte-identical output (AC1, a code-path property)
+//   2. a cue promotes  -> and can NEVER rescue a filtered-out card (FR2)
+//   3. `opts.order`    -> the promoted pair is asked in dependency order
+
+/** Six due cards, each 6..1 placements back, all with identical success. */
+function cueFixture() {
+  const states = {};
+  for (let i = 0; i < 6; i += 1) {
+    states["e" + i] = mkState(6 - i, 2, 2);
+  }
+  return states;
+}
+
+test("cue: absent `cue` leaves the due set byte-identical (AC1)", () => {
+  const s = cueFixture();
+  const opts = { recencyK: 0, events: logEvents(6) };
+  const before = RS.dueSet(s, "d1", "17+", opts);
+  // A cue set that names nothing must be inert, and an unrelated extra key must
+  // not disturb the result either.
+  assert.deepEqual(RS.dueSet(s, "d1", "17+", Object.assign({}, opts, { cue: [] })), before);
+  assert.deepEqual(RS.dueSet(s, "d1", "17+", Object.assign({}, opts, { order: {} })), before);
+});
+
+test("cue: a promoted id moves to the front, and the rest keep their order", () => {
+  const s = cueFixture();
+  const opts = { recencyK: 0, events: logEvents(6) };
+  const before = RS.dueSet(s, "d1", "17+", opts);
+  const promotedId = before[before.length - 1]; // the lowest-ranked card
+  const after = RS.dueSet(s, "d1", "17+", Object.assign({}, opts, { cue: [promotedId] }));
+  assert.equal(after[0], promotedId, "the cued card must be asked first");
+  // Same membership, same relative order for everyone else: a partition, not a
+  // re-score.
+  assert.deepEqual(after.slice().sort(), before.slice().sort());
+  assert.deepEqual(after.slice(1), before.filter((id) => id !== promotedId));
+});
+
+test("cue: a Set works exactly like an array", () => {
+  const s = cueFixture();
+  const opts = { recencyK: 0, events: logEvents(6) };
+  const arr = RS.dueSet(s, "d1", "17+", Object.assign({}, opts, { cue: ["e5"] }));
+  const set = RS.dueSet(s, "d1", "17+", Object.assign({}, opts, { cue: new Set(["e5"]) }));
+  assert.deepEqual(arr, set);
+});
+
+test("cue: `order` asks the promoted pair in dependency order", () => {
+  const s = cueFixture();
+  const opts = { recencyK: 0, events: logEvents(6) };
+  // e1 ranks above e4 without an order; the caller says the dependency runs
+  // e4 -> e1, so e4 must come first or the later card's partner is not yet on
+  // the board when it is asked (RULE 2).
+  const out = RS.dueSet(s, "d1", "17+", Object.assign({}, opts, {
+    cue: ["e1", "e4"],
+    order: { e4: 1, e1: 2 },
+  }));
+  assert.deepEqual(out.slice(0, 2), ["e4", "e1"]);
+});
+
+test("cue: promotion cannot rescue a card that is not due (FR2)", () => {
+  const s = cueFixture();
+  // e5 is only 1 placement back; recencyK 3 filters it out. Naming it in the
+  // cue set must NOT bring it back.
+  const out = RS.dueSet(s, "d1", "17+", { recencyK: 3, cue: ["e5"] });
+  assert.ok(!out.includes("e5"), `cue resurrected a card that is not due: ${JSON.stringify(out)}`);
+});
+
+test("cue: promotion cannot cross the age gate (FR4)", () => {
+  const s = RS.replay([
+    row("ancient", "firstTry"), row("modern", "firstTry"),
+    row("f1", "firstTry"), row("f2", "firstTry"), row("f3", "firstTry"),
+  ]);
+  const opts = {
+    recencyK: 0,
+    currentEra: "ancient",
+    currentWeek: 1,
+    cue: ["modern"],
+    events: [
+      { id: "ancient", era: "ancient", week: 1 },
+      { id: "modern", era: "modern", week: 9 },
+    ],
+  };
+  for (const band of ["5-7", "8-11"]) {
+    const set = RS.dueSet(s, "d1", band, opts);
+    assert.ok(!set.includes("modern"), `${band} must not reach across eras even when cued`);
+  }
+});
+
+test("cue: the cap is applied AFTER promotion, so a cued card survives it", () => {
+  const s = cueFixture();
+  const opts = { recencyK: 0, events: logEvents(6), cap: 2 };
+  const out = RS.dueSet(s, "d1", "17+", Object.assign({}, opts, { cue: ["e5"] }));
+  assert.equal(out.length, 2);
+  assert.ok(out.includes("e5"), `the cued card was dropped by the cap: ${JSON.stringify(out)}`);
+});
+
+test("cue: the success floor still runs after promotion and still holds", () => {
+  const log = [
+    row("hard1", "slip"), row("hard1", "slip"),
+    row("hard2", "slip"),
+    row("easy", "firstTry"), row("easy", "firstTry"), row("easy", "firstTry"), row("easy", "firstTry"),
+  ];
+  const s = RS.replay(log);
+  const out = RS.dueSet(s, "d1", "17+", { recencyK: 0, cue: ["hard2"] });
+  const mean = out.reduce((t, id) => t + s[id].firstTry / s[id].attempts, 0) / out.length;
+  assert.ok(mean >= 0.5, `mean success ${mean} should still be >= 0.5`);
+  assert.ok(out.includes("easy"), "the easy card must survive the trim");
+  assert.ok(out.includes("hard2"), "the cued hard card is the one kept");
+  assert.ok(!out.includes("hard1"), "the un-cued equally-hard card is the one trimmed");
+});
+
+test("cue: dueSet still does not mutate its inputs when a cue is supplied", () => {
+  const states = cueFixture();
+  const opts = { recencyK: 0, events: logEvents(6), cue: ["e5", "e4"], order: { e5: 1, e4: 2 } };
+  const statesBefore = JSON.stringify(states);
+  const optsBefore = JSON.stringify(opts);
+  RS.dueSet(states, "d1", "17+", opts);
+  assert.equal(JSON.stringify(states), statesBefore, "dueSet rewrote the derived state");
+  assert.equal(JSON.stringify(opts), optsBefore, "dueSet rewrote the options");
+});
+
 /* ---------------------------------------------------------------- helpers */
 
 function logEvents(n, deck = "d1") {

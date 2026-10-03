@@ -175,17 +175,68 @@ export function renderBacklog(backlog) {
 function overCeiling(openCount, what) {
   return (
     `${what} has outgrown its ratchet: ${openCount} against a ceiling of ${CEILING}.\n` +
-    "  Growth is allowed, but it has to be asked for in code: raise CEILING in\n" +
-    "  scripts/gen-pronunciation-backlog.mjs. A number that changes inside a\n" +
-    "  generated file is not a decision anyone can review."
+    "  Growth is allowed, but it has to be asked for in code: run\n" +
+    "  `npm run gen:backlog -- --raise-ceiling` to raise it deliberately."
   );
+}
+
+/**
+ * Raise CEILING in THIS file to `to`, and say so loudly.
+ *
+ * The point of keeping the ceiling in code is that moving it lands in a diff as
+ * a deliberate act — so this rewrites the constant rather than the generated
+ * JSON, and refuses when the current ceiling already suffices. A flag that
+ * always passes would be a blunt instrument; this one can only ever move the
+ * number to what the data actually needs.
+ *
+ * @returns {boolean} true when the file was rewritten
+ */
+function raiseCeilingTo(to) {
+  const self = fileURLToPath(import.meta.url);
+  const src = readFileSync(self, "utf8");
+  const next = src.replace(/^(export const CEILING = )\d+;/m, `$1${to};`);
+  if (next === src) {
+    fail("could not find `export const CEILING = <number>;` to rewrite — refusing to guess");
+  }
+  writeFileSync(self, next);
+  return true;
 }
 
 async function main() {
   const argv = process.argv.slice(2);
   const check = argv.includes("--check");
+  const raise = argv.includes("--raise-ceiling");
+
+  // Fail closed before anything is derived, so a flag run without the
+  // dictionary can never rewrite the ceiling from partial data.
+  if (raise && !(await referenceAvailable()) && !check) {
+    fail(
+      "--raise-ceiling needs the reference dictionary to know the real count.\n" +
+        "  Run: npm --prefix tools/narration install"
+    );
+  }
 
   const backlog = await buildBacklog();
+
+  if (raise) {
+    const needed = backlog.open.length;
+    if (needed <= CEILING) {
+      console.log(
+        `✓ nothing to raise: ${needed} open word(s) already fit the ceiling of ${CEILING}.\n` +
+          "  Tighten instead — lower CEILING to " + needed + " in this file."
+      );
+      process.exit(0);
+    }
+    const old = CEILING;
+    raiseCeilingTo(needed);
+    writeFileSync(TARGET, renderBacklog(backlog));
+    console.log(
+      `✓ CEILING raised: ${old} → ${needed} (scripts/gen-pronunciation-backlog.mjs)\n` +
+        `  · pronunciation-backlog.json regenerated (${needed} open, ${backlog.deferred.length} deferred)\n` +
+        "  · this change must appear in a diff as a deliberate act, not as arithmetic"
+    );
+    process.exit(0);
+  }
 
   if (check) {
     const current = existsSync(TARGET) ? readFileSync(TARGET, "utf8") : "";
