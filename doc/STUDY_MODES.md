@@ -218,6 +218,21 @@ are vendor-produced and mutually inconsistent; **do not cite any of them**.
 reporting gives 10M (2019) → **65M**. Quizlet's "60M users" is a company claim. **AnkiDroid is
 ≈23.9M downloads** (chrome-stats, 2026-09-26) — use that, not the older "10M+".
 
+### 3.4 Open-source reference implementations (added 2026-10-02)
+
+Full repo + dataset catalogue in `MARKET_COMPARISON.md` §9. The three worth opening for
+*this* doc's build:
+
+| Repo | License | Why it matters here |
+|---|---|---|
+| [misty-step/chrondle](https://github.com/misty-step/chrondle) | **MIT** | Ships an exact-year **range** mode + which-came-first + ordering in one app. Read its era-scaled scoring (`scoring.ts`) and hint ladder for §9.2 |
+| [kyletscheer/historicle](https://github.com/kyletscheer/historicle) | **GPL-3.0** ⚠️ | The **only no-build vanilla** exact-year implementation (`index.html`+`script.js`+`dates.js`, ~300 events). Read the guess→feedback loop; do **not** copy GPL code |
+| [kimfrithiof/moments](https://github.com/kimfrithiof/moments) | Code **MIT** | The "timeline shuttle" drag → exact year, with **era-scaled tolerance** (a per-card half-life) — the idea to steal for §9.2's tolerance model |
+
+**Seed datasets** (best fit for exact-year decks): [slashyear.com/data](https://slashyear.com/data)
+(CC BY-SA 4.0; 121,329 entries with frozen Wikipedia revision IDs) and
+[Wikidata](https://www.wikidata.org) (facts CC0). Full list in `MARKET_COMPARISON.md` §9.3.
+
 ---
 
 ## 4. What NOT to do

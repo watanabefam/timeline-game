@@ -33,7 +33,7 @@ const row = (eventId, outcome, deck = "d1") => ({ ts: 0, deck, eventId, outcome,
 test("the module exposes the seam and loads with no DOM (classic script)", () => {
   assert.deepEqual(
     Object.keys(RS).sort(),
-    ["K_MAX", "K_MIN", "MAX_POW", "dueSet", "intervalKFor", "rate", "replay"]
+    ["K_MAX", "K_MIN", "MASTERY_ALPHA", "MAX_POW", "dueSet", "intervalKFor", "masteryByEvent", "rate", "replay"]
   );
   assert.equal(typeof RS.replay, "function");
   assert.equal(typeof RS.rate, "function");
@@ -83,6 +83,54 @@ test("replay carries the last deck an event was logged under", () => {
   const s = RS.replay([row("x", "firstTry", "d1"), row("x", "firstTry", "d2")]);
   assert.equal(s.x.deck, "d2");
   assert.equal(s.x.streak, 2);
+});
+
+/* ------------------------------------------------------ masteryByEvent (display) */
+
+test("masteryByEvent seeds with the first observation (1 clean = 100, 1 slip = 0)", () => {
+  assert.deepEqual(RS.masteryByEvent([row("a", "firstTry")]), { a: 100 });
+  assert.deepEqual(RS.masteryByEvent([row("a", "slip")]), { a: 0 });
+});
+
+test("masteryByEvent weighs recent outcomes — finishing well reads higher", () => {
+  // Equal counts, opposite order. A last-N window cannot see the difference.
+  const alternating = [row("a","firstTry"),row("a","slip"),row("a","firstTry"),row("a","slip"),row("a","firstTry"),row("a","slip")];
+  const finishing   = [row("a","slip"),row("a","slip"),row("a","slip"),row("a","firstTry"),row("a","firstTry"),row("a","firstTry")];
+  const alt = RS.masteryByEvent(alternating).a;
+  const fin = RS.masteryByEvent(finishing).a;
+  assert.ok(fin > alt, `finishing well (${fin}) must read higher than alternating (${alt})`);
+});
+
+test("masteryByEvent: an added slip lowers the estimate", () => {
+  const clean = RS.masteryByEvent([row("a","firstTry"), row("a","firstTry"), row("a","firstTry")]).a;
+  const slipped = RS.masteryByEvent([row("a","firstTry"), row("a","firstTry"), row("a","slip")]).a;
+  assert.equal(clean, 100);
+  assert.equal(slipped, 70);
+  assert.ok(slipped < clean, `${slipped} should be below ${clean}`);
+});
+
+test("masteryByEvent is per-event, skips malformed rows, never throws", () => {
+  assert.deepEqual(RS.masteryByEvent(undefined), {});
+  assert.deepEqual(RS.masteryByEvent("nope"), {});
+  assert.deepEqual(RS.masteryByEvent([]), {});
+  const m = RS.masteryByEvent([null, 7, { outcome: "firstTry" }, row("a","firstTry"), row("b","slip")]);
+  assert.deepEqual(Object.keys(m).sort(), ["a", "b"]);
+  assert.equal(m.a, 100);
+  assert.equal(m.b, 0);
+});
+
+test("masteryByEvent does not mutate the log (D3)", () => {
+  const log = [row("a","firstTry"), row("a","slip")];
+  const before = JSON.stringify(log);
+  RS.masteryByEvent(log);
+  assert.equal(JSON.stringify(log), before, "masteryByEvent wrote to the persisted log");
+});
+
+test("masteryByEvent honours an explicit alpha (1 = only the latest outcome)", () => {
+  assert.equal(RS.masteryByEvent([row("a","slip"), row("a","firstTry")], 1).a, 100);
+  assert.equal(RS.masteryByEvent([row("a","firstTry"), row("a","slip")], 1).a, 0);
+  // An out-of-range alpha falls back to the default rather than producing NaN.
+  assert.equal(RS.masteryByEvent([row("a","firstTry")], 0).a, 100);
 });
 
 /* ----------------------------------------------------------- intervalK/rate */

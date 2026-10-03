@@ -2,10 +2,10 @@
  * The service worker loads this with importScripts() at install time. */
 self.OFFLINE_MANIFEST = {
   "formatVersion": 1,
-  "hash": "432de6335ad2",
+  "hash": "3af8bff4d766",
   "generatedBy": "scripts/gen-offline-manifest.mjs",
   "cacheName": "timeline-offline",
-  "totalBytes": 19188902,
+  "totalBytes": 19192384,
   "files": [
     {
       "path": "assets/audio/alex-morgan-battle-boss-fight-game-music-583276.mp3",
@@ -639,7 +639,7 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "index.html",
-      "rev": "f89a2624bb4a",
+      "rev": "a752c6cd40fe",
       "bytes": 28575
     },
     {
@@ -664,8 +664,8 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "review-scheduler.js",
-      "rev": "30bfeadb39e2",
-      "bytes": 9181
+      "rev": "fe055c01a760",
+      "bytes": 10971
     },
     {
       "path": "styles.css",
@@ -674,8 +674,8 @@ self.OFFLINE_MANIFEST = {
     },
     {
       "path": "timeline.js",
-      "rev": "c5602ed41943",
-      "bytes": 208045
+      "rev": "57658c7b34ff",
+      "bytes": 209737
     }
   ]
 };
